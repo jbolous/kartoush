@@ -1,17 +1,11 @@
-<p align="center">
+<p align="center" style="background-color: transparent;">
   <picture>
-    <source
-      media="(prefers-color-scheme: dark)"
-      srcset="./docs/assets/kartoush-header-dark.png"
-      width="360"
-    >
-    <img
-      alt="Kartoush"
-      src="./docs/assets/kartoush-header-light.png"
-      width="360"
-    >
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/kartoush-header-dark.png">
+    <img alt="Kartoush" src="./docs/assets/kartoush-header-light.png" width="360">
   </picture>
 </p>
+
+
 
 Kartoush is a work-in-progress software project focused on exploring and building solutions in the commerce and platform domain.  
 This repository currently serves as a home for early design exploration, decision-making, and project setup.
