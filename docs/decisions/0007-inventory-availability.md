@@ -1,4 +1,4 @@
-# 0007 – Inventory Availability Mode
+# Inventory Availability Mode
 
 ## Status
 Proposed

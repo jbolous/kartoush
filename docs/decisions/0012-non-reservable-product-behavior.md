@@ -1,6 +1,7 @@
-# 0012 – Non-Reservable Product Behavior
+# Non-Reservable Product Behavior
 
 ## Status
+
 Proposed
 
 ## Context

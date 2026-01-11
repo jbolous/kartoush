@@ -1,4 +1,4 @@
-# 0005 – Build Tool
+# Build Tool
 
 ## Status
 Proposed

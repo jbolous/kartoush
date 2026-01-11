@@ -1,4 +1,4 @@
-# 0011 – Layering and Facade Contracts
+# Layering and Facade Contracts
 
 ## Status
 Proposed

@@ -1,4 +1,4 @@
-# 0006 – Deployment Assumptions
+# Deployment Assumptions
 
 ## Status
 Proposed
