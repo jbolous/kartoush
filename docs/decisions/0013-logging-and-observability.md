@@ -1,4 +1,4 @@
-# Decision: Logging and Observability
+# Logging and Observability
 
 ## Status
 

@@ -1,4 +1,4 @@
-# 0001 – Project Goals and Non-Goals
+# Project Goals and Non-Goals
 
 ## Status
 Proposed

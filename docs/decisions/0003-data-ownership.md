@@ -1,6 +1,7 @@
-# 0003 – Data Ownership
+# Data Ownership
 
 ## Status
+
 Proposed
 
 ## Context

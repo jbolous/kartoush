@@ -1,4 +1,4 @@
-# 0008 – Reservation Ownership and Lifecycle
+# Reservation Ownership and Lifecycle
 
 ## Status
 Proposed

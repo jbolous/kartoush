@@ -1,4 +1,4 @@
-# 0010 – Payment Lifecycle and Guarantees
+# Payment Lifecycle and Guarantees
 
 ## Status
 

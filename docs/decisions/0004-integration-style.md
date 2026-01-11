@@ -1,6 +1,7 @@
-# 0004 – Integration Style
+# Integration Style
 
 ## Status
+
 Proposed
 
 ## Context

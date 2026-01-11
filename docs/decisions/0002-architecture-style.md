@@ -1,6 +1,7 @@
-# 0002 – Architecture Style
+# Architecture Style
 
 ## Status
+
 Proposed
 
 ## Context
@@ -10,6 +11,7 @@ style that supports deliberate, incremental development while keeping
 complexity low as the domain is still forming.
 
 The chosen style should:
+
 - Enable clear ownership and boundaries
 - Make change impact easy to reason about
 - Avoid premature operational complexity
@@ -54,10 +56,12 @@ service-oriented architectures.
 ### Microservices from the start
 
 **Pros**
+
 - Independent deployment and scaling
 - Clear service boundaries if the domain is already stable
 
 **Cons**
+
 - High operational complexity early (deployment, networking, observability)
 - Distributed systems challenges before requirements are well understood
 - Slower iteration for an early-stage project
@@ -67,6 +71,7 @@ service-oriented architectures.
 ### Fully monolithic, no modular boundaries
 
 **Pros**
+
 - Simplest possible starting point
 - Minimal upfront structure
 
