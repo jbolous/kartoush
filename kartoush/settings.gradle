@@ -1,2 +1,3 @@
 rootProject.name = 'kartoush'
 include 'app'
+include 'platform-types'
