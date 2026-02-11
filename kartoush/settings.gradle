@@ -1,1 +1,2 @@
 rootProject.name = 'kartoush'
+include 'app'
