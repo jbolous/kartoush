@@ -1,0 +1,26 @@
+[versions]
+springBootVersion = "4.0.2"
+testcontainers = "2.0.3"
+springDependencyManagementVersion = "1.1.7"
+mapstructVersion = "1.6.3"
+
+[plugins]
+springBoot = { id = "org.springframework.boot", version.ref = "springBootVersion" }
+springDependencyManagement = { id = "io.spring.dependency-management", version.ref = "springDependencyManagementVersion" }
+
+[libraries]
+springBootBom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBootVersion" }
+
+springBootStarterTest = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "springBootVersion" }
+springBootStarterDataJpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "springBootVersion" }
+springBootStarterFlyway = { module = "org.springframework.boot:spring-boot-starter-flyway" }
+flywayPostgresql = { module = "org.flywaydb:flyway-database-postgresql" }
+postgresql = { module = "org.postgresql:postgresql" }
+
+testcontainersJunitJupiter = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
+testcontainersPostgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+testcontainersBom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstructVersion"}
+mapstructProcessor= { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstructVersion"}

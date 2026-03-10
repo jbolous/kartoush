@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.2'
-    id 'io.spring.dependency-management' version '1.1.7'
+    alias(libs.plugins.springBoot)
+    alias(libs.plugins.springDependencyManagement)
 }
 
 group = 'com.kartoush'
@@ -19,21 +19,45 @@ repositories {
 }
 
 dependencies {
+    implementation project(':customer')
+    implementation project(':platform-types')
+    testImplementation project(":test-support")
+
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-flyway'
-    implementation 'org.flywaydb:flyway-database-postgresql'
+    implementation (libs.springBootStarterDataJpa)
+
+    implementation (libs.springBootStarterFlyway)
+    implementation (libs.flywayPostgresql)
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-    runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly(libs.postgresql)
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation (platform(libs.testcontainersBom))
+    testImplementation (libs.testcontainers)
+    testImplementation (libs.testcontainersJunitJupiter)
+    testImplementation (libs.testcontainersPostgresql)
+
+    testImplementation project(":test-support")
+    testImplementation (libs.springBootStarterTest)
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+tasks.test {
+    useJUnitPlatform {
+        excludeTags "integration"
+    }
+}
+
+tasks.register("integrationTest", Test) {
+    group = "verification"
+    description = "Runs integration tests (Docker/Testcontainers)."
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags "integration"
+    }
+    shouldRunAfter tasks.test
 }
