@@ -2,26 +2,57 @@ plugins {
     id 'java-library'
 }
 
-group = 'com.kartoush'
-version = '0.0.1-SNAPSHOT'
+dependencies {
+    implementation project(':platform-types')
+    testImplementation project(":test-support")
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+    implementation(libs.springBootStarterDataJpa)
+    implementation(libs.springBootStarterFlyway)
+    implementation(libs.flywayPostgresql)
+    implementation(libs.mapstruct)
+
+    annotationProcessor (platform(libs.mapstructProcessor))
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
+
+    testImplementation (platform(libs.testcontainersBom))
+    testImplementation (platform(libs.testcontainers))
+    testImplementation (platform(libs.testcontainersJunitJupiter))
+    testImplementation (platform(libs.postgresql))
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly (libs.postgresql)
+}
+
+tasks.register("verifyAll") {
+    group = "verification"
+    description = "Runs unit + integration tests."
+    dependsOn tasks.test
+    dependsOn tasks.integrationTest
+}
+
+tasks.test {
+    useJUnitPlatform {
+        excludeTags "integration"
     }
 }
 
-dependencies {
-    // Keep this module framework-light for now.
-    // Add Spring/JPA/Flyway when we implement persistence (next tasks).
-
-    api project(':platform-types')
-
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+tasks.register("integrationTest", Test) {
+    group = "verification"
+    description = "Runs integration tests (Docker/Testcontainers)."
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    environment "TESTCONTAINERS_RYUK_DISABLED", "true"
+    useJUnitPlatform {
+        includeTags "integration"
+    }
+    shouldRunAfter tasks.test
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+
+tasks.check {
+    dependsOn tasks.named("test")
+    // Do not depend on integrationTest by default
 }

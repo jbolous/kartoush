@@ -2,6 +2,10 @@ plugins {
     id 'base'
 }
 
+ext {
+    javaToolchainVersion = 25
+}
+
 allprojects {
     group = 'com.kartoush'
     version = '0.0.1-SNAPSHOT'
@@ -10,5 +14,27 @@ allprojects {
 subprojects {
     repositories {
         mavenCentral()
+    }
+
+    // Apply consistent Java conventions to all modules
+    apply plugin: 'java-library'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(rootProject.ext.javaToolchainVersion)
+        }
+    }
+
+    // Use Spring Boot dependency BOM everywhere (main + test)
+    dependencies {
+        implementation platform(libs.springBootBom)
+        testImplementation platform(libs.springBootBom)
+
+        testImplementation libs.springBootStarterTest
+        testImplementation libs.testcontainersJunitJupiter
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
     }
 }
