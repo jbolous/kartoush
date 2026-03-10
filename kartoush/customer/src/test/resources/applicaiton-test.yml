@@ -1,4 +1,0 @@
-spring:
-  flyway:
-    connect-retries: 10
-    connect-retries-interval: 1s
