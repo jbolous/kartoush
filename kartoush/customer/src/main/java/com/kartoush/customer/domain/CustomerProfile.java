@@ -1,17 +1,15 @@
 package com.kartoush.customer.domain;
 
-import org.springframework.util.StringUtils;
-
 public record CustomerProfile(
         String firstName,
         String lastName,
         String phoneNumber
 ) {
     public CustomerProfile {
-        if (!StringUtils.hasText(firstName)) {
+        if (firstName == null || firstName.isBlank()){
             throw new IllegalArgumentException("firstName must not be blank");
         }
-        if (!StringUtils.hasText(lastName)) {
+        if (lastName == null || lastName.isBlank()){
             throw new IllegalArgumentException("lastName must not be blank");
         }
     }
