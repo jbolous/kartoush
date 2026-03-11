@@ -25,4 +25,16 @@ public final class AddressId {
     public String value() {
         return value;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        AddressId addressId = (AddressId) o;
+        return Objects.equals(value, addressId.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(value);
+    }
 }

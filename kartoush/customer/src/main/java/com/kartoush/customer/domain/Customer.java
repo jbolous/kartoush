@@ -1,14 +1,14 @@
 package com.kartoush.customer.domain;
 
+import com.kartoush.platform.types.AddressId;
+import com.kartoush.platform.types.CustomerId;
+import com.kartoush.platform.types.CustomerStatus;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-
-import com.kartoush.platform.types.CustomerId;
-import com.kartoush.platform.types.CustomerStatus;
-import org.springframework.util.StringUtils;
 
 public final class Customer {
 
@@ -17,29 +17,43 @@ public final class Customer {
     private String email;
     private final String passwordHash;
     private final CustomerStatus status;
-    private final List<CustomerAddress> addresses;
+
+    private final List<CustomerAddress> addresses = new ArrayList<>();
 
     private final Instant createdAt;
     private Instant updatedAt;
 
-    public Customer(
+    private Customer(
             CustomerId id,
             CustomerProfile profile,
             String email,
             String passwordHash,
             CustomerStatus status,
-            List<CustomerAddress> addresses,
             Instant createdAt,
-            Instant updatedAt
-    ) {
-        this.id = Objects.requireNonNull(id, "id");
-        this.profile = Objects.requireNonNull(profile, "profile");
+            Instant updatedAt) {
+        this.id = Objects.requireNonNull(id);
+        this.profile = Objects.requireNonNull(profile);
         this.email = normalizeEmail(email);
-        this.passwordHash = requireNonBlank(passwordHash, "passwordHash");
-        this.status = Objects.requireNonNull(status, "status");
-        this.addresses = new ArrayList<>(Objects.requireNonNull(addresses, "addresses"));
-        this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
-        this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
+        this.passwordHash = passwordHash;
+        this.status = Objects.requireNonNull(status);
+        this.createdAt = Objects.requireNonNull(createdAt);
+        this.updatedAt = Objects.requireNonNull(updatedAt);
+    }
+
+    public static Customer createNew(
+            CustomerId id,
+            CustomerProfile profile,
+            String email,
+            String passwordHash,
+            Instant now) {
+        return new Customer(
+                id,
+                profile,
+                email,
+                passwordHash,
+                CustomerStatus.ACTIVE,
+                now,
+                now);
     }
 
     public static Customer fromPersistence(
@@ -50,29 +64,17 @@ public final class Customer {
             CustomerStatus status,
             List<CustomerAddress> addresses,
             Instant createdAt,
-            Instant updatedAt
-    ) {
-        return new Customer(id, profile, email, passwordHash, status, addresses, createdAt, updatedAt);
-    }
-
-    public static Customer createNew(
-            CustomerId id,
-            CustomerProfile profile,
-            String email,
-            String passwordHash,
-            Instant now) {
-        Objects.requireNonNull(now, "now");
-
-        return new Customer(
+            Instant updatedAt) {
+        Customer customer = new Customer(
                 id,
                 profile,
                 email,
                 passwordHash,
-                CustomerStatus.ACTIVE,
-                List.of(),
-                now,
-                now
-        );
+                status,
+                createdAt,
+                updatedAt);
+        customer.addresses.addAll(addresses);
+        return customer;
     }
 
     public CustomerId getId() {
@@ -108,7 +110,7 @@ public final class Customer {
     }
 
     public void updateProfile(CustomerProfile newProfile, Instant now) {
-        this.profile = Objects.requireNonNull(newProfile, "newProfile");
+        this.profile = Objects.requireNonNull(newProfile);
         touch(now);
     }
 
@@ -117,26 +119,80 @@ public final class Customer {
         touch(now);
     }
 
-    public boolean matchesPasswordHash(String candidatePasswordHash) {
-        return StringUtils.hasText(candidatePasswordHash) && candidatePasswordHash.equals(this.passwordHash);
+    public void addAddress(final CustomerAddress address, final Instant now) {
+        Objects.requireNonNull(address, "address");
+
+        if (address.isDefaultShipping()) {
+            clearDefaultShipping(now);
+        }
+
+        if (address.isDefaultBilling()) {
+            clearDefaultBilling(now);
+        }
+
+        addresses.add(address);
+        touch(now);
+    }
+
+    public void setDefaultShippingAddress(final AddressId addressId, final Instant now) {
+        final CustomerAddress address = findAddress(addressId);
+
+        clearDefaultShipping(now);
+        address.setDefaultShipping(true, now);
+        touch(now);
+    }
+
+    public void setDefaultBillingAddress(final AddressId addressId, final Instant now) {
+        final CustomerAddress address = findAddress(addressId);
+
+        clearDefaultBilling(now);
+        address.setDefaultBilling(true, now);
+        touch(now);
+    }
+
+    public void removeAddress(final AddressId addressId, final Instant now) {
+        final boolean removed = addresses.removeIf(address -> address.getId().equals(addressId));
+
+        if (!removed) {
+            throw new IllegalArgumentException("address not found: " + addressId.value());
+        }
+
+        touch(now);
+    }
+
+    private void clearDefaultShipping(final Instant now) {
+        for (final CustomerAddress address : addresses) {
+            if (address.isDefaultShipping()) {
+                address.setDefaultShipping(false, now);
+            }
+        }
+    }
+
+    private void clearDefaultBilling(final Instant now) {
+        for (final CustomerAddress address : addresses) {
+            if (address.isDefaultBilling()) {
+                address.setDefaultBilling(false, now);
+            }
+        }
+    }
+
+    private CustomerAddress findAddress(final AddressId addressId) {
+        return addresses.stream()
+                .filter(address -> address.getId().equals(addressId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("address not found: " + addressId.value()));
     }
 
     private void touch(Instant now) {
-        Objects.requireNonNull(now, "now");
         if (now.isAfter(updatedAt)) {
             updatedAt = now;
         }
     }
 
     private static String normalizeEmail(String value) {
-        String trimmed = requireNonBlank(value, "email");
-        return trimmed.toLowerCase(Locale.ROOT);
-    }
-
-    private static String requireNonBlank(String value, String fieldName) {
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalArgumentException(fieldName + " is required");
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("email must not be blank");
         }
-        return value.trim();
+        return value.trim().toLowerCase(Locale.ROOT);
     }
 }
