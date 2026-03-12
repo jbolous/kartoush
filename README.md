@@ -9,6 +9,17 @@ This is a design-first system built the way real production platforms evolve.
 
 ---
 
+## Tech Stack
+
+- Java
+- Spring Boot
+- Gradle
+- PostgreSQL
+- Flyway
+- SLF4J
+
+---
+
 ## Why Kartoush Exists
 
 Most public GitHub projects fail to demonstrate:
@@ -107,17 +118,33 @@ This allows:
 - Simplified local development  
 - A future path toward splitting modules into separate services if warranted  
 
-### High-Level Modules
+## Documentation
 
-| Module | Responsibility |
-|------|---------------|
-| Core | Domain models and business rules |
-| Facades | Stable APIs that isolate callers from internal implementation details |
-| Services | Business logic and orchestration |
-| Persistence | Data access and storage concerns |
-| Storefront / API | Entry points into the system |
+Additional architecture documentation lives in the `docs` directory.
 
-Modules communicate through explicit contracts rather than hidden dependencies.
+- `docs/architecture/README.md` — architecture overview and design principles
+- `docs/architecture/decisions/` — Architecture Decision Records (ADRs)
+- `docs/persistence/` — data modeling and persistence strategy
+
+### Module Structure
+
+Kartoush is organized around domain-oriented modules rather than technical layers.
+
+Each module may contain its own:
+
+- domain model
+- facade or application contract
+- service logic
+- persistence implementation
+
+This keeps business capabilities cohesive while still enforcing clear boundaries between modules.
+
+| Concern | Role |
+| ------ | ------ |
+| Domain Model | Encapsulates business concepts and rules |
+| Facade / Contract | Exposes stable entry points to callers |
+| Services | Coordinates use cases and business workflows |
+| Persistence | Handles storage and retrieval |
 
 ---
 
@@ -133,7 +160,7 @@ Examples include:
 - Performance handling under high concurrency  
 - Logging and observability strategy  
 
-These live in the `/architecture/decisions` directory.
+These live in the `docs/architecture/decisions` directory.
 
 > The documentation is as important as the code.
 
@@ -211,7 +238,7 @@ This reflects how real systems are built and prioritized.
 
 If you are reviewing this as a hiring manager or engineer:
 
-1. Start with the Architecture Decision Records  
+1. Start with the Architecture Decision Records in `docs/architecture/decisions`
 2. Review the facade boundaries that isolate callers from internal implementation details  
 3. Examine inventory modeling and reservation flow  
 4. Review logging and performance decisions  

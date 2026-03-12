@@ -2,9 +2,11 @@
 
 This directory contains **Architecture Decision Records (ADRs)** for Kartoush.
 
-ADRs are used to document significant architectural decisions, including the context in which they were made and the tradeoffs involved.
+ADRs document significant architectural and technical decisions along with the context in which they were made and the tradeoffs involved.
 
-Their purpose is simple: to make architectural reasoning explicit and durable.
+Their purpose is simple: to make architectural reasoning **explicit, reviewable, and durable** as the project evolves.
+
+Kartoush intentionally records decisions early in the design process so that architectural thinking remains visible even as the system evolves.
 
 ---
 
@@ -12,11 +14,11 @@ Their purpose is simple: to make architectural reasoning explicit and durable.
 
 An Architecture Decision Record captures:
 
-- A specific architectural decision
-- The problem or context that led to the decision
-- Alternatives that were considered
-- The reasons a particular option was chosen
-- Known consequences and limitations
+- The context of a problem or design choice
+- The decision being considered or made
+- Alternatives that were evaluated
+- The tradeoffs involved
+- The consequences or limitations of the decision
 
 ADRs exist to answer the question:
 
@@ -30,13 +32,30 @@ They are preferred over undocumented assumptions or relying on memory.
 
 An ADR should be written when a decision:
 
-- Affects system structure or boundaries  
-- Introduces constraints that will be difficult to reverse  
-- Impacts multiple modules or domains  
-- Represents a meaningful tradeoff rather than an obvious choice  
+- Affects system structure or module boundaries
+- Introduces constraints that will be difficult to reverse
+- Impacts multiple domains or components
+- Represents a meaningful tradeoff rather than an obvious choice
 
-Not every technical decision needs an ADR.  
+Not every technical choice needs an ADR.  
 If a decision is easy to change or isolated in scope, documentation in code or a task description is usually sufficient.
+
+---
+
+## Decision Lifecycle
+
+Decision records may move through several states:
+
+- **Proposed**  
+  An open question or architectural exploration.
+
+- **Accepted**  
+  A decision has been made and agreed upon.
+
+- **Superseded**  
+  A previous decision has been replaced by a newer one.
+
+The status of the decision should be clearly stated at the top of each record.
 
 ---
 
@@ -52,7 +71,8 @@ When a decision changes:
 
 This preserves historical context and makes architectural evolution visible over time.
 
-ADRs are not rewritten to reflect current thinking. They represent what was believed to be correct at the time.
+ADRs are not rewritten to reflect current thinking.  
+They represent what was believed to be correct at the time.
 
 ---
 
@@ -63,21 +83,22 @@ The code shows **how** that decision is implemented.
 
 If the code no longer reflects an ADR:
 
-- Either the code has drifted  
-- Or a new ADR is needed  
+- Either the code has drifted
+- Or a new ADR is needed
 
-In both cases, the mismatch should be resolved explicitly.
+In both cases the mismatch should be resolved explicitly.
 
 ---
 
-## Format and Naming
+## File Naming
 
 ADRs are stored as Markdown files and named using a simple numeric prefix:
 
-- 0001-use-modular-monolith-architecture.md
-- 0002-introduce-facade-layer.md
+- 0001-project-goals.md
+- 0002-architecture-style.md
+- 0003-data-ownership.md
 
-Lower numbers indicate earlier decisions. Gaps in numbering are acceptable.
+Numbers indicate chronological order and do not imply priority.
 
 ---
 
