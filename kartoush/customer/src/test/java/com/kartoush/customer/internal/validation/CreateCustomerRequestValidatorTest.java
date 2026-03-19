@@ -13,8 +13,7 @@ class CreateCustomerRequestValidatorTest {
 
     private static final String EMAIL = "jack@kartoush.com";
     private static final String INVALID_EMAIL = "@";
-    private static final String PASSWORD = "password";
-    private static final String PHONE_NUMBER = "3125882300";
+    private static final String PHONE_NUMBER = "312-555-0100";
     private static final String INVALID_PHONE_NUMBER = "abc-123";
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
@@ -35,7 +34,6 @@ class CreateCustomerRequestValidatorTest {
         // given
         final var request = new CreateCustomerRequest(
                 EMAIL,
-                PASSWORD,
                 " ",
                 FIRST_NAME,
                 LAST_NAME);
@@ -53,7 +51,6 @@ class CreateCustomerRequestValidatorTest {
         // given
         final var request = new CreateCustomerRequest(
                 EMAIL,
-                PASSWORD,
                 INVALID_PHONE_NUMBER,
                 FIRST_NAME,
                 LAST_NAME);
@@ -71,7 +68,6 @@ class CreateCustomerRequestValidatorTest {
         // given
         final var request = new CreateCustomerRequest(
                 INVALID_EMAIL,
-                PASSWORD,
                 PHONE_NUMBER,
                 FIRST_NAME,
                 LAST_NAME);
@@ -88,7 +84,6 @@ class CreateCustomerRequestValidatorTest {
         // given
         final var request = new CreateCustomerRequest(
                 EMAIL,
-                PASSWORD,
                 PHONE_NUMBER,
                 "",
                 "");
