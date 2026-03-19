@@ -2,19 +2,20 @@ package com.kartoush.customer.internal.facade;
 
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
+import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.model.CreateCustomerRequest;
 import com.kartoush.customer.facade.model.CustomerView;
+import com.kartoush.customer.facade.model.UpdateCustomerRequest;
 import com.kartoush.customer.internal.validation.CreateCustomerRequestValidator;
-import com.kartoush.customer.persistence.mapper.CustomerMapper;
-import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
-import com.kartoush.customer.persistence.repository.CustomerRepository;
+import com.kartoush.customer.internal.validation.UpdateCustomerRequestValidator;
+import com.kartoush.customer.service.CustomerService;
 import com.kartoush.platform.types.CustomerId;
+import com.kartoush.platform.types.Email;
 import com.kartoush.platform.ulid.UlidGenerator;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.util.Optional;
+import java.util.List;
 
 @Service
 public class DefaultCustomerFacade implements CustomerFacade {
@@ -23,63 +24,112 @@ public class DefaultCustomerFacade implements CustomerFacade {
         Customer should not own passwordHash long-term. */
     private static final String TEMPORARY_PASSWORD_HASH = "TEMPORARY_PASSWORD_HASH";
 
-    private final CustomerRepository customerRepository;
-    private final CustomerMapper customerMapper;
+    private final CustomerService customerService;
     private final UlidGenerator ulidGenerator;
-    private final CreateCustomerRequestValidator validator;
+    private final CreateCustomerRequestValidator createCustomerRequestValidator;
+    private final UpdateCustomerRequestValidator updateCustomerRequestValidator;
 
     public DefaultCustomerFacade(
-            final CustomerRepository customerRepository,
-            final CustomerMapper customerMapper,
+            final CustomerService customerService,
             final UlidGenerator ulidGenerator,
-            final CreateCustomerRequestValidator validator) {
-        this.customerRepository = customerRepository;
-        this.customerMapper = customerMapper;
+            final CreateCustomerRequestValidator createCustomerRequestValidator,
+            final UpdateCustomerRequestValidator updateCustomerRequestValidator) {
+        this.customerService = customerService;
         this.ulidGenerator = ulidGenerator;
-        this.validator = validator;
+        this.createCustomerRequestValidator = createCustomerRequestValidator;
+        this.updateCustomerRequestValidator = updateCustomerRequestValidator;
+    }
+
+    @Override
+    public List<CustomerView> getCustomers() {
+        return customerService
+                .getActiveCustomers()
+                .stream()
+                .map(this::toCustomerView)
+                .toList();
     }
 
     @Override
     public CustomerView createCustomer(final CreateCustomerRequest request) {
-        validator.validate(request);
+        createCustomerRequestValidator.validate(request);
 
-        CustomerProfile profile = CustomerProfile.of(
-                request.firstName(),
-                request.lastName(),
-                request.phoneNumber());
+        final CustomerProfile profile = buildCustomerProfile(request);
 
         final Customer customer = Customer.createNew(
                 CustomerId.newId(ulidGenerator),
                 profile,
-                request.email(),
-                TEMPORARY_PASSWORD_HASH,
-                Instant.now());
+                new Email(request.email()),
+                TEMPORARY_PASSWORD_HASH);
 
-        final var savedCustomer = saveCustomer(customer);
+        final var savedCustomer = customerService.createCustomer(customer);
+        return toCustomerView(savedCustomer);
+    }
+
+    @Override
+    public CustomerView getCustomer(final String customerId) {
+        return customerService.getCustomerById(customerId)
+                .map(this::toCustomerView)
+                .orElseThrow( () -> new CustomerNotFoundException(customerId));
+    }
+
+    @Override
+    public CustomerView updateCustomer(String customerId, UpdateCustomerRequest request) {
+
+        updateCustomerRequestValidator.validate(request);
+
+        CustomerProfile profile = buildCustomerProfile(request);
+        Email email = new Email(request.email());
+        Customer savedCustomer = customerService.updateCustomer(customerId, profile, email);
 
         return toCustomerView(savedCustomer);
     }
 
     @Override
-    public Optional<CustomerView> getCustomerById(final CustomerId customerId) {
-        return customerRepository.findById(
-                CustomerIdEmbeddable.from(customerId))
-                .map(customerMapper::toDomain)
-                .map(this::toCustomerView);
+    public CustomerView activateCustomer(final String customerId) {
+        final Customer customer = customerService.activateCustomer(customerId);
+        return toCustomerView(customer);
+    }
+
+    @Override
+    public CustomerView reactivateCustomer(String customerId) {
+        Customer reactiveCustomer = customerService.reactivateCustomer(customerId);
+
+        return toCustomerView(reactiveCustomer);
+    }
+
+    @Override
+    public CustomerView reactivateCustomer(Email email) {
+        Customer reactivatedCustomer = customerService.reactivateCustomerByEmail(email);
+
+        return toCustomerView(reactivatedCustomer);
+    }
+
+    @Override
+    public void deleteCustomer(String customerId) {
+        customerService.deleteCustomer(CustomerId.of(customerId));
     }
 
     private CustomerView toCustomerView(final Customer customer) {
         return new CustomerView(
-                customer.getId(),
-                customer.getEmail(),
+                customer.getId().value(),
+                customer.getEmail().value(),
                 customer.getProfile().phoneNumber(),
                 customer.getProfile().firstName(),
                 customer.getProfile().lastName(),
                 customer.getStatus());
     }
 
-    private Customer saveCustomer(final Customer customer) {
-        final var savedEntity = customerRepository.save(customerMapper.toEntity(customer));
-        return customerMapper.toDomain(savedEntity);
+    private CustomerProfile buildCustomerProfile(final UpdateCustomerRequest request) {
+        return CustomerProfile.of(
+                request.firstName(),
+                request.lastName(),
+                request.phoneNumber());
+    }
+
+    private CustomerProfile buildCustomerProfile(final CreateCustomerRequest request) {
+        return CustomerProfile.of(
+                request.firstName(),
+                request.lastName(),
+                request.phoneNumber());
     }
 }
