@@ -1,8 +1,11 @@
 [versions]
 springBootVersion = "4.0.2"
+springdoc = "3.0.2"
 testcontainers = "2.0.3"
 springDependencyManagementVersion = "1.1.7"
 mapstructVersion = "1.6.3"
+junitJupiterVersion = "5.13.4"
+jspecifyVersion = "1.0.0"
 
 [plugins]
 springBoot = { id = "org.springframework.boot", version.ref = "springBootVersion" }
@@ -12,17 +15,24 @@ springDependencyManagement = { id = "io.spring.dependency-management", version.r
 springBootBom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBootVersion" }
 
 springBootValidation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "springBootVersion" }
-
+springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 springBootStarterTest = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "springBootVersion" }
 springBootStarterDataJpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "springBootVersion" }
 springBootStarterFlyway = { module = "org.springframework.boot:spring-boot-starter-flyway" }
+springBootTest = { module = "org.springframework.boot:spring-boot-test", version.ref = "springBootVersion" }
+springBootTestAutoconfigure = { module = "org.springframework.boot:spring-boot-test-autoconfigure", version.ref = "springBootVersion" }
+springBootTestcontainers = { module = "org.springframework.boot:spring-boot-testcontainers", version.ref = "springBootVersion" }
+
 flywayPostgresql = { module = "org.flywaydb:flyway-database-postgresql" }
 postgresql = { module = "org.postgresql:postgresql" }
 
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainersJunitJupiter = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
 testcontainersPostgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
-testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainersBom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 
-mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstructVersion"}
-mapstructProcessor= { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstructVersion"}
+junitJupiterApi = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junitJupiterVersion" }
+jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecifyVersion" }
+
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstructVersion" }
+mapstructProcessor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstructVersion" }

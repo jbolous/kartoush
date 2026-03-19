@@ -10,7 +10,7 @@ import java.util.Objects;
 @Embeddable
 public class CustomerIdEmbeddable implements Serializable {
 
-    @Column(name = "id", nullable = false, length = 26)
+    @Column(name = "id", nullable = false, updatable = false, length = 26)
     private String value;
 
     protected CustomerIdEmbeddable() {}
@@ -21,6 +21,10 @@ public class CustomerIdEmbeddable implements Serializable {
 
     public static CustomerIdEmbeddable from(CustomerId id) {
         return new CustomerIdEmbeddable(id.value());
+    }
+
+    public static CustomerIdEmbeddable from(String id) {
+        return new CustomerIdEmbeddable(id);
     }
 
     public CustomerId toCustomerId() {
@@ -41,5 +45,12 @@ public class CustomerIdEmbeddable implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hashCode(value);
+    }
+
+    @Override
+    public String toString() {
+        return "CustomerIdEmbeddable{" +
+                "value='" + value + '\'' +
+                '}';
     }
 }

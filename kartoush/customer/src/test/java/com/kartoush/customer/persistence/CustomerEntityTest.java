@@ -17,9 +17,9 @@ class CustomerEntityTest {
 
     private static final String ID = "01J2Z5Y6K4Z6D5H2X3JH8M9N0P";
     private static final String FIRST_NAME = "Jack";
-    private static final String LAST_NAME = "Bolous";
-    private static final String PHONE_NUMBER = "555-555-1212";
-    private static final String EMAIL = "Jack.Bolous@Example.com";
+    private static final String LAST_NAME = "Kartoush";
+    private static final String PHONE_NUMBER = "312-555-0100";
+    private static final String EMAIL = "Jack@kartoush.test";
     private static final String PASSWORD_HASH = "hash";
     private static final CustomerStatus ACTIVE_STATUS = CustomerStatus.ACTIVE;
 

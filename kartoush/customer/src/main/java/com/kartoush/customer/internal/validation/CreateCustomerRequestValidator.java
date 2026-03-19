@@ -1,8 +1,12 @@
 package com.kartoush.customer.internal.validation;
 
 import com.kartoush.customer.facade.model.CreateCustomerRequest;
+import com.kartoush.platform.types.Email;
+import com.kartoush.platform.types.exception.InvalidEmailException;
 import com.kartoush.platform.validation.RequestValidationException;
 import com.kartoush.platform.validation.ValidationError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -11,10 +15,14 @@ import java.util.List;
 @Component
 public class CreateCustomerRequestValidator {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CreateCustomerRequestValidator.class);
+
     private static final String VALIDATION_MESSAGE = "Request validation failed";
     private static final String PHONE_NUMBER_PATTERN = "^\\+?[0-9]{7,15}$";
 
     public void validate(final CreateCustomerRequest request) {
+        LOG.debug("Validating create customer request");
+
         final List<ValidationError> errors = new ArrayList<>();
 
         validateRequest(request, errors);
@@ -39,13 +47,17 @@ public class CreateCustomerRequestValidator {
     }
 
     private void validateEmail(final CreateCustomerRequest request, final List<ValidationError> errors) {
-        if (request.email() == null || request.email().isBlank()) {
-            errors.add(new ValidationError("email", "email must not be blank"));
+        final String email = request.email();
+
+        if (email == null || email.isBlank()) {
+            errors.add(new ValidationError("email", "Email is required"));
             return;
         }
 
-        if (!looksLikeEmail(request.email())) {
-            errors.add(new ValidationError("email", "email must be a valid email address"));
+        try {
+            new Email(email);
+        } catch (final InvalidEmailException exception) {
+            errors.add(new ValidationError("email", exception.getMessage()));
         }
     }
 
@@ -75,12 +87,6 @@ public class CreateCustomerRequestValidator {
         if (value == null || value.isBlank()) {
             errors.add(new ValidationError(field, field + " must not be blank"));
         }
-    }
-
-    private boolean looksLikeEmail(final String email) {
-        final int atIndex = email.indexOf('@');
-
-        return atIndex > 0 && atIndex < email.length() - 1;
     }
 
     private void throwIfErrors(final List<ValidationError> errors) {

@@ -22,7 +22,9 @@ This decision defines:
 Adopt a layered module structure with a facade as the public contract for each
 module:
 
-- Each module exposes one or more facades in an `api` package.
+- Each module exposes one or more public facade contracts in a dedicated facade package.
+- The facade package forms the module’s published entry point for synchronous calls from controllers or other modules.
+- In Kartoush, facade contracts commonly live under a facade package, with implementation types in an internal package.
 - Controllers and other modules interact with a module only through its facade.
 - Business logic lives in application and domain layers, not in controllers,
   facades, or persistence components.

@@ -3,6 +3,8 @@ package com.kartoush.platform.types;
 import com.kartoush.platform.ulid.UlidGenerator;
 import com.kartoush.platform.ulid.Ulids;
 
+import java.util.Objects;
+
 public final class CustomerId {
 
     private final String value;
@@ -23,5 +25,17 @@ public final class CustomerId {
 
     public String value() {
         return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        CustomerId that = (CustomerId) o;
+        return Objects.equals(value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(value);
     }
 }

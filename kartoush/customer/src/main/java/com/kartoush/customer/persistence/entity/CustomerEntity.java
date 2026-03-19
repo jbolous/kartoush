@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.platform.types.CustomerStatus;
+import com.kartoush.platform.types.Email;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -16,16 +17,23 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import org.springframework.data.domain.Persistable;
 
 @Entity
 @Table(name = "customer")
-public class CustomerEntity {
+public class CustomerEntity implements Persistable<String> {
 
     @EmbeddedId
     private CustomerIdEmbeddable id;
+
+    @Transient
+    private boolean isNew = true;
 
     @Embedded
     private CustomerProfileEntity profile;
@@ -38,7 +46,7 @@ public class CustomerEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private CustomerStatus status;
+    private CustomerStatus customerStatus;
 
     @OneToMany(
             mappedBy = "customer",
@@ -62,13 +70,13 @@ public class CustomerEntity {
             CustomerProfileEntity profile,
             String email,
             String passwordHash,
-            CustomerStatus status
+            CustomerStatus customerStatus
     ) {
         this.id = Objects.requireNonNull(id, "id is required");
         this.profile = Objects.requireNonNull(profile, "profile is required");
-        this.email = normalizeEmail(email);
+        this.email = email;
         this.passwordHash = requireNonBlank(passwordHash, "passwordHash is required");
-        this.status = Objects.requireNonNull(status, "status is required");
+        this.customerStatus = Objects.requireNonNull(customerStatus, "status is required");
     }
 
     public static CustomerEntity newCustomer(
@@ -81,7 +89,17 @@ public class CustomerEntity {
         return new CustomerEntity(id, profile, email, passwordHash, status);
     }
 
-    public CustomerIdEmbeddable getId() {
+    @Override
+    public String getId() {
+        return id != null ? id.getValue() : null;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    public CustomerIdEmbeddable getCustomerId() {
         return id;
     }
 
@@ -97,8 +115,8 @@ public class CustomerEntity {
         return passwordHash;
     }
 
-    public CustomerStatus getStatus() {
-        return status;
+    public CustomerStatus getCustomerStatus() {
+        return customerStatus;
     }
 
     public List<CustomerAddressEntity> getAddresses() {
@@ -125,29 +143,18 @@ public class CustomerEntity {
         this.passwordHash = passwordHash;
     }
 
-    public void setStatus(CustomerStatus status) {
-        this.status = status;
-    }
-
-    public void setAddresses(List<CustomerAddressEntity> addresses) {
-        this.addresses = addresses;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
+    public void setCustomerStatus(CustomerStatus status) {
+        this.customerStatus = status;
     }
 
     public void setProfile(CustomerProfileEntity profile) {
         this.profile = profile;
     }
 
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public void replaceAddresses(List<CustomerAddressEntity> newAddresses) {
-        addresses.clear();
-        addresses.addAll(newAddresses);
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        this.isNew = false;
     }
 
     @PrePersist
@@ -184,6 +191,15 @@ public class CustomerEntity {
         updatedAt = Instant.now();
     }
 
+    public void replaceAddresses(final List<CustomerAddressEntity> newAddresses) {
+        addresses.clear();
+
+        for (final CustomerAddressEntity address : newAddresses) {
+            address.setCustomer(this);
+            addresses.add(address);
+        }
+    }
+
     private static String requireNonBlank(String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(fieldName + " is required");
@@ -198,7 +214,7 @@ public class CustomerEntity {
         return value.trim();
     }
 
-    private static String normalizeEmail(String value) {
+    public static String normalizeEmail(String value) {
         String trimmed = requireNonBlank(value, "email");
         return trimmed.toLowerCase(Locale.ROOT);
     }

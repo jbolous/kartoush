@@ -1,0 +1,156 @@
+package com.kartoush.api.error;
+
+import com.kartoush.customer.exception.CustomerAlreadyExistsException;
+import com.kartoush.customer.exception.CustomerDeletedException;
+import com.kartoush.customer.exception.CustomerNotFoundException;
+import com.kartoush.platform.validation.RequestValidationException;
+import com.kartoush.platform.validation.ValidationError;
+import jakarta.servlet.http.HttpServletRequest;
+import org.jspecify.annotations.NonNull;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.util.List;
+import java.util.Set;
+
+@RestControllerAdvice
+public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private static final Set<String> SENSITIVE_FIELDS = Set.of(
+            "password",
+            "passwordHash",
+            "currentPassword",
+            "newPassword",
+            "token",
+            "accessToken",
+            "refreshToken"
+    );
+
+    private final ApiProblemFactory apiProblemFactory;
+
+    public ApiExceptionHandler(final ApiProblemFactory apiProblemFactory) {
+        this.apiProblemFactory = apiProblemFactory;
+    }
+
+    @ExceptionHandler(CustomerNotFoundException.class)
+    public ProblemDetail handleCustomerNotFound(
+            final CustomerNotFoundException ex,
+            final HttpServletRequest request) {
+
+        return apiProblemFactory.create(
+                HttpStatus.NOT_FOUND,
+                "Customer Not Found",
+                ex.getMessage(),
+                ErrorCode.CUSTOMER_NOT_FOUND,
+                request);
+    }
+
+    @ExceptionHandler(CustomerAlreadyExistsException.class)
+    public ProblemDetail handleCustomerExists(
+            final CustomerAlreadyExistsException ex,
+            final HttpServletRequest request) {
+
+        return apiProblemFactory.create(
+                HttpStatus.CONFLICT,
+                "Customer Already Exists",
+                ex.getMessage(),
+                ErrorCode.CUSTOMER_ALREADY_EXISTS,
+                request);
+    }
+
+    @ExceptionHandler(CustomerDeletedException.class)
+    public ProblemDetail handleCustomerDeleted(
+            final CustomerDeletedException ex,
+            final HttpServletRequest request) {
+        return apiProblemFactory.create(
+                HttpStatus.CONFLICT,
+                "Customer email exists but is marked as deleted",
+                ex.getMessage(),
+                ErrorCode.CUSTOMER_DELETED,
+                request);
+    }
+
+    @ExceptionHandler(RequestValidationException.class)
+    public ProblemDetail handleRequestValidationException(
+            final RequestValidationException ex,
+            final HttpServletRequest request) {
+
+        final ProblemDetail problem = apiProblemFactory.create(
+                HttpStatus.BAD_REQUEST,
+                "Validation Failed",
+                ex.getMessage(),
+                ErrorCode.VALIDATION_FAILED,
+                request);
+
+        problem.setProperty("errors", ex.getErrors());
+
+        return problem;
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ProblemDetail handleUnhandledException(
+            final Exception ex,
+            final HttpServletRequest request) {
+
+        return apiProblemFactory.create(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Internal Server Error",
+                "An unexpected error occurred.",
+                ErrorCode.INTERNAL_ERROR,
+                request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            final MethodArgumentNotValidException ex,
+            final @NonNull HttpHeaders headers,
+            final @NonNull HttpStatusCode status,
+            final @NonNull WebRequest request) {
+
+        final HttpServletRequest httpRequest =
+                ((ServletWebRequest) request).getRequest();
+
+        final ProblemDetail problem = apiProblemFactory.create(
+                HttpStatus.BAD_REQUEST,
+                "Validation Failed",
+                "One or more validation errors occurred.",
+                ErrorCode.VALIDATION_FAILED,
+                httpRequest);
+
+        final List<ValidationError> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(this::toValidationError)
+                .toList();
+
+        problem.setProperty("errors", errors);
+
+        return handleExceptionInternal(ex, problem, headers, status, request);
+    }
+
+    private ValidationError toValidationError(final FieldError error) {
+        return new ValidationError(
+                error.getField(),
+                error.getDefaultMessage(),
+                error.getCode(),
+                safeRejectedValue(error));
+    }
+
+    private Object safeRejectedValue(final FieldError error) {
+        if (SENSITIVE_FIELDS.contains(error.getField())) {
+            return "[REDACTED]";
+        }
+
+        return error.getRejectedValue();
+    }
+}

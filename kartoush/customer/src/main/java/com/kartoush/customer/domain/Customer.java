@@ -1,80 +1,92 @@
 package com.kartoush.customer.domain;
 
+import com.kartoush.customer.exception.CustomerAddressNotFoundException;
 import com.kartoush.platform.types.AddressId;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
+import com.kartoush.platform.types.Email;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 public final class Customer {
 
     private final CustomerId id;
     private CustomerProfile profile;
-    private String email;
+    private Email email;
     private final String passwordHash;
-    private final CustomerStatus status;
+    private CustomerStatus status;
 
     private final List<CustomerAddress> addresses = new ArrayList<>();
-
-    private final Instant createdAt;
-    private Instant updatedAt;
 
     private Customer(
             CustomerId id,
             CustomerProfile profile,
-            String email,
+            Email email,
             String passwordHash,
-            CustomerStatus status,
-            Instant createdAt,
-            Instant updatedAt) {
-        this.id = Objects.requireNonNull(id);
-        this.profile = Objects.requireNonNull(profile);
-        this.email = normalizeEmail(email);
-        this.passwordHash = passwordHash;
-        this.status = Objects.requireNonNull(status);
-        this.createdAt = Objects.requireNonNull(createdAt);
-        this.updatedAt = Objects.requireNonNull(updatedAt);
+            CustomerStatus status) {
+        this.id = Objects.requireNonNull(id, "ID must not be null");
+        this.profile = Objects.requireNonNull(profile,  "Profile must not be null");
+        this.email = Objects.requireNonNull(email, "Email must not be null");
+        this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash must not be null");
+        this.status = Objects.requireNonNull(status, "Status must not be null");
     }
 
     public static Customer createNew(
             CustomerId id,
             CustomerProfile profile,
-            String email,
-            String passwordHash,
-            Instant now) {
+            Email email,
+            String passwordHash) {
         return new Customer(
                 id,
                 profile,
                 email,
                 passwordHash,
-                CustomerStatus.ACTIVE,
-                now,
-                now);
+                CustomerStatus.PENDING);
+    }
+
+    public void updateDetails(final CustomerProfile newProfile, final Email newEmail) {
+        assertNotDeleted();
+        this.profile = Objects.requireNonNull(newProfile, "Profile must not be null");
+        this.email = newEmail;
+    }
+
+    public void markDeleted() {
+        if(this.status == CustomerStatus.DELETED) {
+            return;
+        }
+
+        this.status = CustomerStatus.DELETED;
     }
 
     public static Customer fromPersistence(
             CustomerId id,
             CustomerProfile profile,
-            String email,
+            Email email,
             String passwordHash,
             CustomerStatus status,
-            List<CustomerAddress> addresses,
-            Instant createdAt,
-            Instant updatedAt) {
-        Customer customer = new Customer(
+            List<CustomerAddress> addresses) {
+        final Customer customer = new Customer(
                 id,
                 profile,
                 email,
                 passwordHash,
-                status,
-                createdAt,
-                updatedAt);
-        customer.addresses.addAll(addresses);
+                status);
+        customer.addresses.addAll(Objects.requireNonNull(addresses, "Addresses must not be null"));
         return customer;
+    }
+
+    public void activate() {
+        if(status == CustomerStatus.PENDING) {
+            status = CustomerStatus.ACTIVE;
+        }
+    }
+
+    public void reactivate() {
+        if (status == CustomerStatus.DELETED) {
+            status = CustomerStatus.ACTIVE;
+        }
     }
 
     public CustomerId getId() {
@@ -85,7 +97,7 @@ public final class Customer {
         return profile;
     }
 
-    public String getEmail() {
+    public Email getEmail() {
         return email;
     }
 
@@ -101,77 +113,58 @@ public final class Customer {
         return List.copyOf(addresses);
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void updateProfile(CustomerProfile newProfile, Instant now) {
-        this.profile = Objects.requireNonNull(newProfile);
-        touch(now);
-    }
-
-    public void changeEmail(String newEmail, Instant now) {
-        this.email = normalizeEmail(newEmail);
-        touch(now);
-    }
-
-    public void addAddress(final CustomerAddress address, final Instant now) {
-        Objects.requireNonNull(address, "address");
+    public void addAddress(final CustomerAddress address) {
+        assertNotDeleted();
+        Objects.requireNonNull(address, "Addresses must not be null");
 
         if (address.isDefaultShipping()) {
-            clearDefaultShipping(now);
+            clearDefaultShipping();
         }
 
         if (address.isDefaultBilling()) {
-            clearDefaultBilling(now);
+            clearDefaultBilling();
         }
 
         addresses.add(address);
-        touch(now);
     }
 
-    public void setDefaultShippingAddress(final AddressId addressId, final Instant now) {
+    public void setDefaultShippingAddress(final AddressId addressId) {
+        assertNotDeleted();
         final CustomerAddress address = findAddress(addressId);
 
-        clearDefaultShipping(now);
-        address.setDefaultShipping(true, now);
-        touch(now);
+        clearDefaultShipping();
+        address.setDefaultShipping(true);
     }
 
-    public void setDefaultBillingAddress(final AddressId addressId, final Instant now) {
+    public void setDefaultBillingAddress(final AddressId addressId) {
+        assertNotDeleted();
         final CustomerAddress address = findAddress(addressId);
 
-        clearDefaultBilling(now);
-        address.setDefaultBilling(true, now);
-        touch(now);
+        clearDefaultBilling();
+        address.setDefaultBilling(true);
     }
 
-    public void removeAddress(final AddressId addressId, final Instant now) {
+    public void removeAddress(final AddressId addressId) {
+        assertNotDeleted();
         final boolean removed = addresses.removeIf(address -> address.getId().equals(addressId));
 
         if (!removed) {
-            throw new IllegalArgumentException("address not found: " + addressId.value());
+            throw new CustomerAddressNotFoundException(addressId.value());
         }
-
-        touch(now);
     }
 
-    private void clearDefaultShipping(final Instant now) {
+    private void clearDefaultShipping() {
         for (final CustomerAddress address : addresses) {
             if (address.isDefaultShipping()) {
-                address.setDefaultShipping(false, now);
+                address.setDefaultShipping(false);
             }
         }
     }
 
-    private void clearDefaultBilling(final Instant now) {
+    private void clearDefaultBilling() {
         for (final CustomerAddress address : addresses) {
             if (address.isDefaultBilling()) {
-                address.setDefaultBilling(false, now);
+                address.setDefaultBilling(false);
             }
         }
     }
@@ -180,19 +173,12 @@ public final class Customer {
         return addresses.stream()
                 .filter(address -> address.getId().equals(addressId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("address not found: " + addressId.value()));
+                .orElseThrow(() -> new CustomerAddressNotFoundException(addressId.value()));
     }
 
-    private void touch(Instant now) {
-        if (now.isAfter(updatedAt)) {
-            updatedAt = now;
+    private void assertNotDeleted() {
+        if (status == CustomerStatus.DELETED) {
+            throw new IllegalStateException("customer is deleted");
         }
-    }
-
-    private static String normalizeEmail(String value) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("email must not be blank");
-        }
-        return value.trim().toLowerCase(Locale.ROOT);
     }
 }
