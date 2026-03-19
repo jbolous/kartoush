@@ -9,7 +9,7 @@ import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.ulid.UlidGenerator;
 import com.kartoush.testsupport.IntegrationTest;
-import com.kartoush.testsupport.PostgresContainerSupport;
+import com.kartoush.testsupport.PostgresSpringIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +26,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IntegrationTest
 @ContextConfiguration(classes = CustomerTestApplication.class)
 @Import(CustomerJpaTestConfig.class)
-class CustomerEntityRepositoryTest extends PostgresContainerSupport {
+class CustomerEntityRepositoryTest extends PostgresSpringIntegrationTest {
 
-    private static final String FIRST_NAME = "John";
-    private static final String LAST_NAME = "Doe";
+    private static final String FIRST_NAME = "Jack";
+    private static final String LAST_NAME = "Kartoush";
     private static final String PHONE_NUMBER = "555-555-1212";
-    private static final String EMAIL = "John.Doe@Kartoush.com";
+    private static final String EMAIL = "jack@kartoush.test";
     private static final String PASSWORD_HASH = "ABCXYZ123789";
 
     @Autowired
@@ -70,14 +70,14 @@ class CustomerEntityRepositoryTest extends PostgresContainerSupport {
         assertThat(saved.getProfile().getPhoneNumber()).isEqualTo(PHONE_NUMBER);
 
         // when
-        CustomerIdEmbeddable savedId = saved.getId();
+        CustomerIdEmbeddable savedId = saved.getCustomerId();
         Optional<CustomerEntity> retrieved = customerRepository.findById(savedId);
 
         // then (load side)
         assertThat(retrieved).isPresent();
         CustomerProfileEntity retrievedProfile = retrieved.get().getProfile();
 
-        assertThat(retrieved.get().getId()).isEqualTo(savedId);
+        assertThat(retrieved.get().getId()).isEqualTo(savedId.getValue());
         assertThat(retrieved.get().getCreatedAt()).isEqualTo(saved.getCreatedAt());
         assertThat(retrieved.get().getUpdatedAt()).isEqualTo(saved.getUpdatedAt());
         assertThat(saved.getEmail()).isEqualTo(EMAIL.toLowerCase(Locale.ROOT));
@@ -107,6 +107,6 @@ class CustomerEntityRepositoryTest extends PostgresContainerSupport {
         CustomerEntity saved = customerRepository.saveAndFlush(customerEntity);
 
         // then
-        assertThat(saved.getId()).isEqualTo(id);
+        assertThat(saved.getId()).isEqualTo(id.getValue());
     }
 }

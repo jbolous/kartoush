@@ -5,48 +5,84 @@ import com.kartoush.customer.persistence.entity.CustomerAddressEntity;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.platform.types.CustomerId;
-import org.mapstruct.AfterMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.Named;
+import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {CustomerAddressMapper.class})
-public interface CustomerMapper {
+import com.kartoush.platform.types.Email;
+import org.springframework.stereotype.Component;
 
-    // Domain -> Entity
-    @Mapping(target = "id", source = "id", qualifiedByName = "toEmbeddableCustomerId")
-    @Mapping(target = "profile", source = "profile")
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    CustomerEntity toEntity(Customer domain);
+@Component
+public class CustomerMapper
+{
+    private final CustomerAddressMapper customerAddressMapper;
+    private final CustomerProfileMapper customerProfileMapper;
 
-    // Entity -> Domain
-    @Mapping(target = "id", source = "id", qualifiedByName = "toDomainCustomerId")
-    @Mapping(target = "profile", source = "profile")
-    Customer toDomain(CustomerEntity entity);
-
-    @AfterMapping
-    default void linkAddresses(@MappingTarget CustomerEntity customerEntity) {
-        if (customerEntity.getAddresses() == null) return;
-
-        for (CustomerAddressEntity address : customerEntity.getAddresses()) {
-            address.setCustomer(customerEntity);
-            if (address.getId() == null) {
-                throw new IllegalStateException("Address id must be set before persisting");
-            }
-        }
+    public CustomerMapper(final CustomerAddressMapper customerAddressMapper,
+                          final CustomerProfileMapper customerProfileMapper) {
+        this.customerAddressMapper = customerAddressMapper;
+        this.customerProfileMapper = customerProfileMapper;
     }
 
-    @Named("toEmbeddableCustomerId")
-    default CustomerIdEmbeddable toEmbeddableCustomerId(CustomerId id) {
+    public CustomerEntity toEntity(final Customer domain)
+    {
+        if (domain == null) {
+            return null;
+        }
+
+        final CustomerEntity customerEntity = CustomerEntity.newCustomer(
+                toEmbeddableCustomerId(domain.getId()),
+                customerProfileMapper.toEntity(domain.getProfile()),
+                domain.getEmail().value(),
+                domain.getPasswordHash(),
+                domain.getStatus()
+        );
+
+        final List<CustomerAddressEntity> addressEntities = domain.getAddresses().stream()
+                .map(address -> customerAddressMapper.toEntity(address, customerEntity))
+                .toList();
+
+        customerEntity.replaceAddresses(addressEntities);
+
+        return customerEntity;
+    }
+
+    public Customer toDomain(final CustomerEntity entity)
+    {
+        if (entity == null) {
+            return null;
+        }
+
+        return Customer.fromPersistence(
+                toDomainCustomerId(entity.getCustomerId()),
+                customerProfileMapper.toDomain(entity.getProfile()),
+                new Email(entity.getEmail()),
+                entity.getPasswordHash(),
+                entity.getCustomerStatus(),
+                entity.getAddresses().stream()
+                        .map(customerAddressMapper::toDomain)
+                        .toList());
+    }
+
+    public void updateEntity(final Customer domain, final CustomerEntity entity)
+    {
+        entity.setProfile(customerProfileMapper.toEntity(domain.getProfile()));
+        entity.setEmail(domain.getEmail().value());
+        entity.setPasswordHash(domain.getPasswordHash());
+        entity.setCustomerStatus(domain.getStatus());
+
+        final List<CustomerAddressEntity> addressEntities = domain.getAddresses().stream()
+                .map(address -> customerAddressMapper.toEntity(address, entity))
+                .toList();
+
+        entity.replaceAddresses(addressEntities);
+    }
+
+    private CustomerIdEmbeddable toEmbeddableCustomerId(final CustomerId id)
+    {
         return id == null ? null : CustomerIdEmbeddable.from(id);
     }
 
-    @Named("toDomainCustomerId")
-    default CustomerId toDomainCustomerId(CustomerIdEmbeddable id) {
+    private CustomerId toDomainCustomerId(final CustomerIdEmbeddable id)
+    {
         return id == null ? null : id.toCustomerId();
     }
 }
-
-

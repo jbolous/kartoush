@@ -1,27 +1,24 @@
 package com.kartoush.customer.persistence.entity;
 
-import java.time.Instant;
-import java.util.Objects;
-
 import com.kartoush.customer.persistence.model.AddressIdEmbeddable;
-import com.kartoush.platform.types.AddressType;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.Instant;
+import java.util.Locale;
+import java.util.Objects;
 import org.springframework.util.StringUtils;
 
 @Entity
 @Table(name = "customer_address")
-public class CustomerAddressEntity {
-
+public class CustomerAddressEntity
+{
     @EmbeddedId
     private AddressIdEmbeddable id;
 
@@ -50,10 +47,6 @@ public class CustomerAddressEntity {
     @Column(name = "country_code", nullable = false, length = 2)
     private String countryCode;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, length = 20)
-    private AddressType type;
-
     @Column(name = "is_default_shipping", nullable = false)
     private boolean defaultShipping;
 
@@ -66,23 +59,25 @@ public class CustomerAddressEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    public CustomerAddressEntity() {
+    protected CustomerAddressEntity()
+    {
         // for JPA
     }
 
     private CustomerAddressEntity(
-            CustomerEntity customer,
-            String label,
-            String line1,
-            String line2,
-            String city,
-            String stateOrProvince,
-            String postalCode,
-            String countryCode,
-            AddressType type,
-            boolean defaultShipping,
-            boolean defaultBilling
-    ) {
+            final AddressIdEmbeddable id,
+            final CustomerEntity customer,
+            final String label,
+            final String line1,
+            final String line2,
+            final String city,
+            final String stateOrProvince,
+            final String postalCode,
+            final String countryCode,
+            final boolean defaultShipping,
+            final boolean defaultBilling)
+    {
+        this.id = Objects.requireNonNull(id, "id");
         this.customer = Objects.requireNonNull(customer, "customer");
         this.label = normalizeOptional(label);
         this.line1 = requireNonBlank(line1, "line1");
@@ -90,166 +85,180 @@ public class CustomerAddressEntity {
         this.city = requireNonBlank(city, "city");
         this.stateOrProvince = requireNonBlank(stateOrProvince, "stateOrProvince");
         this.postalCode = requireNonBlank(postalCode, "postalCode");
-        this.countryCode = requireNonBlank(countryCode, "countryCode");
-        this.type = Objects.requireNonNull(type, "type");
+        this.countryCode = normalizeCountryCode(countryCode);
         this.defaultShipping = defaultShipping;
         this.defaultBilling = defaultBilling;
     }
 
     public static CustomerAddressEntity of(
-            CustomerEntity customer,
-            String label,
-            String line1,
-            String line2,
-            String city,
-            String stateOrProvince,
-            String postalCode,
-            String countryCode,
-            AddressType type,
-            boolean defaultShipping,
-            boolean defaultBilling
-    ) {
+            final AddressIdEmbeddable id,
+            final CustomerEntity customer,
+            final String label,
+            final String line1,
+            final String line2,
+            final String city,
+            final String stateOrProvince,
+            final String postalCode,
+            final String countryCode,
+            final boolean defaultShipping,
+            final boolean defaultBilling)
+    {
         return new CustomerAddressEntity(
-                customer, label, line1, line2, city, stateOrProvince, postalCode, countryCode,
-                type, defaultShipping, defaultBilling
-        );
+                id,
+                customer,
+                label,
+                line1,
+                line2,
+                city,
+                stateOrProvince,
+                postalCode,
+                countryCode,
+                defaultShipping,
+                defaultBilling);
     }
 
-    public CustomerEntity getCustomer() {
-        return customer;
-    }
-
-    public boolean isDefaultShipping() {
-        return defaultShipping;
-    }
-
-    public boolean isDefaultBilling() {
-        return defaultBilling;
-    }
-
-    public void setId(AddressIdEmbeddable id) {
-        this.id = id;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
-    public void setLine1(String line1) {
-        this.line1 = line1;
-    }
-
-    public void setLine2(String line2) {
-        this.line2 = line2;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public void setStateOrProvince(String stateOrProvince) {
-        this.stateOrProvince = stateOrProvince;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
-    }
-
-    public void setCountryCode(String countryCode) {
-        this.countryCode = countryCode;
-    }
-
-    public void setType(AddressType type) {
-        this.type = type;
-    }
-
-    public void setDefaultShipping(boolean defaultShipping) {
+    public void update(
+            final String label,
+            final String line1,
+            final String line2,
+            final String city,
+            final String stateOrProvince,
+            final String postalCode,
+            final String countryCode,
+            final boolean defaultShipping,
+            final boolean defaultBilling)
+    {
+        this.label = normalizeOptional(label);
+        this.line1 = requireNonBlank(line1, "line1");
+        this.line2 = normalizeOptional(line2);
+        this.city = requireNonBlank(city, "city");
+        this.stateOrProvince = requireNonBlank(stateOrProvince, "stateOrProvince");
+        this.postalCode = requireNonBlank(postalCode, "postalCode");
+        this.countryCode = normalizeCountryCode(countryCode);
         this.defaultShipping = defaultShipping;
-    }
-
-    public void setDefaultBilling(boolean defaultBilling) {
         this.defaultBilling = defaultBilling;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
+    void setCustomer(final CustomerEntity customer)
+    {
+        this.customer = Objects.requireNonNull(customer, "customer");
     }
 
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public void setCustomer(CustomerEntity customer) {
-        this.customer = customer;
-    }
-
-    public AddressIdEmbeddable getId() {
+    public AddressIdEmbeddable getId()
+    {
         return id;
     }
 
-    public String getLabel() {
+    public CustomerEntity getCustomer()
+    {
+        return customer;
+    }
+
+    public String getLabel()
+    {
         return label;
     }
 
-    public String getLine1() {
+    public String getLine1()
+    {
         return line1;
     }
 
-    public String getLine2() {
+    public String getLine2()
+    {
         return line2;
     }
 
-    public String getCity() {
+    public String getCity()
+    {
         return city;
     }
 
-    public String getStateOrProvince() {
+    public String getStateOrProvince()
+    {
         return stateOrProvince;
     }
 
-    public String getPostalCode() {
+    public String getPostalCode()
+    {
         return postalCode;
     }
 
-    public String getCountryCode() {
+    public String getCountryCode()
+    {
         return countryCode;
     }
 
-    public AddressType getType() {
-        return type;
+    public boolean isDefaultShipping()
+    {
+        return defaultShipping;
     }
 
-    public Instant getCreatedAt() {
+    public boolean isDefaultBilling()
+    {
+        return defaultBilling;
+    }
+
+    public Instant getCreatedAt()
+    {
         return createdAt;
     }
 
-    public Instant getUpdatedAt() {
+    public Instant getUpdatedAt()
+    {
         return updatedAt;
     }
 
     @PrePersist
-    protected void onCreate() {
-        Instant now = Instant.now();
-        createdAt = now;
+    protected void onCreate()
+    {
+        validateState();
+
+        final Instant now = Instant.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
         updatedAt = now;
     }
 
     @PreUpdate
-    protected void onUpdate() {
+    protected void onUpdate()
+    {
+        validateState();
         updatedAt = Instant.now();
     }
 
-    private static String requireNonBlank(String value, String fieldName) {
+    private void validateState()
+    {
+        Objects.requireNonNull(id, "ID cannot be null");
+        Objects.requireNonNull(customer, "Customer cannot be null");
+        label = normalizeOptional(label);
+        line1 = requireNonBlank(line1, "line1");
+        line2 = normalizeOptional(line2);
+        city = requireNonBlank(city, "city");
+        stateOrProvince = requireNonBlank(stateOrProvince, "stateOrProvince");
+        postalCode = requireNonBlank(postalCode, "postalCode");
+        countryCode = normalizeCountryCode(countryCode);
+    }
+
+    private static String requireNonBlank(final String value, final String fieldName)
+    {
         if (!StringUtils.hasText(value)) {
             throw new IllegalArgumentException(fieldName + " is required");
         }
         return value.trim();
     }
 
-    private static String normalizeOptional(String value) {
+    private static String normalizeOptional(final String value)
+    {
         if (!StringUtils.hasText(value)) {
             return null;
         }
         return value.trim();
+    }
+
+    private static String normalizeCountryCode(final String value)
+    {
+        return requireNonBlank(value, "countryCode").toUpperCase(Locale.ROOT);
     }
 }
