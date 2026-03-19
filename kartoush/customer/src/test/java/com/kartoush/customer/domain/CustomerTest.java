@@ -80,7 +80,7 @@ class CustomerTest
         assertThat(customer.getProfile()).isEqualTo(PROFILE);
         assertThat(customer.getEmail()).isEqualTo(EMAIL);
         assertThat(customer.getPasswordHash()).isEqualTo(PASSWORD_HASH);
-        assertThat(customer.getStatus()).isEqualTo(CustomerStatus.ACTIVE);
+        assertThat(customer.getStatus()).isEqualTo(CustomerStatus.PENDING);
         assertThat(customer.getAddresses()).isEmpty();
     }
 
@@ -591,7 +591,7 @@ class CustomerTest
     }
 
     @Test
-    void shouldKeepActiveCustomerActiveWhenReactivated() {
+    void shouldKeepActiveCustomerPendingWhenReactivated() {
         final Customer customer = Customer.createNew(
                 CUSTOMER_ID,
                 PROFILE,
@@ -600,6 +600,32 @@ class CustomerTest
 
         customer.reactivate();
 
+        assertThat(customer.getStatus()).isEqualTo(CustomerStatus.PENDING);
+    }
+
+    @Test
+    void shouldActivateCustomerWhenActivated() {
+        final Customer customer = Customer.createNew(
+            CUSTOMER_ID,
+            PROFILE,
+            EMAIL,
+            PASSWORD_HASH);
+
+        customer.activate();
+
         assertThat(customer.getStatus()).isEqualTo(CustomerStatus.ACTIVE);
+    }
+
+    @Test
+    void shouldDeleteCustomerWhenActive() {
+        final Customer customer = Customer.createNew(
+            CUSTOMER_ID,
+            PROFILE,
+            EMAIL,
+            PASSWORD_HASH);
+
+        customer.activate();
+        customer.markDeleted();
+        assertThat(customer.getStatus()).isEqualTo(CustomerStatus.DELETED);
     }
 }

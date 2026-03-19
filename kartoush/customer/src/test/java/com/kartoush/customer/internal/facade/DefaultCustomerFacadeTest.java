@@ -88,6 +88,6 @@ class DefaultCustomerFacadeTest {
                 PHONE_NUMBER,
                 FIRST_NAME,
                 LAST_NAME,
-                CustomerStatus.ACTIVE);
+                CustomerStatus.PENDING);
     }
 }

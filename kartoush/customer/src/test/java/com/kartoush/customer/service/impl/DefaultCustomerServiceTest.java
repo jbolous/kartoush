@@ -4,7 +4,6 @@ import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
 import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
-import com.kartoush.customer.persistence.mapper.CustomerEntityMapper;
 import com.kartoush.customer.persistence.mapper.CustomerMapper;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
@@ -35,7 +34,6 @@ class DefaultCustomerServiceTest
     private static final String CUSTOMER_ID_VALUE = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
     private static final String GENERATED_CUSTOMER_ID_VALUE = "01BX5ZZKBKACTAV9WEVGEMMVRZ";
     private static final Email EMAIL = new Email("jack@kartoush.test");
-    private static final String PASSWORD_HASH = "hashed-password";
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
     private static final String PHONE_NUMBER = "312-555-0100";
@@ -52,9 +50,6 @@ class DefaultCustomerServiceTest
 
     @Mock
     private CustomerMapper customerMapper;
-
-    @Mock
-    private CustomerEntityMapper customerEntityMapper;
 
     @Mock
     private UlidGenerator ulidGenerator;
@@ -121,23 +116,24 @@ class DefaultCustomerServiceTest
     void shouldCreateCustomer() {
         // given
         final Customer inputCustomer = mock(Customer.class);
+        final CustomerEntity mappedEntity = mock(CustomerEntity.class);
         final CustomerEntity savedEntity = mock(CustomerEntity.class);
         final Customer mappedCustomer = mock(Customer.class);
 
-        given(inputCustomer.getProfile()).willReturn(PROFILE);
         given(inputCustomer.getEmail()).willReturn(EMAIL);
-        given(inputCustomer.getPasswordHash()).willReturn(PASSWORD_HASH);
-        given(ulidGenerator.next()).willReturn(GENERATED_CUSTOMER_ID_VALUE);
-        given(customerRepository.save(any(CustomerEntity.class))).willReturn(savedEntity);
+
+        given(customerMapper.toEntity(any(Customer.class))).willReturn(mappedEntity);
+        given(customerRepository.save(mappedEntity)).willReturn(savedEntity);
         given(customerMapper.toDomain(savedEntity)).willReturn(mappedCustomer);
+        given(savedEntity.getId()).willReturn(GENERATED_CUSTOMER_ID_VALUE);
 
         // when
         final Customer result = defaultCustomerService.createCustomer(inputCustomer);
 
         // then
         assertThat(result).isSameAs(mappedCustomer);
-        verify(ulidGenerator).next();
-        verify(customerRepository).save(any(CustomerEntity.class));
+        verify(customerMapper).toEntity(any(Customer.class));
+        verify(customerRepository).save(mappedEntity);
         verify(customerMapper).toDomain(savedEntity);
     }
 
@@ -150,7 +146,7 @@ class DefaultCustomerServiceTest
 
         given(customerRepository.findById(CUSTOMER_ID_EMBEDDABLE)).willReturn(Optional.of(existingCustomerEntity));
         given(customerRepository.save(existingCustomerEntity)).willReturn(savedCustomerEntity);
-        given(customerMapper.toDomain(savedCustomerEntity)).willReturn(mappedCustomer);
+        given(customerMapper.toDomain(any(CustomerEntity.class))).willReturn(mappedCustomer);
 
         // when
         final Customer result = defaultCustomerService.updateCustomer(CUSTOMER_ID_VALUE, PROFILE, EMAIL);
@@ -158,9 +154,9 @@ class DefaultCustomerServiceTest
         // then
         assertThat(result).isSameAs(mappedCustomer);
         verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
-        verify(customerEntityMapper).updateCustomerDetails(existingCustomerEntity, PROFILE, EMAIL);
-        verify(customerRepository).save(existingCustomerEntity);
         verify(customerMapper).toDomain(savedCustomerEntity);
+        verify(customerMapper).updateEntity(result, existingCustomerEntity);
+        verify(customerRepository).save(existingCustomerEntity);
     }
 
     @Test
@@ -174,7 +170,6 @@ class DefaultCustomerServiceTest
                 .hasMessageContaining(CUSTOMER_ID_VALUE);
 
         verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
-        verify(customerEntityMapper, never()).updateCustomerDetails(any(), any(), any());
         verify(customerRepository, never()).save(any());
         verify(customerMapper, never()).toDomain(any());
     }
@@ -195,7 +190,7 @@ class DefaultCustomerServiceTest
         verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
         verify(customerMapper).toDomain(customerEntity);
         verify(customer).markDeleted();
-        verify(customerEntityMapper).updateEntity(customer, customerEntity);
+        verify(customerMapper).updateEntity(customer, customerEntity);
         verify(customerRepository).save(customerEntity);
     }
 
@@ -211,7 +206,7 @@ class DefaultCustomerServiceTest
 
         verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
         verify(customerMapper, never()).toDomain(any());
-        verify(customerEntityMapper, never()).updateEntity(any(), any());
+        verify(customerMapper, never()).updateEntity(any(), any());
         verify(customerRepository, never()).save(any());
     }
 }
