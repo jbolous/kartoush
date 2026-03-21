@@ -14,37 +14,41 @@ import java.util.Objects;
 public final class Customer {
 
     private final CustomerId id;
+
     private CustomerProfile profile;
+
     private Email email;
+
     private final String passwordHash;
+
     private CustomerStatus status;
 
     private final List<CustomerAddress> addresses = new ArrayList<>();
 
     private Customer(
-            CustomerId id,
-            CustomerProfile profile,
-            Email email,
-            String passwordHash,
-            CustomerStatus status) {
+        CustomerId id,
+        CustomerProfile profile,
+        Email email,
+        String passwordHash,
+        CustomerStatus status) {
         this.id = Objects.requireNonNull(id, "ID must not be null");
-        this.profile = Objects.requireNonNull(profile,  "Profile must not be null");
+        this.profile = Objects.requireNonNull(profile, "Profile must not be null");
         this.email = Objects.requireNonNull(email, "Email must not be null");
         this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash must not be null");
         this.status = Objects.requireNonNull(status, "Status must not be null");
     }
 
     public static Customer createNew(
-            CustomerId id,
-            CustomerProfile profile,
-            Email email,
-            String passwordHash) {
+        CustomerId id,
+        CustomerProfile profile,
+        Email email,
+        String passwordHash) {
         return new Customer(
-                id,
-                profile,
-                email,
-                passwordHash,
-                CustomerStatus.PENDING);
+            id,
+            profile,
+            email,
+            passwordHash,
+            CustomerStatus.PENDING);
     }
 
     public static Customer fromPersistence(
@@ -70,24 +74,24 @@ public final class Customer {
         this.email = newEmail;
     }
 
-    public void markDeleted() {
-        if(this.status == CustomerStatus.DELETED) {
-            return;
-        }
-
-        this.status = CustomerStatus.DELETED;
+    public void softDelete() {
+        transitionTo(CustomerStatus.DELETED);
     }
 
     public void activate() {
-        if(status == CustomerStatus.PENDING) {
-            status = CustomerStatus.ACTIVE;
-        }
+        transitionTo(CustomerStatus.ACTIVE);
+    }
+
+    public void inactivate() {
+        transitionTo(CustomerStatus.INACTIVE);
     }
 
     public void reactivate() {
-        if (status == CustomerStatus.DELETED) {
-            status = CustomerStatus.ACTIVE;
+        if (this.status != CustomerStatus.INACTIVE) {
+            throw new InvalidCustomerStatusTransitionException(this.status, CustomerStatus.ACTIVE);
         }
+
+        transitionTo(CustomerStatus.ACTIVE);
     }
 
     public void addAddress(final CustomerAddress address) {
@@ -130,8 +134,11 @@ public final class Customer {
         }
     }
 
-    public void transitionTo(final CustomerStatus targetStatus)
-    {
+    public void transitionTo(final CustomerStatus targetStatus) throws InvalidCustomerStatusTransitionException {
+        if (this.status == targetStatus) {
+            return;
+        }
+
         if (!isValidTransition(this.status, targetStatus)) {
             throw new InvalidCustomerStatusTransitionException(this.status, targetStatus);
         }
@@ -164,8 +171,7 @@ public final class Customer {
     }
 
     private boolean isValidTransition(final CustomerStatus currentStatus,
-                                      final CustomerStatus targetStatus)
-    {
+                                      final CustomerStatus targetStatus) {
         return switch (currentStatus) {
             case PENDING -> targetStatus == CustomerStatus.ACTIVE
                 || targetStatus == CustomerStatus.INACTIVE
@@ -196,9 +202,9 @@ public final class Customer {
 
     private CustomerAddress findAddress(final AddressId addressId) {
         return addresses.stream()
-                .filter(address -> address.getId().equals(addressId))
-                .findFirst()
-                .orElseThrow(() -> new CustomerAddressNotFoundException(addressId.value()));
+            .filter(address -> address.getId().equals(addressId))
+            .findFirst()
+            .orElseThrow(() -> new CustomerAddressNotFoundException(addressId.value()));
     }
 
     private void assertNotDeleted() {
