@@ -53,7 +53,7 @@ public class UpdateCustomerRequestValidator {
     private void validateOptionalPhoneNumber(
             final String phoneNumber,
             final List<ValidationError> errors) {
-        if (phoneNumber == null) {
+        if (phoneNumber == null || phoneNumber.isBlank()) {
             return;
         }
 
