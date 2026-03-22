@@ -9,7 +9,9 @@ import java.util.regex.Pattern;
 public record Email(String value) {
 
     private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+        Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+
+    private static final String DELETED_SUFFIX = "|deleted|";
 
     public Email {
         if (value == null) {
@@ -24,6 +26,16 @@ public record Email(String value) {
         if (!EMAIL_PATTERN.matcher(value).matches()) {
             throw new InvalidEmailException("Email must be a valid email address");
         }
+    }
+
+    public Email updateForDeletion(final CustomerId customerId) {
+        final String suffix = DELETED_SUFFIX + customerId.value();
+
+        if (this.value.endsWith(suffix)) {
+            return this;
+        }
+
+        return new Email(this.value + suffix);
     }
 
     private static String normalize(final String email) {
