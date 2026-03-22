@@ -5,10 +5,10 @@ import com.kartoush.platform.types.CustomerStatus;
 
 public record CustomerView(
         String customerId,
-        String email,
-        String phoneNumber,
         String firstName,
         String lastName,
+        String email,
+        String phoneNumber,
         CustomerStatus status
 ) {
     public boolean isActive () {

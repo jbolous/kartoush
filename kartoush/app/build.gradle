@@ -23,7 +23,7 @@ dependencies {
     implementation project(':platform-types')
     testImplementation project(":test-support")
 
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation (libs.springBootStarterWeb)
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation(libs.springdoc.openapi.webmvc.ui)

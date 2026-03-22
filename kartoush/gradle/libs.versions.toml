@@ -14,10 +14,10 @@ springDependencyManagement = { id = "io.spring.dependency-management", version.r
 [libraries]
 springBootBom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBootVersion" }
 
-springBootValidation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "springBootVersion" }
 springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 springBootStarterTest = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "springBootVersion" }
 springBootStarterDataJpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "springBootVersion" }
+springBootStarterWeb = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "springBootVersion"}
 springBootStarterFlyway = { module = "org.springframework.boot:spring-boot-starter-flyway" }
 springBootTest = { module = "org.springframework.boot:spring-boot-test", version.ref = "springBootVersion" }
 springBootTestAutoconfigure = { module = "org.springframework.boot:spring-boot-test-autoconfigure", version.ref = "springBootVersion" }
