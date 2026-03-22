@@ -83,11 +83,11 @@ class DefaultCustomerFacadeTest {
 
     private CustomerView buildCustomerView(){
         return new CustomerView(
-                CUSTOMER_ID,
-                EMAIL,
-                PHONE_NUMBER,
-                FIRST_NAME,
-                LAST_NAME,
-                CustomerStatus.PENDING);
+                                CUSTOMER_ID,
+                                FIRST_NAME,
+                                LAST_NAME,
+                                EMAIL,
+                                PHONE_NUMBER,
+                                CustomerStatus.PENDING);
     }
 }
