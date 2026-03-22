@@ -78,8 +78,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
         updateCustomerRequestValidator.validate(request);
 
         CustomerProfile profile = buildCustomerProfile(request);
-        Email email = new Email(request.email());
-        Customer savedCustomer = customerService.updateCustomer(customerId, profile, email);
+        Customer savedCustomer = customerService.updateCustomer(customerId, profile);
 
         return toCustomerView(savedCustomer);
     }

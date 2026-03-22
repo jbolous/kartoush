@@ -149,7 +149,7 @@ class DefaultCustomerServiceTest
         given(customerMapper.toDomain(any(CustomerEntity.class))).willReturn(mappedCustomer);
 
         // when
-        final Customer result = defaultCustomerService.updateCustomer(CUSTOMER_ID_VALUE, PROFILE, EMAIL);
+        final Customer result = defaultCustomerService.updateCustomer(CUSTOMER_ID_VALUE, PROFILE);
 
         // then
         assertThat(result).isSameAs(mappedCustomer);
@@ -165,7 +165,7 @@ class DefaultCustomerServiceTest
         given(customerRepository.findById(CUSTOMER_ID_EMBEDDABLE)).willReturn(Optional.empty());
 
         // when / then
-        assertThatThrownBy(() -> defaultCustomerService.updateCustomer(CUSTOMER_ID_VALUE, PROFILE, EMAIL))
+        assertThatThrownBy(() -> defaultCustomerService.updateCustomer(CUSTOMER_ID_VALUE, PROFILE))
                 .isInstanceOf(CustomerNotFoundException.class)
                 .hasMessageContaining(CUSTOMER_ID_VALUE);
 

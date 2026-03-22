@@ -68,10 +68,9 @@ public final class Customer {
         return customer;
     }
 
-    public void updateDetails(final CustomerProfile newProfile, final Email newEmail) {
+    public void updateDetails(final CustomerProfile newProfile) {
         assertNotDeleted();
         this.profile = Objects.requireNonNull(newProfile, "Profile must not be null");
-        this.email = newEmail;
     }
 
     public void softDelete() {
@@ -92,10 +91,6 @@ public final class Customer {
     }
 
     public void reactivate() {
-        if (this.status != CustomerStatus.INACTIVE) {
-            throw new InvalidCustomerStatusTransitionException(this.status, CustomerStatus.ACTIVE);
-        }
-
         transitionTo(CustomerStatus.ACTIVE);
     }
 

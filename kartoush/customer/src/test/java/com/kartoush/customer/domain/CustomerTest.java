@@ -158,23 +158,11 @@ class CustomerTest {
         final Customer customer = createNewCustomer();
 
         // when
-        customer.updateDetails(UPDATED_PROFILE, UPDATED_EMAIL);
+        customer.updateDetails(UPDATED_PROFILE);
 
         // then
         assertThat(customer.getProfile()).isEqualTo(UPDATED_PROFILE);
-        assertThat(customer.getEmail()).isEqualTo(UPDATED_EMAIL);
-    }
-
-    @Test
-    void shouldNormalizeEmailWhenUpdatingDetails() {
-        // given
-        final Customer customer = createNewCustomer();
-
-        // when
-        customer.updateDetails(UPDATED_PROFILE, new Email("  Updated@Kartoush.Test  "));
-
-        // then
-        assertThat(customer.getEmail()).isEqualTo(UPDATED_EMAIL);
+        assertThat(customer.getEmail()).isEqualTo(EMAIL);
     }
 
     @Test
@@ -184,23 +172,9 @@ class CustomerTest {
 
         // when / then
         assertThatThrownBy(() -> customer.updateDetails(
-            null,
-            UPDATED_EMAIL))
+            null))
             .isInstanceOf(NullPointerException.class)
             .hasMessage(PROFILE_NULL_MESSAGE);
-    }
-
-    @Test
-    void shouldThrowWhenUpdatingDetailsWithBlankEmail() {
-        // given
-        final Customer customer = createNewCustomer();
-
-        // when / then
-        assertThatThrownBy(() -> customer.updateDetails(
-            UPDATED_PROFILE,
-            new Email(BLANK_EMAIL)))
-            .isInstanceOf(InvalidEmailException.class)
-            .hasMessage(EMAIL_BLANK_MESSAGE);
     }
 
     @Test
@@ -209,7 +183,7 @@ class CustomerTest {
         final Customer customer = createCustomerWithStatus(CustomerStatus.DELETED);
 
         // when / then
-        assertThatThrownBy(() -> customer.updateDetails(UPDATED_PROFILE, UPDATED_EMAIL))
+        assertThatThrownBy(() -> customer.updateDetails(UPDATED_PROFILE))
             .isInstanceOf(IllegalStateException.class)
             .hasMessage(CUSTOMER_DELETED_MESSAGE);
     }
