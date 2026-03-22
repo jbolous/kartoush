@@ -75,7 +75,12 @@ public final class Customer {
     }
 
     public void softDelete() {
-        transitionTo(CustomerStatus.DELETED);
+        if (this.status == CustomerStatus.DELETED) {
+            return;
+        }
+
+        this.email = this.email.updateForDeletion(this.id);
+        this.status = CustomerStatus.DELETED;
     }
 
     public void activate() {
