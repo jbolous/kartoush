@@ -1,6 +1,7 @@
 package com.kartoush.customer.domain;
 
 import com.kartoush.customer.exception.CustomerAddressNotFoundException;
+import com.kartoush.customer.exception.InvalidCustomerStatusTransitionException;
 import com.kartoush.platform.types.AddressId;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
@@ -13,37 +14,58 @@ import java.util.Objects;
 public final class Customer {
 
     private final CustomerId id;
+
     private CustomerProfile profile;
+
     private Email email;
+
     private final String passwordHash;
+
     private CustomerStatus status;
 
     private final List<CustomerAddress> addresses = new ArrayList<>();
 
     private Customer(
-            CustomerId id,
-            CustomerProfile profile,
-            Email email,
-            String passwordHash,
-            CustomerStatus status) {
+        CustomerId id,
+        CustomerProfile profile,
+        Email email,
+        String passwordHash,
+        CustomerStatus status) {
         this.id = Objects.requireNonNull(id, "ID must not be null");
-        this.profile = Objects.requireNonNull(profile,  "Profile must not be null");
+        this.profile = Objects.requireNonNull(profile, "Profile must not be null");
         this.email = Objects.requireNonNull(email, "Email must not be null");
         this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash must not be null");
         this.status = Objects.requireNonNull(status, "Status must not be null");
     }
 
     public static Customer createNew(
-            CustomerId id,
-            CustomerProfile profile,
-            Email email,
-            String passwordHash) {
+        CustomerId id,
+        CustomerProfile profile,
+        Email email,
+        String passwordHash) {
         return new Customer(
-                id,
-                profile,
-                email,
-                passwordHash,
-                CustomerStatus.PENDING);
+            id,
+            profile,
+            email,
+            passwordHash,
+            CustomerStatus.PENDING);
+    }
+
+    public static Customer fromPersistence(
+        CustomerId id,
+        CustomerProfile profile,
+        Email email,
+        String passwordHash,
+        CustomerStatus status,
+        List<CustomerAddress> addresses) {
+        final Customer customer = new Customer(
+            id,
+            profile,
+            email,
+            passwordHash,
+            status);
+        customer.addresses.addAll(Objects.requireNonNull(addresses, "Addresses must not be null"));
+        return customer;
     }
 
     public void updateDetails(final CustomerProfile newProfile, final Email newEmail) {
@@ -52,65 +74,24 @@ public final class Customer {
         this.email = newEmail;
     }
 
-    public void markDeleted() {
-        if(this.status == CustomerStatus.DELETED) {
-            return;
-        }
-
-        this.status = CustomerStatus.DELETED;
-    }
-
-    public static Customer fromPersistence(
-            CustomerId id,
-            CustomerProfile profile,
-            Email email,
-            String passwordHash,
-            CustomerStatus status,
-            List<CustomerAddress> addresses) {
-        final Customer customer = new Customer(
-                id,
-                profile,
-                email,
-                passwordHash,
-                status);
-        customer.addresses.addAll(Objects.requireNonNull(addresses, "Addresses must not be null"));
-        return customer;
+    public void softDelete() {
+        transitionTo(CustomerStatus.DELETED);
     }
 
     public void activate() {
-        if(status == CustomerStatus.PENDING) {
-            status = CustomerStatus.ACTIVE;
-        }
+        transitionTo(CustomerStatus.ACTIVE);
+    }
+
+    public void inactivate() {
+        transitionTo(CustomerStatus.INACTIVE);
     }
 
     public void reactivate() {
-        if (status == CustomerStatus.DELETED) {
-            status = CustomerStatus.ACTIVE;
+        if (this.status != CustomerStatus.INACTIVE) {
+            throw new InvalidCustomerStatusTransitionException(this.status, CustomerStatus.ACTIVE);
         }
-    }
 
-    public CustomerId getId() {
-        return id;
-    }
-
-    public CustomerProfile getProfile() {
-        return profile;
-    }
-
-    public Email getEmail() {
-        return email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public CustomerStatus getStatus() {
-        return status;
-    }
-
-    public List<CustomerAddress> getAddresses() {
-        return List.copyOf(addresses);
+        transitionTo(CustomerStatus.ACTIVE);
     }
 
     public void addAddress(final CustomerAddress address) {
@@ -153,6 +134,56 @@ public final class Customer {
         }
     }
 
+    public void transitionTo(final CustomerStatus targetStatus) throws InvalidCustomerStatusTransitionException {
+        if (this.status == targetStatus) {
+            return;
+        }
+
+        if (!isValidTransition(this.status, targetStatus)) {
+            throw new InvalidCustomerStatusTransitionException(this.status, targetStatus);
+        }
+
+        this.status = targetStatus;
+    }
+
+    public CustomerId getId() {
+        return id;
+    }
+
+    public CustomerProfile getProfile() {
+        return profile;
+    }
+
+    public Email getEmail() {
+        return email;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public CustomerStatus getStatus() {
+        return status;
+    }
+
+    public List<CustomerAddress> getAddresses() {
+        return List.copyOf(addresses);
+    }
+
+    private boolean isValidTransition(final CustomerStatus currentStatus,
+                                      final CustomerStatus targetStatus) {
+        return switch (currentStatus) {
+            case PENDING -> targetStatus == CustomerStatus.ACTIVE
+                || targetStatus == CustomerStatus.INACTIVE
+                || targetStatus == CustomerStatus.DELETED;
+            case ACTIVE -> targetStatus == CustomerStatus.INACTIVE
+                || targetStatus == CustomerStatus.DELETED;
+            case INACTIVE -> targetStatus == CustomerStatus.ACTIVE
+                || targetStatus == CustomerStatus.DELETED;
+            case DELETED -> false;
+        };
+    }
+
     private void clearDefaultShipping() {
         for (final CustomerAddress address : addresses) {
             if (address.isDefaultShipping()) {
@@ -171,9 +202,9 @@ public final class Customer {
 
     private CustomerAddress findAddress(final AddressId addressId) {
         return addresses.stream()
-                .filter(address -> address.getId().equals(addressId))
-                .findFirst()
-                .orElseThrow(() -> new CustomerAddressNotFoundException(addressId.value()));
+            .filter(address -> address.getId().equals(addressId))
+            .findFirst()
+            .orElseThrow(() -> new CustomerAddressNotFoundException(addressId.value()));
     }
 
     private void assertNotDeleted() {

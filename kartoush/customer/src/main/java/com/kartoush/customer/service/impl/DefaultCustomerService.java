@@ -112,7 +112,7 @@ public class DefaultCustomerService implements CustomerService
 
         final Customer customer = customerMapper.toDomain(customerEntity);
 
-        customer.markDeleted();
+        customer.softDelete();
 
         customerMapper.updateEntity(customer, customerEntity);
 

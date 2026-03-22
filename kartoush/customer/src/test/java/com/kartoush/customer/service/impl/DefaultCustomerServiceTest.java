@@ -189,7 +189,7 @@ class DefaultCustomerServiceTest
         // then
         verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
         verify(customerMapper).toDomain(customerEntity);
-        verify(customer).markDeleted();
+        verify(customer).softDelete();
         verify(customerMapper).updateEntity(customer, customerEntity);
         verify(customerRepository).save(customerEntity);
     }
