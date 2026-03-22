@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,6 +66,8 @@ class CustomerTest {
     private static final String ADDRESSES_NULL_MESSAGE = "Addresses must not be null";
 
     private static final String ADDRESS_NOT_FOUND_PREFIX = "Address not found for id: ";
+
+    private static final String DELETED_SUFFIX = "|deleted|";
 
     private static final CustomerId CUSTOMER_ID = CustomerId.of(CUSTOMER_ID_VALUE);
 
@@ -198,18 +201,6 @@ class CustomerTest {
             new Email(BLANK_EMAIL)))
             .isInstanceOf(InvalidEmailException.class)
             .hasMessage(EMAIL_BLANK_MESSAGE);
-    }
-
-    @Test
-    void shouldKeepDeletedCustomerDeletedWhenSoftDeleted() {
-        // given
-        final Customer customer = createCustomerWithStatus(CustomerStatus.DELETED);
-
-        // when
-        customer.softDelete();
-
-        // then
-        assertThat(customer.getStatus()).isEqualTo(CustomerStatus.DELETED);
     }
 
     @Test
@@ -540,6 +531,34 @@ class CustomerTest {
         assertThat(customer.getStatus()).isEqualTo(CustomerStatus.INACTIVE);
     }
 
+    @Test
+    void shouldMutateEmailWhenSoftDeletingCustomer() {
+        final Customer customer = createCustomerWithStatus(CustomerStatus.ACTIVE);
+
+        customer.softDelete();
+
+        assertThat(customer.getStatus()).isEqualTo(CustomerStatus.DELETED);
+        assertThat(customer.getEmail().value())
+            .isEqualTo(expectedDeletedEmail());
+    }
+
+    @Test
+    void shouldKeepDeletedCustomerDeletedWhenSoftDeletedAgain() {
+        // given
+        final Customer customer = createCustomerWithStatus(CustomerStatus.ACTIVE);
+
+        customer.softDelete();
+
+        final Email deletedEmail = customer.getEmail();
+
+        // when
+        customer.softDelete();
+
+        // then
+        assertThat(customer.getStatus()).isEqualTo(CustomerStatus.DELETED);
+        assertThat(customer.getEmail()).isEqualTo(deletedEmail);
+    }
+
     @ParameterizedTest
     @EnumSource(value = CustomerStatus.class, names = {"PENDING", "ACTIVE", "DELETED"})
     void shouldRejectReactivateWhenStatusIsNotInactive(final CustomerStatus currentStatus) {
@@ -624,5 +643,12 @@ class CustomerTest {
             ADDRESS_COUNTRY_CODE,
             defaultShipping,
             defaultBilling);
+    }
+
+    private String expectedDeletedEmail() {
+        return (CustomerTest.EMAIL.value()
+            + DELETED_SUFFIX
+            + CustomerTest.CUSTOMER_ID.value())
+            .toLowerCase(Locale.ROOT);
     }
 }
