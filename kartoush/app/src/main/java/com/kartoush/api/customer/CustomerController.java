@@ -4,6 +4,9 @@ import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.model.CreateCustomerRequest;
 import com.kartoush.customer.facade.model.CustomerView;
 import com.kartoush.customer.facade.model.UpdateCustomerRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,51 +28,61 @@ import java.util.List;
 public class CustomerController {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomerController.class);
+
     private final CustomerFacade customerFacade;
 
-    public CustomerController(final CustomerFacade customerFacade)
-    {
+    public CustomerController(final CustomerFacade customerFacade) {
         this.customerFacade = customerFacade;
     }
 
     @GetMapping
-    public ResponseEntity<List<CustomerView>> getCustomers()
-    {
+    public ResponseEntity<List<CustomerView>> getCustomers() {
         return ResponseEntity.ok(customerFacade.getCustomers());
     }
 
     @GetMapping("/{customerId}")
-    public ResponseEntity<CustomerView> getCustomer(@PathVariable final String customerId)
-    {
+    public ResponseEntity<CustomerView> getCustomer(@PathVariable final String customerId) {
         return ResponseEntity.ok(customerFacade.getCustomer(customerId));
     }
 
     @PostMapping
     public ResponseEntity<CustomerView> createCustomer(
-            @Valid @RequestBody final CreateCustomerRequest request)
-    {
+        @Valid @RequestBody final CreateCustomerRequest request) {
         LOG.info("Received create customer request for email={}", request.email());
         final CustomerView createdCustomer = customerFacade.createCustomer(request);
         LOG.info("Created customer id={} for email={}", createdCustomer.customerId(), request.email());
 
         return ResponseEntity
-                .created(URI.create("/api/customers/" + createdCustomer.customerId()))
-                .body(createdCustomer);
+            .created(URI.create("/api/customers/" + createdCustomer.customerId()))
+            .body(createdCustomer);
     }
 
 
+    @Operation(
+        summary = "Update customer profile",
+        description = """
+            Replaces the customer profile fields that are updatable through this API.
 
+            This endpoint updates profile data only, such as first name, last name, and phone number.
+            It does not update the customer's email address and does not change customer lifecycle state.
+
+            The operation is idempotent.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Customer profile updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Request validation failed"),
+        @ApiResponse(responseCode = "404", description = "Customer not found")
+    })
     @PutMapping("/{customerId}")
     public ResponseEntity<CustomerView> updateCustomer(
-            @PathVariable final String customerId,
-            @Valid @RequestBody final UpdateCustomerRequest request)
-    {
+        @PathVariable final String customerId,
+        @RequestBody final UpdateCustomerRequest request) {
         return ResponseEntity.ok(customerFacade.updateCustomer(customerId, request));
     }
 
     @DeleteMapping("/{customerId}")
-    public ResponseEntity<Void> deleteCustomer(@PathVariable final String customerId)
-    {
+    public ResponseEntity<Void> deleteCustomer(@PathVariable final String customerId) {
         customerFacade.deleteCustomer(customerId);
         return ResponseEntity.noContent().build();
     }

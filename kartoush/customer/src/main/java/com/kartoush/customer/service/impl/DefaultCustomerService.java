@@ -87,13 +87,12 @@ public class DefaultCustomerService implements CustomerService
     @Transactional
     public Customer updateCustomer(
             final String customerId,
-            final CustomerProfile profile,
-            final Email email) {
+            final CustomerProfile profile) {
         final CustomerEntity customerEntity = customerRepository.findById(CustomerIdEmbeddable.from(customerId))
                 .orElseThrow(() -> new CustomerNotFoundException(customerId));
 
         final Customer customer = customerMapper.toDomain(customerEntity);
-        customer.updateDetails(profile, email);
+        customer.updateDetails(profile);
 
         customerMapper.updateEntity(customer, customerEntity);
         final CustomerEntity savedCustomer = customerRepository.save(customerEntity);
