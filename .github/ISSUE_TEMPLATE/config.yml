@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Architecture Decisions
+    url: https://github.com/jbolous/kartoush/tree/main/docs/architecture/decisions
+    about: Review architecture decisions before creating issues.
+
+  - name: Persistence Decisions
+    url: https://github.com/jbolous/kartoush/tree/main/docs/persistence/decisions
+    about: Review persistence-related decisions before creating issues.

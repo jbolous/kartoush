@@ -1,0 +1,78 @@
+name: Task
+description: A focused unit of work that contributes to an epic or project goal
+title: "[Task]: "
+labels:
+  - task
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What needs to be done?
+      placeholder: |
+        Implement validation for customer status transitions in the domain layer.
+    validations:
+      required: true
+
+  - type: input
+    id: parent
+    attributes:
+      label: Parent
+      description: Link the related Epic or issue (use GitHub sub-issues as the source of truth)
+      placeholder: "#123"
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Relevant background, decisions, or links
+      placeholder: |
+        Architecture Decision:
+        docs/architecture/decisions/xxxx-some-decision.md
+
+        Persistence Decision:
+        docs/persistence/decisions/xxxx-some-decision.md
+
+        This task implements behavior defined in the decision record.
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What is included in this task?
+      placeholder: |
+        - add validation to the domain model
+        - enforce allowed transitions
+        - throw appropriate exceptions
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: What defines completion?
+      placeholder: |
+        - valid transitions succeed
+        - invalid transitions fail with expected exceptions
+        - unit tests cover both scenarios
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of Scope
+      description: What is not included?
+      placeholder: |
+        - API changes
+        - persistence changes
+        - unrelated refactoring
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Additional implementation notes or follow-ups
+      placeholder: |
+        Any edge cases, follow-ups, or considerations.
