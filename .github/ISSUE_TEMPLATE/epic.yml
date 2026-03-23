@@ -1,0 +1,90 @@
+name: Epic
+description: High-level initiative that groups related tasks
+title: "[Epic]: "
+labels:
+  - epic
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What is the intended outcome of this epic?
+      placeholder: |
+        Harden the customer lifecycle and ensure consistent, production-grade API behavior across controller, facade, and service layers.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: Why is this work needed?
+      placeholder: |
+        While the initial vertical slice is complete, this work focuses on correctness, consistency, and clarity of behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What areas of work are included?
+      placeholder: |
+        Lifecycle correctness
+        - define allowed customer status transitions
+        - enforce transition rules in the domain/service layer
+        - prevent invalid operations
+
+        API consistency
+        - clarify update semantics
+        - ensure consistent request validation rules
+        - standardize API responses
+
+        Error handling
+        - introduce global exception handling
+        - map domain exceptions to consistent API responses
+        - align with RFC-7807 / Problem Details
+
+        Testing
+        - add WebMvc tests for create, get, update, and delete
+        - validate error scenarios at the API level
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: What defines completion of this epic?
+      placeholder: |
+        - lifecycle rules are clearly defined and enforced
+        - invalid customer operations fail predictably
+        - API behavior is consistent across endpoints
+        - exception handling is standardized
+        - API-level tests cover both happy paths and error scenarios
+    validations:
+      required: true
+
+  - type: textarea
+    id: related
+    attributes:
+      label: Related Work
+      description: Link ADRs, issues, or PRs
+      placeholder: |
+        Architecture Decisions:
+        - docs/architecture/decisions/xxxx-some-decision.md
+
+        Persistence Decisions:
+        - docs/persistence/decisions/xxxx-some-decision.md
+
+        Related Issues:
+        - #123
+
+        Related PRs:
+        - #456
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Additional context or follow-ups
