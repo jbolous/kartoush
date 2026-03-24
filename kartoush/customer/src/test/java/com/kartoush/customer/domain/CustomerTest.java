@@ -1,6 +1,7 @@
 package com.kartoush.customer.domain;
 
 import com.kartoush.customer.exception.CustomerAddressNotFoundException;
+import com.kartoush.customer.exception.InvalidCustomerReactivationException;
 import com.kartoush.customer.exception.InvalidCustomerStatusTransitionException;
 import com.kartoush.platform.types.AddressId;
 import com.kartoush.platform.types.CustomerId;
@@ -92,6 +93,8 @@ class CustomerTest {
     private static final String ADDRESS_COUNTRY_CODE = "US";
 
     private static final String INVALID_CUSTOMER_STATE_TRANSITION_MESSAGE = "Invalid customer status transition from %s to %s";
+
+    private static final String INVALID_CUSTOMER_REACTIVATION_MESSAGE = "Customer can only be reactivated from INACTIVE status, but was %s";
 
     private static final CustomerProfile PROFILE = new CustomerProfile(
         FIRST_NAME,
@@ -539,9 +542,9 @@ class CustomerTest {
         final Customer customer = createCustomerWithStatus(currentStatus);
 
         assertThatThrownBy(customer::reactivate)
-            .isInstanceOf(InvalidCustomerStatusTransitionException.class)
-            .hasMessage(INVALID_CUSTOMER_STATE_TRANSITION_MESSAGE
-                .formatted(currentStatus, CustomerStatus.ACTIVE));
+            .isInstanceOf(InvalidCustomerReactivationException.class)
+            .hasMessage(INVALID_CUSTOMER_REACTIVATION_MESSAGE
+                .formatted(currentStatus));
     }
 
     @ParameterizedTest

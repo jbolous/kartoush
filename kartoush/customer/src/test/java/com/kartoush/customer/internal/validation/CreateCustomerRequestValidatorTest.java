@@ -6,7 +6,7 @@ import com.kartoush.platform.validation.RequestValidationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CreateCustomerRequestValidatorTest {
@@ -29,19 +29,17 @@ class CreateCustomerRequestValidatorTest {
     }
 
     @Test
-    @DisplayName("Should allow a blank phone number")
     void shouldAllowBlankPhoneNumber() {
         // given
         final var request = new CreateCustomerRequest(
-                EMAIL,
-                " ",
                 FIRST_NAME,
-                LAST_NAME);
+                LAST_NAME,
+                EMAIL,
+            " ");
 
         // then
-        assertThatCode(() ->
-                validator.validate(request))
-                .doesNotThrowAnyException();
+        assertThatNoException()
+            .isThrownBy(() -> validator.validate(request));
     }
 
     @Test

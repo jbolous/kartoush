@@ -1,6 +1,7 @@
 package com.kartoush.customer.domain;
 
 import com.kartoush.customer.exception.CustomerAddressNotFoundException;
+import com.kartoush.customer.exception.InvalidCustomerReactivationException;
 import com.kartoush.customer.exception.InvalidCustomerStatusTransitionException;
 import com.kartoush.platform.types.AddressId;
 import com.kartoush.platform.types.CustomerId;
@@ -91,6 +92,9 @@ public final class Customer {
     }
 
     public void reactivate() {
+        if (this.status != CustomerStatus.INACTIVE) {
+            throw new InvalidCustomerReactivationException(this.status);
+        }
         transitionTo(CustomerStatus.ACTIVE);
     }
 

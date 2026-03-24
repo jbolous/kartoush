@@ -1,24 +1,24 @@
 package com.kartoush.customer.persistence;
 
-import com.kartoush.customer.domain.Customer;
-import com.kartoush.customer.domain.CustomerProfile;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.entity.CustomerProfileEntity;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
-import com.kartoush.customer.test.CustomerTestApplication;
+import com.kartoush.customer.CustomerTestApplication;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
-import com.kartoush.platform.types.Email;
+import com.kartoush.platform.ulid.DefaultUlidGenerator;
 import com.kartoush.platform.ulid.UlidGenerator;
 import com.kartoush.testsupport.IntegrationTest;
-import com.kartoush.testsupport.PostgresSpringIntegrationTest;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.util.List;
 import java.util.Locale;
@@ -26,11 +26,11 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
 @IntegrationTest
+@Testcontainers
+@DataJpaTest
 @ContextConfiguration(classes = CustomerTestApplication.class)
-@Import(CustomerJpaTestConfig.class)
-class CustomerEntityRepositoryTest extends PostgresSpringIntegrationTest {
+class CustomerEntityRepositoryTest {
 
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
@@ -38,32 +38,36 @@ class CustomerEntityRepositoryTest extends PostgresSpringIntegrationTest {
     private static final String EMAIL = "jack@kartoush.test";
     private static final String PASSWORD_HASH = "ABCXYZ123789";
 
-    @Autowired
-    private UlidGenerator ulidGenerator;
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer postgres =
+        new PostgreSQLContainer("postgres:16-alpine")
+            .withDatabaseName("kartoush")
+            .withUsername("kartoush")
+            .withPassword("kartoush")
+            .waitingFor(Wait.forListeningPort());
+
+    private final UlidGenerator ulidGenerator = new DefaultUlidGenerator();
 
     @Autowired
     private CustomerRepository customerRepository;
 
     @Test
-    @DisplayName("New customer should receive identifier and audit timestamps when persisted")
     void shouldPersistAndLoadCustomer() {
-
         // given
         CustomerIdEmbeddable id = CustomerIdEmbeddable.from(CustomerId.newId(ulidGenerator));
         CustomerProfileEntity profile = new CustomerProfileEntity(FIRST_NAME, LAST_NAME, PHONE_NUMBER);
-        CustomerEntity customer = CustomerEntity
-                .newCustomer(id,
-                        profile,
-                        EMAIL,
-                        PASSWORD_HASH,
-                        CustomerStatus.ACTIVE
-                        );
+        CustomerEntity customer = CustomerEntity.newCustomer(
+            id,
+            profile,
+            EMAIL,
+            PASSWORD_HASH,
+            CustomerStatus.ACTIVE
+        );
 
-        // when
         CustomerEntity saved = customerRepository.saveAndFlush(customer);
         CustomerProfileEntity savedProfile = saved.getProfile();
 
-        // then (save side)
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isNotNull();
@@ -73,14 +77,14 @@ class CustomerEntityRepositoryTest extends PostgresSpringIntegrationTest {
         assertThat(saved.getProfile().getLastName()).isEqualTo(LAST_NAME);
         assertThat(saved.getProfile().getPhoneNumber()).isEqualTo(PHONE_NUMBER);
 
-        // when
         CustomerIdEmbeddable savedId = saved.getCustomerId();
         Optional<CustomerEntity> retrieved = customerRepository.findById(savedId);
 
-        // then (load side)
+        // when
         assertThat(retrieved).isPresent();
         CustomerProfileEntity retrievedProfile = retrieved.get().getProfile();
 
+        // then
         assertThat(retrieved.get().getId()).isEqualTo(savedId.getValue());
         assertThat(retrieved.get().getCreatedAt()).isEqualTo(saved.getCreatedAt());
         assertThat(retrieved.get().getUpdatedAt()).isEqualTo(saved.getUpdatedAt());
@@ -89,23 +93,20 @@ class CustomerEntityRepositoryTest extends PostgresSpringIntegrationTest {
         assertThat(retrievedProfile.getFirstName()).isEqualTo(savedProfile.getFirstName());
         assertThat(retrievedProfile.getLastName()).isEqualTo(savedProfile.getLastName());
         assertThat(retrievedProfile.getPhoneNumber()).isEqualTo(savedProfile.getPhoneNumber());
-
     }
 
     @Test
-    @DisplayName("Customer should preserve provided identifier when persisted")
     void shouldPreserveProvidedCustomerIdWhenProvided() {
-
         // given
         CustomerIdEmbeddable id = CustomerIdEmbeddable.from(CustomerId.newId(ulidGenerator));
         CustomerProfileEntity profile = new CustomerProfileEntity(FIRST_NAME, LAST_NAME, PHONE_NUMBER);
-        CustomerEntity customerEntity = CustomerEntity
-                .newCustomer(id,
-                        profile,
-                        EMAIL,
-                        PASSWORD_HASH,
-                        CustomerStatus.ACTIVE
-                );
+        CustomerEntity customerEntity = CustomerEntity.newCustomer(
+            id,
+            profile,
+            EMAIL,
+            PASSWORD_HASH,
+            CustomerStatus.ACTIVE
+        );
 
         // when
         CustomerEntity saved = customerRepository.saveAndFlush(customerEntity);
@@ -115,10 +116,9 @@ class CustomerEntityRepositoryTest extends PostgresSpringIntegrationTest {
     }
 
     @Test
-    void shouldAllowReusingOriginalEmailAfterSoftDelete()
-    {
+    void shouldAllowReusingOriginalEmailAfterSoftDelete() {
         // given
-        final String originalEmail = "jack@kartoush.test";
+        final String originalEmail = EMAIL;
         final CustomerIdEmbeddable customerId1 = CustomerIdEmbeddable.from(CustomerId.newId(ulidGenerator));
         final CustomerProfileEntity profile = new CustomerProfileEntity(FIRST_NAME, LAST_NAME, PHONE_NUMBER);
 
@@ -127,15 +127,15 @@ class CustomerEntityRepositoryTest extends PostgresSpringIntegrationTest {
             profile,
             originalEmail,
             PASSWORD_HASH,
-            CustomerStatus.PENDING);
+            CustomerStatus.PENDING
+        );
 
-        // persist original
         customerRepository.saveAndFlush(first);
 
-        // simulate soft delete
         first.setEmail(originalEmail + "|deleted|" + customerId1.getValue().toLowerCase(Locale.ROOT));
         first.setCustomerStatus(CustomerStatus.DELETED);
 
+        // when
         customerRepository.saveAndFlush(first);
 
         final CustomerIdEmbeddable customerId2 = CustomerIdEmbeddable.from(CustomerId.newId(ulidGenerator));
@@ -149,12 +149,11 @@ class CustomerEntityRepositoryTest extends PostgresSpringIntegrationTest {
             CustomerStatus.PENDING
         );
 
-        // create new customer with same email
         customerRepository.saveAndFlush(second);
 
-        // then
         final List<CustomerEntity> customers = customerRepository.findAll();
 
+        // then
         assertThat(customers).hasSize(2);
 
         final CustomerEntity deleted = customerRepository.findById(customerId1).orElseThrow();
@@ -167,4 +166,5 @@ class CustomerEntityRepositoryTest extends PostgresSpringIntegrationTest {
         assertThat(active.getCustomerStatus()).isEqualTo(CustomerStatus.PENDING);
         assertThat(active.getEmail()).isEqualTo(originalEmail);
     }
+
 }

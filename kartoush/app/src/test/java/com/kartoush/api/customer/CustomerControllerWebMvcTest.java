@@ -9,9 +9,6 @@ import com.kartoush.customer.facade.model.UpdateCustomerRequest;
 import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.http.converter.autoconfigure.HttpMessageConvertersAutoConfiguration;
-import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -32,14 +29,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CustomerController.class)
-class CustomerControllerWebMvcTest
-{
+class CustomerControllerWebMvcTest {
     private static final String BASE_URL = "/api/customers";
+
     private static final String CUSTOMER_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
     private static final String FIRST_NAME = "Jack";
+
     private static final String LAST_NAME = "Kartoush";
+
     private static final String EMAIL = "jack@kartoush.com";
+
     private static final String PHONE = "+16305551234";
 
     @Autowired
@@ -54,8 +54,7 @@ class CustomerControllerWebMvcTest
     private CustomerFacade customerFacade;
 
     @Test
-    void shouldGetCustomers() throws Exception
-    {
+    void shouldGetCustomers() throws Exception {
         when(customerFacade.getCustomers()).thenReturn(List.of());
 
         mockMvc.perform(get(BASE_URL))
@@ -65,8 +64,7 @@ class CustomerControllerWebMvcTest
     }
 
     @Test
-    void shouldGetCustomerById() throws Exception
-    {
+    void shouldGetCustomerById() throws Exception {
         when(customerFacade.getCustomer(eq(CUSTOMER_ID)))
             .thenReturn(mockCustomerView());
 
@@ -77,8 +75,7 @@ class CustomerControllerWebMvcTest
     }
 
     @Test
-    void shouldCreateCustomer() throws Exception
-    {
+    void shouldCreateCustomer() throws Exception {
         final CreateCustomerRequest request = new CreateCustomerRequest(
             FIRST_NAME,
             LAST_NAME,
@@ -97,14 +94,13 @@ class CustomerControllerWebMvcTest
             .andExpect(jsonPath("$.customerId").value(CUSTOMER_ID))
             .andExpect(jsonPath("$.email").value(EMAIL))
             .andExpect(jsonPath("$.firstName").value(FIRST_NAME))
-            .andExpect(jsonPath("$.lastName").value(LAST_NAME));;
+            .andExpect(jsonPath("$.lastName").value(LAST_NAME));
 
         verify(customerFacade).createCustomer(any());
     }
 
     @Test
-    void shouldUpdateCustomer() throws Exception
-    {
+    void shouldUpdateCustomer() throws Exception {
         final UpdateCustomerRequest request = new UpdateCustomerRequest(
             FIRST_NAME,
             LAST_NAME,
@@ -123,22 +119,20 @@ class CustomerControllerWebMvcTest
     }
 
     @Test
-    void shouldDeleteCustomer() throws Exception
-    {
+    void shouldDeleteCustomer() throws Exception {
         mockMvc.perform(delete(BASE_URL + "/{customerId}", CUSTOMER_ID))
             .andExpect(status().isNoContent());
 
         verify(customerFacade).deleteCustomer(eq(CUSTOMER_ID));
     }
 
-    private CustomerView mockCustomerView()
-    {
+    private CustomerView mockCustomerView() {
         return new CustomerView(
-                                            CUSTOMER_ID,
-                                            FIRST_NAME,
-                                            LAST_NAME,
-                                            EMAIL,
-                                            PHONE,
-                                            CustomerStatus.ACTIVE);
+            CUSTOMER_ID,
+            FIRST_NAME,
+            LAST_NAME,
+            EMAIL,
+            PHONE,
+            CustomerStatus.ACTIVE);
     }
 }

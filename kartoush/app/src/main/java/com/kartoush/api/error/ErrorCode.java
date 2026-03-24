@@ -1,11 +1,21 @@
 package com.kartoush.api.error;
 
 public enum ErrorCode {
-    CUSTOMER_NOT_FOUND,
-    CUSTOMER_ALREADY_EXISTS,
+    // Customer
     CUSTOMER_ADDRESS_NOT_FOUND,
-    VALIDATION_FAILED,
+    CUSTOMER_ALREADY_EXISTS,
     CUSTOMER_DELETED,
+    CUSTOMER_NOT_FOUND,
+    CUSTOMER_PENDING_ACTIVATION,
+
+    // Lifecycle
+    INVALID_CUSTOMER_STATUS_TRANSITION,
+    INVALID_CUSTOMER_REACTIVATION,
+
+    // Validation
+    VALIDATION_FAILED,
+
+    // System
     INTERNAL_ERROR;
 
     private final String urn;

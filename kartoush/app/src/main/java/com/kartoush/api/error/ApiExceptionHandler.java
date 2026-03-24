@@ -1,12 +1,17 @@
 package com.kartoush.api.error;
 
+import com.kartoush.customer.exception.CustomerAddressNotFoundException;
 import com.kartoush.customer.exception.CustomerAlreadyExistsException;
-import com.kartoush.customer.exception.CustomerDeletedException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
+import com.kartoush.customer.exception.CustomerPendingActivationException;
+import com.kartoush.customer.exception.InvalidCustomerReactivationException;
+import com.kartoush.customer.exception.InvalidCustomerStatusTransitionException;
 import com.kartoush.platform.validation.RequestValidationException;
 import com.kartoush.platform.validation.ValidationError;
 import jakarta.servlet.http.HttpServletRequest;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -26,15 +31,16 @@ import java.util.Set;
 @RestControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ApiExceptionHandler.class);
+
     private static final Set<String> SENSITIVE_FIELDS = Set.of(
-            "password",
-            "passwordHash",
-            "currentPassword",
-            "newPassword",
-            "token",
-            "accessToken",
-            "refreshToken"
-    );
+        "password",
+        "passwordHash",
+        "currentPassword",
+        "newPassword",
+        "token",
+        "accessToken",
+        "refreshToken");
 
     private final ApiProblemFactory apiProblemFactory;
 
@@ -43,54 +49,42 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(CustomerNotFoundException.class)
-    public ProblemDetail handleCustomerNotFound(
-            final CustomerNotFoundException ex,
-            final HttpServletRequest request) {
+    public ProblemDetail handleCustomerNotFoundException(
+        final CustomerNotFoundException ex,
+        final HttpServletRequest request) {
 
         return apiProblemFactory.create(
-                HttpStatus.NOT_FOUND,
-                "Customer Not Found",
-                ex.getMessage(),
-                ErrorCode.CUSTOMER_NOT_FOUND,
-                request);
+            HttpStatus.NOT_FOUND,
+            "Customer Not Found",
+            ex.getMessage(),
+            ErrorCode.CUSTOMER_NOT_FOUND,
+            request);
     }
 
     @ExceptionHandler(CustomerAlreadyExistsException.class)
-    public ProblemDetail handleCustomerExists(
-            final CustomerAlreadyExistsException ex,
-            final HttpServletRequest request) {
+    public ProblemDetail handleCustomerAlreadyExistsException(
+        final CustomerAlreadyExistsException ex,
+        final HttpServletRequest request) {
 
         return apiProblemFactory.create(
-                HttpStatus.CONFLICT,
-                "Customer Already Exists",
-                ex.getMessage(),
-                ErrorCode.CUSTOMER_ALREADY_EXISTS,
-                request);
-    }
-
-    @ExceptionHandler(CustomerDeletedException.class)
-    public ProblemDetail handleCustomerDeleted(
-            final CustomerDeletedException ex,
-            final HttpServletRequest request) {
-        return apiProblemFactory.create(
-                HttpStatus.CONFLICT,
-                "Customer email exists but is marked as deleted",
-                ex.getMessage(),
-                ErrorCode.CUSTOMER_DELETED,
-                request);
+            HttpStatus.CONFLICT,
+            "Customer Already Exists",
+            ex.getMessage(),
+            ErrorCode.CUSTOMER_ALREADY_EXISTS,
+            request);
     }
 
     @ExceptionHandler(RequestValidationException.class)
     public ProblemDetail handleRequestValidationException(
-            final RequestValidationException ex,
-            final HttpServletRequest request) {
+        final RequestValidationException ex,
+        final HttpServletRequest request) {
 
         final ProblemDetail problem = apiProblemFactory.create(
-                HttpStatus.BAD_REQUEST,
-                "Validation Failed",
-                ex.getMessage(),
-                ErrorCode.VALIDATION_FAILED,
-                request);
+            HttpStatus.BAD_REQUEST,
+            "Request Validation Failed",
+            ex.getMessage(),
+            ErrorCode.VALIDATION_FAILED,
+            request);
 
         problem.setProperty("errors", ex.getErrors());
 
@@ -99,51 +93,104 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnhandledException(
-            final Exception ex,
-            final HttpServletRequest request) {
+        final Exception ex,
+        final HttpServletRequest request) {
+        LOG.error("Unhandled exception for request [{} {}] with query [{}]",
+            request.getMethod(),
+            request.getRequestURI(),
+            request.getQueryString(),
+            ex);
 
         return apiProblemFactory.create(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Internal Server Error",
-                "An unexpected error occurred.",
-                ErrorCode.INTERNAL_ERROR,
-                request);
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Internal Server Error",
+            "An unexpected error occurred",
+            ErrorCode.INTERNAL_ERROR,
+            request);
     }
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
-            final MethodArgumentNotValidException ex,
-            final @NonNull HttpHeaders headers,
-            final @NonNull HttpStatusCode status,
-            final @NonNull WebRequest request) {
+        final MethodArgumentNotValidException ex,
+        final @NonNull HttpHeaders headers,
+        final @NonNull HttpStatusCode status,
+        final @NonNull WebRequest request) {
 
         final HttpServletRequest httpRequest =
-                ((ServletWebRequest) request).getRequest();
+            ((ServletWebRequest) request).getRequest();
 
         final ProblemDetail problem = apiProblemFactory.create(
-                HttpStatus.BAD_REQUEST,
-                "Validation Failed",
-                "One or more validation errors occurred.",
-                ErrorCode.VALIDATION_FAILED,
-                httpRequest);
+            HttpStatus.BAD_REQUEST,
+            "Validation Failed",
+            "One or more validation errors occurred.",
+            ErrorCode.VALIDATION_FAILED,
+            httpRequest);
 
         final List<ValidationError> errors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(this::toValidationError)
-                .toList();
+            .getFieldErrors()
+            .stream()
+            .map(this::toValidationError)
+            .toList();
 
         problem.setProperty("errors", errors);
 
         return handleExceptionInternal(ex, problem, headers, status, request);
     }
 
+    @ExceptionHandler(InvalidCustomerReactivationException.class)
+    public ProblemDetail handleInvalidCustomerReactivationException(
+        final InvalidCustomerReactivationException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Invalid Customer Reactivation",
+            ex.getLocalizedMessage(),
+            ErrorCode.INVALID_CUSTOMER_REACTIVATION,
+            request);
+    }
+    @ExceptionHandler(InvalidCustomerStatusTransitionException.class)
+    public ProblemDetail handleInvalidCustomerStatusTransitionException(
+        final InvalidCustomerStatusTransitionException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Invalid Customer Status Transition",
+            ex.getMessage(),
+            ErrorCode.INVALID_CUSTOMER_STATUS_TRANSITION,
+            request);
+    }
+
+    @ExceptionHandler(CustomerAddressNotFoundException.class)
+    public ProblemDetail handleCustomerAddressNotFoundException(
+        final CustomerAddressNotFoundException ex,
+        final HttpServletRequest request) {
+            return apiProblemFactory.create(
+                HttpStatus.NOT_FOUND,
+                "Customer Address Not Found",
+                ex.getMessage(),
+                ErrorCode.CUSTOMER_ADDRESS_NOT_FOUND,
+                request);
+    }
+
+    @ExceptionHandler(CustomerPendingActivationException.class)
+    public ProblemDetail handleCustomerPendingActivationException(
+        final CustomerPendingActivationException ex,
+        final HttpServletRequest request)
+    {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Customer Pending Activation",
+            ex.getMessage(),
+            ErrorCode.CUSTOMER_PENDING_ACTIVATION,
+            request);
+    }
+
     private ValidationError toValidationError(final FieldError error) {
         return new ValidationError(
-                error.getField(),
-                error.getDefaultMessage(),
-                error.getCode(),
-                safeRejectedValue(error));
+            error.getField(),
+            error.getDefaultMessage(),
+            error.getCode(),
+            safeRejectedValue(error));
     }
 
     private Object safeRejectedValue(final FieldError error) {

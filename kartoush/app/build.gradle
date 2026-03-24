@@ -40,6 +40,7 @@ dependencies {
     testImplementation (libs.testcontainers)
     testImplementation (libs.testcontainersJunitJupiter)
     testImplementation (libs.testcontainersPostgresql)
+    testImplementation (libs.springBootStarterWebmvcTest)
 
     testImplementation project(":test-support")
     testImplementation (libs.springBootStarterTest)
