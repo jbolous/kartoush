@@ -4,7 +4,6 @@ import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
 import com.kartoush.customer.exception.CustomerAlreadyExistsException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
-import com.kartoush.customer.exception.CustomerDeletedException;
 import com.kartoush.customer.exception.CustomerPendingActivationException;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.mapper.CustomerMapper;
@@ -64,9 +63,7 @@ public class DefaultCustomerService implements CustomerService
             final String email = existingCustomer.get().getEmail();
             final CustomerStatus status = existingCustomer.get().getCustomerStatus();
 
-            if (status == CustomerStatus.DELETED) {
-                throw new CustomerDeletedException(email);
-            } else if (status == CustomerStatus.PENDING) {
+            if (status == CustomerStatus.PENDING) {
                 throw new CustomerPendingActivationException(email);
             }
 
