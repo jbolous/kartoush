@@ -111,10 +111,10 @@ public class DefaultCustomerFacade implements CustomerFacade {
     private CustomerView toCustomerView(final Customer customer) {
         return new CustomerView(
                 customer.getId().value(),
-                customer.getEmail().value(),
-                customer.getProfile().phoneNumber(),
                 customer.getProfile().firstName(),
                 customer.getProfile().lastName(),
+                customer.getEmail().value(),
+                customer.getProfile().phoneNumber(),
                 customer.getStatus());
     }
 

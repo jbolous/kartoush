@@ -1,4 +1,4 @@
-package com.kartoush.customer.test;
+package com.kartoush.customer;
 
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;

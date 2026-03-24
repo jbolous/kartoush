@@ -23,22 +23,24 @@ class CustomerEntityTest {
     private static final String PASSWORD_HASH = "hash";
     private static final CustomerStatus ACTIVE_STATUS = CustomerStatus.ACTIVE;
 
-
     @Test
-    void onCreate_shouldNormalizeEmail_andSetTimestamps() {
+    void shouldNormalizeEmailAndSetTimestampsWhenCreatingCustomer() {
+        // given
         CustomerEntity entity = CustomerEntity.newCustomer(
-                CustomerIdEmbeddable.from(CustomerId.of(ID)),
-                new CustomerProfileEntity(
+            CustomerIdEmbeddable.from(CustomerId.of(ID)),
+            new CustomerProfileEntity(
                 " " + FIRST_NAME + " ",
                 " " + LAST_NAME + " ",
                 " " + PHONE_NUMBER + " "),
-                EMAIL,
-                PASSWORD_HASH,
-                ACTIVE_STATUS
+            EMAIL,
+            PASSWORD_HASH,
+            ACTIVE_STATUS
         );
 
+        // when
         entity.onCreate();
 
+        // then
         assertThat(entity.getEmail()).isEqualTo(EMAIL.toLowerCase(Locale.ROOT));
         assertThat(entity.getProfile().getFirstName()).isEqualTo(FIRST_NAME);
         assertThat(entity.getProfile().getLastName()).isEqualTo(LAST_NAME);
@@ -53,41 +55,51 @@ class CustomerEntityTest {
     }
 
     @Test
-    void newCustomer_shouldFailWhenIdMissing() {
+    void shouldThrowExceptionWhenCreatingCustomerWithoutId() {
+        // given
+
+        // when / then
         assertThatThrownBy(() -> CustomerEntity.newCustomer(
-                null,
-                new CustomerProfileEntity(
-                        FIRST_NAME,
-                        LAST_NAME,
-                        PHONE_NUMBER),
-                EMAIL,
-                PASSWORD_HASH,
-                ACTIVE_STATUS))
-                .isInstanceOf(NullPointerException.class)
-                .hasMessageContaining("id is required");
+            null,
+            new CustomerProfileEntity(
+                FIRST_NAME,
+                LAST_NAME,
+                PHONE_NUMBER
+            ),
+            EMAIL,
+            PASSWORD_HASH,
+            ACTIVE_STATUS
+        ))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("id is required");
     }
 
     @Test
-    void onUpdate_shouldRefreshUpdatedAt_andNormalizeEmail() {
+    void shouldRefreshUpdatedAtAndNormalizeEmailWhenUpdatingCustomer() {
+        // given
         CustomerEntity entity = CustomerEntity.newCustomer(
-                CustomerIdEmbeddable.from(CustomerId.of(ID)),
-                new CustomerProfileEntity(
-                        FIRST_NAME,
-                        LAST_NAME,
-                        PHONE_NUMBER),
-                EMAIL,
-                PASSWORD_HASH,
-                ACTIVE_STATUS);
+            CustomerIdEmbeddable.from(CustomerId.of(ID)),
+            new CustomerProfileEntity(
+                FIRST_NAME,
+                LAST_NAME,
+                PHONE_NUMBER
+            ),
+            EMAIL,
+            PASSWORD_HASH,
+            ACTIVE_STATUS
+        );
 
         entity.onCreate();
         Instant createdAt = entity.getCreatedAt();
-        Instant updatedAt1 = entity.getUpdatedAt();
+        Instant originalUpdatedAt = entity.getUpdatedAt();
 
+        // when
         entity.onUpdate();
-        Instant updatedAt2 = entity.getUpdatedAt();
+        Instant updatedUpdatedAt = entity.getUpdatedAt();
 
+        // then
         assertThat(entity.getEmail()).isEqualTo(EMAIL.toLowerCase(Locale.ROOT));
         assertThat(entity.getCreatedAt()).isEqualTo(createdAt);
-        assertThat(updatedAt2).isAfterOrEqualTo(updatedAt1);
+        assertThat(updatedUpdatedAt).isAfterOrEqualTo(originalUpdatedAt);
     }
 }

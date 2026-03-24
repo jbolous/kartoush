@@ -1,8 +1,8 @@
 package com.kartoush.customer.facade.model;
 
 public record CreateCustomerRequest(
-        String email,
-        String phoneNumber,
         String firstName,
-        String lastName) {
+        String lastName,
+        String email,
+        String phoneNumber) {
 }

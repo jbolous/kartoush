@@ -64,10 +64,10 @@ class DefaultCustomerFacadeTest {
 
     private CreateCustomerRequest buildCustomerRequest(){
         return  new CreateCustomerRequest(
-                EMAIL,
-                PHONE_NUMBER,
                 FIRST_NAME,
-                LAST_NAME);
+                LAST_NAME,
+                EMAIL,
+                PHONE_NUMBER);
     }
 
     private Customer buildCustomer(){
