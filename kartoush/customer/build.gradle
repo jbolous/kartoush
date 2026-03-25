@@ -10,6 +10,7 @@ dependencies {
     implementation(libs.springBootStarterFlyway)
     implementation(libs.flywayPostgresql)
     implementation(libs.mapstruct)
+    implementation(libs.swaggerAnnotations)
 
     annotationProcessor(libs.mapstructProcessor)
     testAnnotationProcessor(libs.mapstructProcessor)

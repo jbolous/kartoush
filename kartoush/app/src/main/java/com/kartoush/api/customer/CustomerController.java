@@ -35,21 +35,39 @@ public class CustomerController {
         this.customerFacade = customerFacade;
     }
 
+    @Operation(summary = "Get all customers")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Customers retrieved successfully")
+    })
     @GetMapping
     public ResponseEntity<List<CustomerView>> getCustomers() {
         return ResponseEntity.ok(customerFacade.getCustomers());
     }
 
+    @Operation(summary = "Get customer by id")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Customer retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Customer not found")
+    })
     @GetMapping("/{customerId}")
     public ResponseEntity<CustomerView> getCustomer(@PathVariable final String customerId) {
         return ResponseEntity.ok(customerFacade.getCustomer(customerId));
     }
 
+    @Operation(summary = "Create customer")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Customer created successfully"),
+        @ApiResponse(responseCode = "400", description = "Request validation failed"),
+        @ApiResponse(responseCode = "409", description = "Customer already exists or pending activation")
+    })
     @PostMapping
     public ResponseEntity<CustomerView> createCustomer(
         @Valid @RequestBody final CreateCustomerRequest request) {
+
         LOG.info("Received create customer request for email={}", request.email());
+
         final CustomerView createdCustomer = customerFacade.createCustomer(request);
+
         LOG.info("Created customer id={} for email={}", createdCustomer.customerId(), request.email());
 
         return ResponseEntity
@@ -57,30 +75,25 @@ public class CustomerController {
             .body(createdCustomer);
     }
 
-
-    @Operation(
-        summary = "Update customer profile",
-        description = """
-            Replaces the customer profile fields that are updatable through this API.
-
-            This endpoint updates profile data only, such as first name, last name, and phone number.
-            It does not update the customer's email address and does not change customer lifecycle state.
-
-            The operation is idempotent.
-            """
-    )
+    @Operation(summary = "Update customer profile")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Customer profile updated successfully"),
+        @ApiResponse(responseCode = "200", description = "Customer updated successfully"),
         @ApiResponse(responseCode = "400", description = "Request validation failed"),
         @ApiResponse(responseCode = "404", description = "Customer not found")
     })
     @PutMapping("/{customerId}")
     public ResponseEntity<CustomerView> updateCustomer(
         @PathVariable final String customerId,
-        @RequestBody final UpdateCustomerRequest request) {
+        @Valid @RequestBody final UpdateCustomerRequest request) {
+
         return ResponseEntity.ok(customerFacade.updateCustomer(customerId, request));
     }
 
+    @Operation(summary = "Delete customer")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Customer deleted successfully"),
+        @ApiResponse(responseCode = "404", description = "Customer not found")
+    })
     @DeleteMapping("/{customerId}")
     public ResponseEntity<Void> deleteCustomer(@PathVariable final String customerId) {
         customerFacade.deleteCustomer(customerId);
