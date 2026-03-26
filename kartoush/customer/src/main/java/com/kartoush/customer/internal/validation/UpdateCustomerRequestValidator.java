@@ -1,9 +1,11 @@
 package com.kartoush.customer.internal.validation;
 
+import com.kartoush.customer.domain.CustomerConstraints;
 import com.kartoush.customer.facade.model.UpdateCustomerRequest;
 import com.kartoush.platform.types.PhoneNumber;
 import com.kartoush.platform.types.exception.InvalidPhoneNumberException;
 import com.kartoush.platform.validation.RequestValidationException;
+import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
 import org.springframework.stereotype.Component;
 
@@ -23,46 +25,11 @@ public class UpdateCustomerRequestValidator {
             return;
         }
 
-        validateRequiredText("firstName", request.firstName(), 100, errors);
-        validateRequiredText("lastName", request.lastName(), 100, errors);
-        validateOptionalPhoneNumber(request.phoneNumber(), errors);
+        RequestValidationSupport.validateRequiredText("firstName", request.firstName(), CustomerConstraints.NAME_MAX_LENGTH, errors);
+        RequestValidationSupport.validateRequiredText("lastName", request.lastName(), CustomerConstraints.NAME_MAX_LENGTH, errors);
+        RequestValidationSupport.validateOptionalPhoneNumber("phoneNumber", request.phoneNumber(), errors);
 
         throwIfErrors(errors);
-    }
-
-    private void validateRequiredText(
-            final String field,
-            final String value,
-            final int maxLength,
-            final List<ValidationError> errors) {
-        if (value == null) {
-            errors.add(new ValidationError(field, field + " must not be null"));
-            return;
-        }
-
-        if (value.isBlank()) {
-            errors.add(new ValidationError(field, field + " must not be blank"));
-            return;
-        }
-
-        if (value.length() > maxLength) {
-            errors.add(new ValidationError(field, field + " must not exceed " + maxLength + " characters"));
-        }
-    }
-
-    private void validateOptionalPhoneNumber(
-            final String phoneNumber,
-            final List<ValidationError> errors) {
-        if (phoneNumber == null || phoneNumber.isBlank()) {
-            return;
-        }
-
-        try {
-            new PhoneNumber(phoneNumber);
-        }
-        catch (final InvalidPhoneNumberException ex) {
-            errors.add(new ValidationError("phoneNumber", ex.getMessage()));
-        }
     }
 
     private void throwIfErrors(final List<ValidationError> errors) {

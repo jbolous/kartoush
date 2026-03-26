@@ -1,11 +1,6 @@
 rootProject.name = 'kartoush'
-include 'app', 'platform-types', 'customer'
-
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-    }
-}
-
-
+include 'app'
+include 'customer'
+include ':platform:platform-types'
+include ':platform:platform-validation'
 include 'test-support'
