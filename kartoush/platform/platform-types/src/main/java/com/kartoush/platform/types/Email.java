@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
 
 public record Email(String value) {
 
+    private static final int MAX_LENGTH = 150;
+
     private static final Pattern EMAIL_PATTERN =
         Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
@@ -21,6 +23,10 @@ public record Email(String value) {
 
         if (value.isBlank()) {
             throw new InvalidEmailException("Email must not be blank");
+        }
+
+        if(value.length() > MAX_LENGTH) {
+            throw new InvalidEmailException("Email cannot be longer than " + MAX_LENGTH);
         }
 
         if (!EMAIL_PATTERN.matcher(value).matches()) {
