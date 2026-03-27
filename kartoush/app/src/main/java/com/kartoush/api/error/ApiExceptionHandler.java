@@ -5,6 +5,7 @@ import com.kartoush.customer.exception.CustomerAlreadyExistsException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.exception.CustomerPendingActivationException;
 import com.kartoush.customer.exception.InvalidCustomerReactivationException;
+import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.exception.InvalidCustomerStatusTransitionException;
 import com.kartoush.platform.validation.RequestValidationException;
 import com.kartoush.platform.validation.ValidationError;
@@ -175,13 +176,24 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(CustomerPendingActivationException.class)
     public ProblemDetail handleCustomerPendingActivationException(
         final CustomerPendingActivationException ex,
-        final HttpServletRequest request)
-    {
+        final HttpServletRequest request) {
         return apiProblemFactory.create(
             HttpStatus.CONFLICT,
             "Customer Pending Activation",
             ex.getMessage(),
             ErrorCode.CUSTOMER_PENDING_ACTIVATION,
+            request);
+    }
+
+    @ExceptionHandler(InvalidCustomerStatusForUpdateException.class)
+    public ProblemDetail handleInvalidCustomerStatusForUpdateException(
+        final InvalidCustomerStatusForUpdateException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Invalid Customer Status For Update",
+            ex.getMessage(),
+            ErrorCode.INVALID_CUSTOMER_STATUS_FOR_UPDATE,
             request);
     }
 
