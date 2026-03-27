@@ -1,0 +1,224 @@
+# Customer Lifecycle and API Behavior
+
+## Overview
+
+The customer module defines the lifecycle, validation rules, and API behavior for customer management within the system.
+
+This document describes the current implemented behavior, including lifecycle transitions, API expectations, and error handling conventions. It is intended to provide a clear reference without requiring readers to inspect the implementation.
+
+---
+
+## Customer Lifecycle
+
+### States
+
+Customers exist in one of the following states:
+
+- PENDING
+- ACTIVE
+- INACTIVE
+- DELETED
+
+---
+
+### State Definitions
+
+Each customer lifecycle state represents a distinct stage in the customer's relationship with the system.
+
+#### PENDING
+
+A customer has been created but has not yet completed activation.
+
+This state typically represents a newly registered customer who has not verified their account or completed an activation step. Pending customers are not considered fully active in the system.
+
+Pending customers are not returned in standard customer queries and are not eligible for normal operations until activated.
+
+---
+
+#### ACTIVE
+
+A customer is fully active and can interact with the system as expected.
+
+This is the normal operating state for a customer. Active customers are returned in standard queries and are eligible for all supported operations.
+
+---
+
+#### INACTIVE
+
+A customer is temporarily disabled but not deleted.
+
+This state represents a customer who previously had access but is no longer active due to a system or administrative action. The customer may be reactivated in the future.
+
+Inactive customers are not considered active in the system but retain their data and identity.
+
+---
+
+#### DELETED
+
+A customer has been soft deleted.
+
+The customer record remains in the system for historical and auditing purposes, but the customer is no longer considered active. The original email is mutated to allow reuse, and the customer cannot transition to any other state.
+
+---
+
+### Valid Transitions
+
+The following lifecycle transitions are supported:
+
+- PENDING -> ACTIVE
+- PENDING -> INACTIVE
+- PENDING -> DELETED
+- ACTIVE -> INACTIVE
+- ACTIVE -> DELETED
+- INACTIVE -> ACTIVE
+- INACTIVE -> DELETED
+
+---
+
+### Invalid Transitions
+
+The following transitions are not allowed:
+
+- DELETED -> any state
+- Reactivation from any state other than INACTIVE
+- Invalid transitions during specific operations, such as attempting to reactivate a PENDING customer
+
+Invalid transitions result in domain exceptions.
+
+---
+
+### Activation vs Reactivation
+
+The system distinguishes between activation and reactivation.
+
+Activation moves a customer from PENDING to ACTIVE and represents initial account activation.
+
+Reactivation moves a customer from INACTIVE to ACTIVE and is used when restoring access for an existing customer.
+
+Reactivation is not allowed for PENDING or DELETED customers.
+
+---
+
+### Delete Behavior (Soft Delete)
+
+Customer deletion is implemented as a soft delete.
+
+The customer status is set to DELETED, and the record remains in persistence. The original email is mutated to allow reuse of the original email address while preserving historical data.
+
+---
+
+## API Behavior
+
+### Base Path
+
+`/api/customers`
+
+---
+
+### Endpoints
+
+#### Get all customers
+
+`GET /api/customers`
+
+Returns a list of customers. Only active customers are returned.
+
+---
+
+#### Get customer by ID
+
+`GET /api/customers/{customerId}`
+
+Returns a single customer. Returns 404 if the customer does not exist.
+
+---
+
+#### Create customer
+
+`POST /api/customers`
+
+Creates a new customer and returns 201 Created with the created customer.
+
+Validation rules:
+
+- First name and last name are required
+- Email must be valid and within defined length constraints
+- Phone number, if provided, must be valid
+
+Error scenarios:
+
+- 400 Bad Request for validation failures
+- 409 Conflict if the customer already exists or is in a conflicting state
+
+---
+
+#### Update customer
+
+`PUT /api/customers/{customerId}`
+
+Updates customer profile fields such as first name, last name, and phone number.
+
+The operation does not update the email address and does not change the customer lifecycle state. The request is intended to be idempotent.
+
+Error scenarios:
+
+- 400 Bad Request for validation failures
+- 404 Not Found if the customer does not exist
+
+---
+
+#### Delete customer
+
+`DELETE /api/customers/{customerId}`
+
+Performs a soft delete and returns 204 No Content.
+
+The customer status is set to DELETED, and the record is not physically removed.
+
+---
+
+## Error Handling
+
+The API uses a consistent error response structure based on ProblemDetail.
+
+### Common Status Codes
+
+- 400 Bad Request for validation failures
+- 404 Not Found when the customer does not exist
+- 409 Conflict for business rule violations
+- 500 Internal Server Error for unexpected failures
+
+### Error Response Characteristics
+
+Error responses include:
+
+- Status
+- Title
+- Detail
+- Type (error code URI)
+- Instance (request path)
+
+Additional properties may include:
+
+- ErrorCode
+- Timestamp
+
+Validation errors are standardized across both custom validation logic and framework-level validation.
+
+---
+
+## Deferred / Not Yet Exposed
+
+The following capabilities are not currently exposed via the API:
+
+- Activation endpoint
+- Reactivation endpoint
+- Token-based activation or verification flows
+
+These will be introduced in a future iteration.
+
+---
+
+## Notes
+
+This document reflects the current implemented behavior and should be updated as lifecycle rules or API behavior evolve.
