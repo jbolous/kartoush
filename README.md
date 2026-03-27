@@ -1,11 +1,75 @@
 # Kartoush
 
-> A modular monolith e-commerce platform built to demonstrate real-world system architecture, tradeoff-driven design, and production-minded engineering.
+> A modular monolith e-commerce backend built to demonstrate production-grade architecture, domain modeling, and system design at scale.
 
-Kartoush exists to showcase how a large, evolving system can be intentionally designed, documented, and implemented by a single engineer with enterprise experience.
+Kartoush is designed to showcase how a real-world backend system can be intentionally architected, evolved, and documented over time.
+
+It reflects the kind of system design, tradeoffs, and engineering discipline expected from a senior engineer working on production platforms.
 
 This is not a tutorial project.  
-This is a design-first system built the way real production platforms evolve.
+This is a design-first system built the way real-world systems evolve.
+
+## Overview
+
+Kartoush is a backend system inspired by real-world e-commerce platforms, designed to model complex domains such as:
+
+- Customer lifecycle management  
+- Inventory reservation and backordering  
+- Order and checkout workflows (in progress)  
+
+The system is built using a **modular monolith architecture**, emphasizing:
+
+- clear domain boundaries  
+- explicit contracts between modules  
+- long-term maintainability and evolvability  
+
+This project reflects how a **senior engineer designs, builds, and evolves a system over time**, focusing on real-world tradeoffs rather than simplified examples.
+
+---
+
+## Why This Stands Out
+
+Kartoush focuses on engineering depth over surface-level features.
+
+It demonstrates:
+
+- **Architecture Ownership**  
+  A modular monolith with strict boundaries and documented decisions (ADRs)
+
+- **Real Domain Complexity**  
+  Inventory modeling that accounts for reservations, expiration, and concurrency
+
+- **Production-Oriented Design**  
+  Lifecycle rules, validation, idempotency, and observability designed from the start
+
+- **Decision Transparency**  
+  Tradeoffs are documented and revisited as the system evolves
+
+- **Evolution Over Time**  
+  The system is intentionally built to reflect how real platforms grow, adapt, and change
+
+---
+
+## Why Kartoush Exists
+
+Most public GitHub projects fail to demonstrate:
+
+- architectural ownership  
+- system-level tradeoffs  
+- non-functional requirements  
+- long-term maintainability  
+
+Kartoush was created to close that gap.
+
+It showcases how I approach:
+
+- system decomposition  
+- domain boundaries  
+- scalability and performance  
+- observability and operability  
+- evolution over time  
+
+Everything in this repository exists to make engineering decisions explicit.
 
 ---
 
@@ -20,26 +84,17 @@ This is a design-first system built the way real production platforms evolve.
 
 ---
 
-## Why Kartoush Exists
+## Where to Start (for Reviewers)
 
-Most public GitHub projects fail to demonstrate:
+If you are reviewing this project:
 
-- Architectural ownership  
-- System-level tradeoffs  
-- Non-functional requirements  
-- Long-term maintainability  
+1. Read the Architecture Decision Records in `docs/architecture/decisions`  
+2. Review the customer domain and lifecycle rules  
+3. Examine inventory modeling and reservation handling  
+4. Explore module boundaries and facade contracts  
+5. Inspect commit history to understand how decisions evolved  
 
-Kartoush was created to solve that gap.
-
-The goal is to demonstrate how I approach:
-
-- System decomposition  
-- Domain boundaries  
-- Performance and scalability  
-- Observability and operability  
-- Change over time  
-
-Everything in this repository exists to make engineering decisions explicit.
+---
 
 ### A Deliberate Learning Project
 
@@ -216,7 +271,7 @@ Kartoush is intentionally not:
 - A framework showcase  
 - A tutorial codebase  
 
-It is a thinking artifact that happens to compile.
+This is a thinking artifact that also happens to compile.
 
 ---
 
