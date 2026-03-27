@@ -5,6 +5,7 @@ import com.kartoush.customer.domain.CustomerProfile;
 import com.kartoush.customer.exception.CustomerAlreadyExistsException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.exception.CustomerPendingActivationException;
+import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.mapper.CustomerMapper;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
@@ -88,6 +89,8 @@ public class DefaultCustomerService implements CustomerService
         final CustomerEntity customerEntity = customerRepository.findById(CustomerIdEmbeddable.from(customerId))
                 .orElseThrow(() -> new CustomerNotFoundException(customerId));
 
+        validateCustomerCanBeUpdated(customerEntity);
+
         final Customer customer = customerMapper.toDomain(customerEntity);
         customer.updateDetails(profile);
 
@@ -166,5 +169,13 @@ public class DefaultCustomerService implements CustomerService
         final CustomerEntity savedCustomer = customerRepository.save(customerEntity);
 
         return customerMapper.toDomain(savedCustomer);
+    }
+
+    private void validateCustomerCanBeUpdated(final CustomerEntity customer) {
+        final CustomerStatus status = customer.getCustomerStatus();
+
+        if (status == CustomerStatus.INACTIVE || status == CustomerStatus.DELETED) {
+            throw new InvalidCustomerStatusForUpdateException(status);
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.kartoush.customer.service.impl;
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
 import com.kartoush.customer.exception.CustomerNotFoundException;
+import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.mapper.CustomerMapper;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
@@ -10,7 +11,6 @@ import com.kartoush.customer.persistence.repository.CustomerRepository;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
-import com.kartoush.platform.ulid.UlidGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -50,9 +50,6 @@ class DefaultCustomerServiceTest
 
     @Mock
     private CustomerMapper customerMapper;
-
-    @Mock
-    private UlidGenerator ulidGenerator;
 
     @InjectMocks
     private DefaultCustomerService defaultCustomerService;
@@ -141,12 +138,14 @@ class DefaultCustomerServiceTest
     void shouldUpdateCustomer() {
         // given
         final CustomerEntity existingCustomerEntity = mock(CustomerEntity.class);
+        final Customer existingCustomer = mock(Customer.class);
         final CustomerEntity savedCustomerEntity = mock(CustomerEntity.class);
         final Customer mappedCustomer = mock(Customer.class);
 
         given(customerRepository.findById(CUSTOMER_ID_EMBEDDABLE)).willReturn(Optional.of(existingCustomerEntity));
+        given(customerMapper.toDomain(existingCustomerEntity)).willReturn(existingCustomer);
         given(customerRepository.save(existingCustomerEntity)).willReturn(savedCustomerEntity);
-        given(customerMapper.toDomain(any(CustomerEntity.class))).willReturn(mappedCustomer);
+        given(customerMapper.toDomain(savedCustomerEntity)).willReturn(mappedCustomer);
 
         // when
         final Customer result = defaultCustomerService.updateCustomer(CUSTOMER_ID_VALUE, PROFILE);
@@ -154,9 +153,45 @@ class DefaultCustomerServiceTest
         // then
         assertThat(result).isSameAs(mappedCustomer);
         verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
-        verify(customerMapper).toDomain(savedCustomerEntity);
-        verify(customerMapper).updateEntity(result, existingCustomerEntity);
+        verify(customerMapper).toDomain(existingCustomerEntity);
+        verify(customerMapper).updateEntity(existingCustomer, existingCustomerEntity);
         verify(customerRepository).save(existingCustomerEntity);
+        verify(customerMapper).toDomain(savedCustomerEntity);
+    }
+
+    @Test
+    void shouldThrowWhenUpdatingInactiveCustomer() {
+        // given
+        final CustomerEntity existingCustomerEntity = mock(CustomerEntity.class);
+
+        given(existingCustomerEntity.getCustomerStatus()).willReturn(CustomerStatus.INACTIVE);
+        given(customerRepository.findById(CUSTOMER_ID_EMBEDDABLE)).willReturn(Optional.of(existingCustomerEntity));
+
+        // when / then
+        assertThatThrownBy(() -> defaultCustomerService.updateCustomer(CUSTOMER_ID_VALUE, PROFILE))
+            .isInstanceOf(InvalidCustomerStatusForUpdateException.class)
+            .hasMessage("Customer cannot be updated while in INACTIVE status");
+
+        verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
+        verify(customerRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenUpdatingDeletedCustomer() {
+        // given
+        final CustomerEntity existingCustomerEntity = mock(CustomerEntity.class);
+
+        given(existingCustomerEntity.getCustomerStatus()).willReturn(CustomerStatus.DELETED);
+        given(customerRepository.findById(CUSTOMER_ID_EMBEDDABLE)).willReturn(Optional.of(existingCustomerEntity));
+
+        // when / then
+        assertThatThrownBy(() -> defaultCustomerService.updateCustomer(CUSTOMER_ID_VALUE, PROFILE))
+            .isInstanceOf(InvalidCustomerStatusForUpdateException.class)
+            .hasMessage("Customer cannot be updated while in DELETED status");
+
+        verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
+        verify(customerMapper, never()).updateEntity(any(), any());
+        verify(customerRepository, never()).save(any());
     }
 
     @Test
@@ -172,6 +207,31 @@ class DefaultCustomerServiceTest
         verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
         verify(customerRepository, never()).save(any());
         verify(customerMapper, never()).toDomain(any());
+    }
+
+    @Test
+    void shouldUpdatePendingCustomer() {
+        // given
+        final CustomerEntity existingCustomerEntity = mock(CustomerEntity.class);
+        final Customer existingCustomer = mock(Customer.class);
+        final CustomerEntity savedCustomerEntity = mock(CustomerEntity.class);
+        final Customer mappedCustomer = mock(Customer.class);
+
+        given(customerRepository.findById(CUSTOMER_ID_EMBEDDABLE)).willReturn(Optional.of(existingCustomerEntity));
+        given(customerMapper.toDomain(existingCustomerEntity)).willReturn(existingCustomer);
+        given(customerRepository.save(existingCustomerEntity)).willReturn(savedCustomerEntity);
+        given(customerMapper.toDomain(savedCustomerEntity)).willReturn(mappedCustomer);
+
+        // when
+        final Customer result = defaultCustomerService.updateCustomer(CUSTOMER_ID_VALUE, PROFILE);
+
+        // then
+        assertThat(result).isSameAs(mappedCustomer);
+        verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
+        verify(customerMapper).toDomain(existingCustomerEntity);
+        verify(customerMapper).updateEntity(existingCustomer, existingCustomerEntity);
+        verify(customerRepository).save(existingCustomerEntity);
+        verify(customerMapper).toDomain(savedCustomerEntity);
     }
 
     @Test
@@ -209,4 +269,6 @@ class DefaultCustomerServiceTest
         verify(customerMapper, never()).updateEntity(any(), any());
         verify(customerRepository, never()).save(any());
     }
+
+
 }
