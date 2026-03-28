@@ -20,8 +20,9 @@ import java.util.List;
 @Service
 public class DefaultCustomerFacade implements CustomerFacade {
 
-    /* TODO(#82): Move credential handling to authentication module.
-        Customer should not own passwordHash long-term. */
+    /* TODO(#82): Move credential handling to a dedicated authentication module.
+     * Customer should not own passwordHash long-term as part of proper domain separation. 
+     */
     private static final String TEMPORARY_PASSWORD_HASH = "TEMPORARY_PASSWORD_HASH";
 
     private final CustomerService customerService;
