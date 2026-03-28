@@ -7,7 +7,10 @@ Kartoush is designed to showcase how a real-world backend system can be intentio
 It reflects the kind of system design, tradeoffs, and engineering discipline expected from a senior engineer working on production platforms.
 
 This is not a tutorial project.  
-This is a design-first system built the way real-world systems evolve.
+This is a design-first system built the way real systems evolve.  
+It is intentionally structured as a portfolio project to demonstrate real-world backend engineering practices, not just feature delivery.
+
+---
 
 ## Overview
 
@@ -29,7 +32,7 @@ This project reflects how a **senior engineer designs, builds, and evolves a sys
 
 ## Why This Stands Out
 
-Kartoush focuses on engineering depth over surface-level features.
+Kartoush prioritizes engineering depth over surface-level features.
 
 It demonstrates:
 
@@ -40,7 +43,7 @@ It demonstrates:
   Inventory modeling that accounts for reservations, expiration, and concurrency
 
 - **Production-Oriented Design**  
-  Lifecycle rules, validation, idempotency, and observability designed from the start
+  Lifecycle rules, validation, idempotency, and observability designed from the start (e.g., explicit customer lifecycle state transitions and failure handling)
 
 - **Decision Transparency**  
   Tradeoffs are documented and revisited as the system evolves
@@ -75,7 +78,7 @@ Everything in this repository exists to make engineering decisions explicit.
 
 ## Tech Stack
 
-- Java
+- Java 25
 - Spring Boot
 - Gradle
 - PostgreSQL
@@ -84,11 +87,159 @@ Everything in this repository exists to make engineering decisions explicit.
 
 ---
 
+## Requirements
+
+To build and run Kartoush locally, the following are required:
+
+- **Java 25**
+- **Container runtime (Docker, Rancher Desktop, or equivalent)** required for Testcontainers-based integration tests
+- **Gradle Wrapper** (included in the repository)
+
+---
+
+## Environment Setup
+
+### Java
+
+Kartoush targets **Java 25**.
+
+Verify your version:
+
+```bash
+java -version
+```
+
+If needed, install Java 25 and ensure it is set as your active JDK.
+
+---
+
+### Container Runtime (Docker, Rancher Desktop, etc.)
+
+A container runtime is required to run integration tests using Testcontainers.  
+This can be Docker, Rancher Desktop, or another compatible runtime.  
+Ensure your container runtime exposes a Docker-compatible socket for Testcontainers.
+
+Verify your container runtime is running:
+
+```bash
+docker ps
+```
+
+If your container runtime is not running, start it (e.g., Docker Desktop, Rancher Desktop) before executing tests.
+
+---
+
+## Quick Start
+
+Build the project and run the full test suite locally:
+
+```bash
+./gradlew clean build
+./gradlew verifyAll
+```
+
+---
+
+## Build
+
+To build the project:
+
+```bash
+./gradlew clean build
+```
+
+---
+
+## Run Tests
+
+### Run All Tests (Recommended)
+
+```bash
+./gradlew verifyAll
+```
+
+Runs the full verification suite, including:
+
+- unit tests
+- integration tests
+
+---
+
+### Unit Tests Only
+
+```bash
+./gradlew test
+```
+
+Runs only unit tests.
+
+---
+
+### Integration Tests Only
+
+```bash
+./gradlew integrationTest
+```
+
+Integration tests use Testcontainers and will:
+
+- start a PostgreSQL container automatically
+- configure the datasource at runtime
+- run against a real database instance
+
+---
+
+## API Documentation
+
+Swagger UI is available when the application is running:
+
+<http://localhost:8080/swagger-ui.html>
+
+This provides an interactive way to explore and test available endpoints.
+
+---
+
+## API Example
+
+### Create Customer
+
+```bash
+curl -X POST http://localhost:8080/customers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john.doe@example.com",
+    "firstName": "John",
+    "lastName": "Doe"
+  }'
+```
+
+### Get Customer
+
+```bash
+curl http://localhost:8080/customers/{customerId}
+```
+
+### Notes
+
+- Only **active customers** are returned by default  
+- Lifecycle rules (e.g., pending, inactive, deleted) are enforced at the domain level  
+- Validation errors return structured responses  
+
+---
+
+## Troubleshooting
+
+- Ensure your container runtime is running before executing integration tests  
+- If tests fail with container-related errors, verify your container runtime is accessible  
+- On macOS, ensure your container runtime (e.g., Docker Desktop, Rancher Desktop) is fully started before running tests  
+
+---
+
 ## Where to Start (for Reviewers)
 
 If you are reviewing this project:
 
-1. Read the Architecture Decision Records in `docs/architecture/decisions`  
+1. Start with the Architecture Decision Records in `docs/architecture/decisions`  
 2. Review the customer domain and lifecycle rules  
 3. Examine inventory modeling and reservation handling  
 4. Explore module boundaries and facade contracts  
@@ -281,23 +432,11 @@ Kartoush is an evolving system.
 
 Some components are:
 
-- Fully implemented  
-- Partially implemented  
-- Documented but intentionally deferred  
+- Fully implemented
+- Partially implemented
+- Documented but intentionally deferred
 
 This reflects how real systems are built and prioritized.
-
----
-
-## How to Explore the Project
-
-If you are reviewing this as a hiring manager or engineer:
-
-1. Start with the Architecture Decision Records in `docs/architecture/decisions`
-2. Review the facade boundaries that isolate callers from internal implementation details  
-3. Examine inventory modeling and reservation flow  
-4. Review logging and performance decisions  
-5. Inspect commit history to see how decisions evolved  
 
 ---
 
