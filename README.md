@@ -1,10 +1,18 @@
-# Kartoush
+<p align="center">
+  <img src="docs/assets/kartoush-logo.png" alt="Kartoush Logo" width="350"/>
+</p>
+
+<h1 align="center">Kartoush</h1>
+
+<p align="center">
+  Modular monolith backend platform for inventory, reservations, and order lifecycle management
+</p>
 
 > A modular monolith e-commerce backend built to demonstrate production-grade architecture, domain modeling, and system design at scale.
 
 Kartoush is designed to showcase how a real-world backend system can be intentionally architected, evolved, and documented over time.
 
-It reflects the kind of system design, tradeoffs, and engineering discipline expected from a senior engineer working on production platforms.
+It reflects the system design, tradeoffs, and engineering discipline expected from a senior engineer building production systems.
 
 This is not a tutorial project.  
 This is a design-first system built the way real systems evolve.  
@@ -84,6 +92,7 @@ Everything in this repository exists to make engineering decisions explicit.
 - PostgreSQL
 - Flyway
 - SLF4J
+- Integration testing with Testcontainers (PostgreSQL)
 
 ---
 
