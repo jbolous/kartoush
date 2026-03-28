@@ -189,6 +189,22 @@ Integration tests use Testcontainers and will:
 
 ---
 
+## Testing Strategy
+
+Kartoush follows a layered testing approach designed to balance fast feedback with real-world validation.
+
+- **Unit tests** provide fast, isolated validation of business logic  
+- **Integration tests** validate behavior against a real PostgreSQL database using Testcontainers  
+- **verifyAll** runs the full test suite and is the recommended pre-commit verification step  
+
+Integration tests are treated as first-class and are designed to catch issues that only appear in real environments, such as persistence behavior, transaction boundaries, and database constraints.
+
+For detailed testing conventions and design decisions, see:
+
+- `docs/architecture/decisions/0023-testing-strategy-and-conventions.md`
+
+---
+
 ## API Documentation
 
 Swagger UI is available when the application is running:
