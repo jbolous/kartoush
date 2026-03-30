@@ -34,7 +34,7 @@ The system is built using a **modular monolith architecture**, emphasizing:
 - explicit contracts between modules  
 - long-term maintainability and evolvability  
 
-This project reflects how a **senior engineer designs, builds, and evolves a system over time**, focusing on real-world tradeoffs rather than simplified examples.
+This project reflects how production backend systems are intentionally designed, built, and evolved over time.
 
 ---
 
@@ -93,6 +93,7 @@ Everything in this repository exists to make engineering decisions explicit.
 - Flyway
 - SLF4J
 - Integration testing with Testcontainers (PostgreSQL)
+- OpenAPI (springdoc) for API documentation
 
 ---
 
@@ -126,7 +127,7 @@ If needed, install Java 25 and ensure it is set as your active JDK.
 
 A container runtime is required to run integration tests using Testcontainers.  
 This can be Docker, Rancher Desktop, or another compatible runtime.  
-Ensure your container runtime exposes a Docker-compatible socket for Testcontainers.
+Ensure your container runtime is compatible with Docker APIs so Testcontainers can communicate with it.
 
 Verify your container runtime is running:
 
@@ -234,7 +235,7 @@ This provides an interactive way to explore and test available endpoints.
 
 ---
 
-## API Example
+## API Usage Example
 
 ### Create Customer
 
