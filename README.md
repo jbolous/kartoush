@@ -138,6 +138,16 @@ If your container runtime is not running, start it (e.g., Docker Desktop, Ranche
 
 ---
 
+### Database
+
+No manual database setup is required.
+
+Integration tests use Testcontainers to provision a PostgreSQL instance at runtime. Database schema is managed using Flyway migrations, which are applied automatically during startup.
+
+This ensures tests run against a real database with a consistent, versioned schema without requiring local installation or manual setup.
+
+---
+
 ## Quick Start
 
 Build the project and run the full test suite locally:
