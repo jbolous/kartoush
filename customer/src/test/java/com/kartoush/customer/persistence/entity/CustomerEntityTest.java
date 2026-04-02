@@ -1,4 +1,4 @@
-package com.kartoush.customer.persistence;
+package com.kartoush.customer.persistence.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -6,8 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.Instant;
 import java.util.Locale;
 
-import com.kartoush.customer.persistence.entity.CustomerEntity;
-import com.kartoush.customer.persistence.entity.CustomerProfileEntity;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
