@@ -3,7 +3,6 @@ package com.kartoush.customer.persistence.repository;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.platform.types.CustomerStatus;
-import com.kartoush.platform.types.Email;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

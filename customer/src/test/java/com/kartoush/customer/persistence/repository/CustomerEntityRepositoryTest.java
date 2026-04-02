@@ -1,24 +1,20 @@
-package com.kartoush.customer.persistence;
+package com.kartoush.customer.persistence.repository;
 
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.entity.CustomerProfileEntity;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
-import com.kartoush.customer.persistence.repository.CustomerRepository;
 import com.kartoush.customer.CustomerTestApplication;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.ulid.DefaultUlidGenerator;
 import com.kartoush.platform.ulid.UlidGenerator;
 import com.kartoush.testsupport.IntegrationTest;
+import com.kartoush.testsupport.PostgresDataJpaTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.test.context.ContextConfiguration;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.util.List;
 import java.util.Locale;
@@ -27,25 +23,16 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
-@Testcontainers
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ContextConfiguration(classes = CustomerTestApplication.class)
-class CustomerEntityRepositoryTest {
+class CustomerEntityRepositoryTest extends PostgresDataJpaTest {
 
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
     private static final String PHONE_NUMBER = "555-555-1212";
     private static final String EMAIL = "jack@kartoush.test";
     private static final String PASSWORD_HASH = "ABCXYZ123789";
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres =
-        new PostgreSQLContainer("postgres:16-alpine")
-            .withDatabaseName("kartoush")
-            .withUsername("kartoush")
-            .withPassword("kartoush")
-            .waitingFor(Wait.forListeningPort());
 
     private final UlidGenerator ulidGenerator = new DefaultUlidGenerator();
 
@@ -62,8 +49,7 @@ class CustomerEntityRepositoryTest {
             profile,
             EMAIL,
             PASSWORD_HASH,
-            CustomerStatus.ACTIVE
-        );
+            CustomerStatus.ACTIVE);
 
         CustomerEntity saved = customerRepository.saveAndFlush(customer);
         CustomerProfileEntity savedProfile = saved.getProfile();
@@ -105,8 +91,7 @@ class CustomerEntityRepositoryTest {
             profile,
             EMAIL,
             PASSWORD_HASH,
-            CustomerStatus.ACTIVE
-        );
+            CustomerStatus.ACTIVE);
 
         // when
         CustomerEntity saved = customerRepository.saveAndFlush(customerEntity);
@@ -127,8 +112,7 @@ class CustomerEntityRepositoryTest {
             profile,
             originalEmail,
             PASSWORD_HASH,
-            CustomerStatus.PENDING
-        );
+            CustomerStatus.PENDING);
 
         customerRepository.saveAndFlush(first);
 
@@ -146,8 +130,7 @@ class CustomerEntityRepositoryTest {
             profile2,
             originalEmail,
             PASSWORD_HASH,
-            CustomerStatus.PENDING
-        );
+            CustomerStatus.PENDING);
 
         customerRepository.saveAndFlush(second);
 
