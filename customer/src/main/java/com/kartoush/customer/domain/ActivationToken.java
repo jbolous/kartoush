@@ -46,6 +46,24 @@ public class ActivationToken {
         );
     }
 
+    public static ActivationToken of(
+        final ActivationTokenId id,
+        final CustomerId customerId,
+        final String tokenHash,
+        final Instant expiresAt,
+        final Instant consumedAt,
+        final Instant createdAt
+    ) {
+        return new ActivationToken(
+            id,
+            customerId,
+            tokenHash,
+            expiresAt,
+            consumedAt,
+            createdAt
+        );
+    }
+
 
     public ActivationTokenId getId() {
         return id;
