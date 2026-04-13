@@ -4,6 +4,9 @@ import com.kartoush.customer.exception.CustomerAddressNotFoundException;
 import com.kartoush.customer.exception.CustomerAlreadyExistsException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.exception.CustomerPendingActivationException;
+import com.kartoush.customer.exception.ActivationTokenConsumedException;
+import com.kartoush.customer.exception.ActivationTokenExpiredException;
+import com.kartoush.customer.exception.ActivationTokenNotFoundException;
 import com.kartoush.customer.exception.InvalidCustomerReactivationException;
 import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.exception.InvalidCustomerStatusTransitionException;
@@ -182,6 +185,42 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             "Customer Pending Activation",
             ex.getMessage(),
             ErrorCode.CUSTOMER_PENDING_ACTIVATION,
+            request);
+    }
+
+    @ExceptionHandler(ActivationTokenNotFoundException.class)
+    public ProblemDetail handleActivationTokenNotFoundException(
+        final ActivationTokenNotFoundException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.NOT_FOUND,
+            "Activation Token Not Found",
+            ex.getMessage(),
+            ErrorCode.ACTIVATION_TOKEN_NOT_FOUND,
+            request);
+    }
+
+    @ExceptionHandler(ActivationTokenExpiredException.class)
+    public ProblemDetail handleActivationTokenExpiredException(
+        final ActivationTokenExpiredException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Activation Token Expired",
+            ex.getMessage(),
+            ErrorCode.ACTIVATION_TOKEN_EXPIRED,
+            request);
+    }
+
+    @ExceptionHandler(ActivationTokenConsumedException.class)
+    public ProblemDetail handleActivationTokenConsumedException(
+        final ActivationTokenConsumedException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Activation Token Already Consumed",
+            ex.getMessage(),
+            ErrorCode.ACTIVATION_TOKEN_CONSUMED,
             request);
     }
 

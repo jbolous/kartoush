@@ -100,6 +100,54 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
+    void shouldHandleActivationTokenNotFoundException() {
+        // given
+        final ActivationTokenNotFoundException ex = new ActivationTokenNotFoundException(CUSTOMER_ID);
+
+        // when
+        final ProblemDetail problem = handler.handleActivationTokenNotFoundException(ex, request);
+
+        // then
+        assertThat(problem.getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(problem.getTitle()).isEqualTo("Activation Token Not Found");
+        assertThat(problem.getDetail()).isEqualTo("Activation token not found for customer id: " + CUSTOMER_ID);
+        assertThat(problem.getProperties()).isNotNull();
+        assertThat(problem.getProperties().get("errorCode")).isEqualTo(ErrorCode.ACTIVATION_TOKEN_NOT_FOUND.name());
+    }
+
+    @Test
+    void shouldHandleActivationTokenExpiredException() {
+        // given
+        final ActivationTokenExpiredException ex = new ActivationTokenExpiredException(CUSTOMER_ID);
+
+        // when
+        final ProblemDetail problem = handler.handleActivationTokenExpiredException(ex, request);
+
+        // then
+        assertThat(problem.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(problem.getTitle()).isEqualTo("Activation Token Expired");
+        assertThat(problem.getDetail()).isEqualTo("Activation token is expired for customer id: " + CUSTOMER_ID);
+        assertThat(problem.getProperties()).isNotNull();
+        assertThat(problem.getProperties().get("errorCode")).isEqualTo(ErrorCode.ACTIVATION_TOKEN_EXPIRED.name());
+    }
+
+    @Test
+    void shouldHandleActivationTokenConsumedException() {
+        // given
+        final ActivationTokenConsumedException ex = new ActivationTokenConsumedException(CUSTOMER_ID);
+
+        // when
+        final ProblemDetail problem = handler.handleActivationTokenConsumedException(ex, request);
+
+        // then
+        assertThat(problem.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(problem.getTitle()).isEqualTo("Activation Token Already Consumed");
+        assertThat(problem.getDetail()).isEqualTo("Activation token has already been consumed for customer id: " + CUSTOMER_ID);
+        assertThat(problem.getProperties()).isNotNull();
+        assertThat(problem.getProperties().get("errorCode")).isEqualTo(ErrorCode.ACTIVATION_TOKEN_CONSUMED.name());
+    }
+
+    @Test
     void shouldHandleInvalidCustomerStatusTransitionException() {
         // given
         final InvalidCustomerStatusTransitionException ex =

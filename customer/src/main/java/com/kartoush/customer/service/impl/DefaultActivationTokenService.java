@@ -1,6 +1,9 @@
 package com.kartoush.customer.service.impl;
 
 import com.kartoush.customer.domain.ActivationToken;
+import com.kartoush.customer.exception.ActivationTokenConsumedException;
+import com.kartoush.customer.exception.ActivationTokenExpiredException;
+import com.kartoush.customer.exception.ActivationTokenNotFoundException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.persistence.entity.ActivationTokenEntity;
 import com.kartoush.customer.persistence.mapper.ActivationTokenMapper;
@@ -72,5 +75,32 @@ public class DefaultActivationTokenService implements ActivationTokenService {
         ActivationTokenEntity activationTokenEntity = activationTokenMapper.toEntity(activationToken);
 
         return activationTokenMapper.toDomain(activationTokenRepository.save(activationTokenEntity));
+    }
+
+    @Override
+    public ActivationToken validate(CustomerId customerId, String rawToken) {
+        if (rawToken == null || rawToken.isBlank()) {
+            throw new ActivationTokenNotFoundException(customerId.value());
+        }
+
+        String tokenHash = activationTokenHasher.hash(rawToken);
+
+        ActivationToken activationToken = activationTokenRepository.findByCustomerIdAndTokenHash(
+                CustomerIdEmbeddable.from(customerId),
+                tokenHash)
+            .map(activationTokenMapper::toDomain)
+            .orElseThrow(() -> new ActivationTokenNotFoundException(customerId.value()));
+
+        Instant now = Instant.now(clock);
+
+        if (activationToken.isConsumed()) {
+            throw new ActivationTokenConsumedException(customerId.value());
+        }
+
+        if (activationToken.isExpired(now)) {
+            throw new ActivationTokenExpiredException(customerId.value());
+        }
+
+        return activationToken;
     }
 }

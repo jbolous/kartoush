@@ -5,4 +5,6 @@ import com.kartoush.platform.types.CustomerId;
 
 public interface ActivationTokenService {
     ActivationToken createFor(CustomerId customerId);
+
+    ActivationToken validate(CustomerId customerId, String rawToken);
 }
