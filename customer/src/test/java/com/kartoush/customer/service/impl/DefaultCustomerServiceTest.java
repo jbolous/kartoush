@@ -3,11 +3,14 @@ package com.kartoush.customer.service.impl;
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
 import com.kartoush.customer.exception.CustomerNotFoundException;
+import com.kartoush.customer.exception.InvalidCustomerActivationException;
+import com.kartoush.customer.exception.InvalidActivationTokenResendException;
 import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.mapper.CustomerMapper;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
+import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
@@ -44,12 +47,16 @@ class DefaultCustomerServiceTest
             FIRST_NAME,
             LAST_NAME,
             PHONE_NUMBER);
+    private static final String RAW_TOKEN = "raw-token";
 
     @Mock
     private CustomerRepository customerRepository;
 
     @Mock
     private CustomerMapper customerMapper;
+
+    @Mock
+    private ActivationTokenService activationTokenService;
 
     @InjectMocks
     private DefaultCustomerService defaultCustomerService;
@@ -268,6 +275,103 @@ class DefaultCustomerServiceTest
         verify(customerMapper, never()).toDomain(any());
         verify(customerMapper, never()).updateEntity(any(), any());
         verify(customerRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldActivatePendingCustomerWithValidToken() {
+        // given
+        final CustomerEntity customerEntity = mock(CustomerEntity.class);
+        final Customer customer = mock(Customer.class);
+        final CustomerEntity savedCustomerEntity = mock(CustomerEntity.class);
+        final Customer savedCustomer = mock(Customer.class);
+        final com.kartoush.customer.domain.ActivationToken activationToken =
+            mock(com.kartoush.customer.domain.ActivationToken.class);
+
+        given(customerRepository.findById(CUSTOMER_ID_EMBEDDABLE)).willReturn(Optional.of(customerEntity));
+        given(customerMapper.toDomain(customerEntity)).willReturn(customer);
+        given(customer.getStatus()).willReturn(CustomerStatus.PENDING);
+        given(customerRepository.save(customerEntity)).willReturn(savedCustomerEntity);
+        given(customerMapper.toDomain(savedCustomerEntity)).willReturn(savedCustomer);
+        given(activationTokenService.validate(CUSTOMER_ID, RAW_TOKEN)).willReturn(activationToken);
+        given(activationTokenService.consume(activationToken)).willReturn(activationToken);
+
+        // when
+        final Customer result = defaultCustomerService.activateCustomer(CUSTOMER_ID_VALUE, RAW_TOKEN);
+
+        // then
+        assertThat(result).isSameAs(savedCustomer);
+        verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
+        verify(activationTokenService).validate(CUSTOMER_ID, RAW_TOKEN);
+        verify(customer).activate();
+        verify(customerMapper).updateEntity(customer, customerEntity);
+        verify(customerRepository).save(customerEntity);
+        verify(activationTokenService).consume(activationToken);
+        verify(customerMapper).toDomain(savedCustomerEntity);
+    }
+
+    @Test
+    void shouldThrowWhenActivatingNonPendingCustomerWithToken() {
+        // given
+        final CustomerEntity customerEntity = mock(CustomerEntity.class);
+        final Customer customer = mock(Customer.class);
+        final com.kartoush.customer.domain.ActivationToken activationToken =
+            mock(com.kartoush.customer.domain.ActivationToken.class);
+
+        given(customerRepository.findById(CUSTOMER_ID_EMBEDDABLE)).willReturn(Optional.of(customerEntity));
+        given(customerMapper.toDomain(customerEntity)).willReturn(customer);
+        given(customer.getStatus()).willReturn(CustomerStatus.ACTIVE);
+        given(activationTokenService.validate(CUSTOMER_ID, RAW_TOKEN)).willReturn(activationToken);
+
+        // when / then
+        assertThatThrownBy(() -> defaultCustomerService.activateCustomer(CUSTOMER_ID_VALUE, RAW_TOKEN))
+            .isInstanceOf(InvalidCustomerActivationException.class)
+            .hasMessage("Customer cannot be activated while in ACTIVE status");
+
+        verify(activationTokenService).validate(CUSTOMER_ID, RAW_TOKEN);
+        verify(customer, never()).activate();
+        verify(customerMapper, never()).updateEntity(any(), any());
+        verify(customerRepository, never()).save(any());
+        verify(activationTokenService, never()).consume(any());
+    }
+
+    @Test
+    void shouldResendActivationTokenForPendingCustomer() {
+        // given
+        final CustomerEntity customerEntity = mock(CustomerEntity.class);
+        final Customer customer = mock(Customer.class);
+
+        given(customerRepository.findById(CUSTOMER_ID_EMBEDDABLE)).willReturn(Optional.of(customerEntity));
+        given(customerMapper.toDomain(customerEntity)).willReturn(customer);
+        given(customer.getStatus()).willReturn(CustomerStatus.PENDING);
+        given(customer.getId()).willReturn(CUSTOMER_ID);
+
+        // when
+        defaultCustomerService.resendActivationToken(CUSTOMER_ID_VALUE);
+
+        // then
+        verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
+        verify(customerMapper).toDomain(customerEntity);
+        verify(activationTokenService).resendFor(CUSTOMER_ID);
+    }
+
+    @Test
+    void shouldThrowWhenResendingActivationTokenForNonPendingCustomer() {
+        // given
+        final CustomerEntity customerEntity = mock(CustomerEntity.class);
+        final Customer customer = mock(Customer.class);
+
+        given(customerRepository.findById(CUSTOMER_ID_EMBEDDABLE)).willReturn(Optional.of(customerEntity));
+        given(customerMapper.toDomain(customerEntity)).willReturn(customer);
+        given(customer.getStatus()).willReturn(CustomerStatus.ACTIVE);
+
+        // when / then
+        assertThatThrownBy(() -> defaultCustomerService.resendActivationToken(CUSTOMER_ID_VALUE))
+            .isInstanceOf(InvalidActivationTokenResendException.class)
+            .hasMessage("Activation token cannot be resent while customer is in ACTIVE status");
+
+        verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
+        verify(customerMapper).toDomain(customerEntity);
+        verify(activationTokenService, never()).resendFor(any());
     }
 
 

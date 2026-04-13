@@ -24,6 +24,7 @@ import com.kartoush.customer.service.ActivationTokenHasher;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 
 import com.kartoush.platform.types.ActivationTokenId;
 import com.kartoush.platform.types.CustomerId;
@@ -42,6 +43,7 @@ class DefaultActivationTokenServiceTest {
     private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC);
     private static final String RAW_TOKEN = "generated-raw-token";
     private static final String TOKEN_HASH = "generated-token-hash";
+    private static final String EXISTING_TOKEN_HASH = "existing-token-hash";
     private static final String CUSTOMER_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
     private static final String ACTIVATION_TOKEN_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
     private static final long TWENTY_FOUR_HOURS_IN_SECONDS = 24 * 60 * 60;
@@ -439,6 +441,87 @@ class DefaultActivationTokenServiceTest {
         assertThatThrownBy(() -> activationTokenService.validate(customerId, RAW_TOKEN))
             .isInstanceOf(ActivationTokenConsumedException.class)
             .hasMessage("Activation token has already been consumed for customer id: " + customerId.value());
+    }
+
+    @Test
+    void shouldConsumeActivationToken() {
+        // given
+        CustomerId customerId = CustomerId.of(CUSTOMER_ID);
+
+        DefaultActivationTokenService activationTokenService =
+            new DefaultActivationTokenService(
+                activationTokenRepository,
+                customerRepository,
+                activationTokenGenerator,
+                activationTokenHasher,
+                activationTokenMapper,
+                ulidGenerator,
+                FIXED_CLOCK);
+
+        ActivationToken activationToken = ActivationToken.fromPersistence(
+            ActivationTokenId.of(ACTIVATION_TOKEN_ID),
+            customerId,
+            TOKEN_HASH,
+            FIXED_INSTANT.plusSeconds(TWENTY_FOUR_HOURS_IN_SECONDS),
+            null,
+            FIXED_INSTANT);
+
+        stubMapperToEntity();
+        stubMapperToDomain();
+        when(activationTokenRepository.save(activationTokenEntityCaptor.capture()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        ActivationToken consumedActivationToken = activationTokenService.consume(activationToken);
+
+        // then
+        verify(activationTokenRepository).save(activationTokenEntityCaptor.getValue());
+        assertThat(consumedActivationToken.getConsumedAt()).isEqualTo(FIXED_INSTANT);
+        assertThat(activationTokenEntityCaptor.getValue().getConsumedAt()).isEqualTo(FIXED_INSTANT);
+    }
+
+    @Test
+    void shouldResendActivationTokenAndInvalidateExistingTokens() {
+        // given
+        CustomerId customerId = CustomerId.of(CUSTOMER_ID);
+        ActivationTokenEntity existingToken = ActivationTokenEntity.of(
+            ActivationTokenIdEmbeddable.from(ActivationTokenId.of(ACTIVATION_TOKEN_ID)),
+            CustomerIdEmbeddable.from(customerId),
+            EXISTING_TOKEN_HASH,
+            FIXED_INSTANT.plusSeconds(TWENTY_FOUR_HOURS_IN_SECONDS),
+            null,
+            FIXED_INSTANT.minusSeconds(60));
+
+        DefaultActivationTokenService activationTokenService =
+            new DefaultActivationTokenService(
+                activationTokenRepository,
+                customerRepository,
+                activationTokenGenerator,
+                activationTokenHasher,
+                activationTokenMapper,
+                ulidGenerator,
+                FIXED_CLOCK);
+
+        stubExistingCustomer(customerId);
+        when(activationTokenRepository.findAllByCustomerIdAndConsumedAtIsNull(CustomerIdEmbeddable.from(customerId)))
+            .thenReturn(List.of(existingToken));
+        when(activationTokenRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(activationTokenGenerator.generate()).thenReturn(RAW_TOKEN);
+        when(activationTokenHasher.hash(RAW_TOKEN)).thenReturn(TOKEN_HASH);
+        stubGeneratedActivationTokenId();
+        stubMapperToEntity();
+        stubMapperToDomain();
+        when(activationTokenRepository.save(activationTokenEntityCaptor.capture()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        ActivationToken resentToken = activationTokenService.resendFor(customerId);
+
+        // then
+        verify(activationTokenRepository).findAllByCustomerIdAndConsumedAtIsNull(CustomerIdEmbeddable.from(customerId));
+        verify(activationTokenRepository).saveAll(any());
+        assertThat(existingToken.getConsumedAt()).isEqualTo(FIXED_INSTANT);
+        assertThat(resentToken.getTokenHash()).isEqualTo(TOKEN_HASH);
     }
 
     private void stubExistingCustomer(CustomerId customerId) {

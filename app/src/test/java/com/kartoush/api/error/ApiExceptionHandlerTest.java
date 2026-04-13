@@ -148,6 +148,38 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
+    void shouldHandleInvalidCustomerActivationException() {
+        // given
+        final InvalidCustomerActivationException ex = new InvalidCustomerActivationException(CustomerStatus.ACTIVE);
+
+        // when
+        final ProblemDetail problem = handler.handleInvalidCustomerActivationException(ex, request);
+
+        // then
+        assertThat(problem.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(problem.getTitle()).isEqualTo("Invalid Customer Activation");
+        assertThat(problem.getDetail()).isEqualTo("Customer cannot be activated while in ACTIVE status");
+        assertThat(problem.getProperties()).isNotNull();
+        assertThat(problem.getProperties().get("errorCode")).isEqualTo(ErrorCode.INVALID_CUSTOMER_ACTIVATION.name());
+    }
+
+    @Test
+    void shouldHandleInvalidActivationTokenResendException() {
+        // given
+        final InvalidActivationTokenResendException ex = new InvalidActivationTokenResendException(CustomerStatus.ACTIVE);
+
+        // when
+        final ProblemDetail problem = handler.handleInvalidActivationTokenResendException(ex, request);
+
+        // then
+        assertThat(problem.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(problem.getTitle()).isEqualTo("Invalid Activation Token Resend");
+        assertThat(problem.getDetail()).isEqualTo("Activation token cannot be resent while customer is in ACTIVE status");
+        assertThat(problem.getProperties()).isNotNull();
+        assertThat(problem.getProperties().get("errorCode")).isEqualTo(ErrorCode.INVALID_ACTIVATION_TOKEN_RESEND.name());
+    }
+
+    @Test
     void shouldHandleInvalidCustomerStatusTransitionException() {
         // given
         final InvalidCustomerStatusTransitionException ex =

@@ -89,6 +89,33 @@ public class CustomerController {
         return ResponseEntity.ok(customerFacade.updateCustomer(customerId, request));
     }
 
+    @Operation(summary = "Activate customer by token")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Customer activated successfully"),
+        @ApiResponse(responseCode = "400", description = "Request validation failed"),
+        @ApiResponse(responseCode = "404", description = "Customer or activation token not found"),
+        @ApiResponse(responseCode = "409", description = "Activation token is expired, consumed, or customer cannot be activated")
+    })
+    @PostMapping("/{customerId}/activation")
+    public ResponseEntity<CustomerView> activateCustomer(
+        @PathVariable final String customerId,
+        @Valid @RequestBody final ActivateCustomerRequest request) {
+
+        return ResponseEntity.ok(customerFacade.activateCustomer(customerId, request.token()));
+    }
+
+    @Operation(summary = "Resend activation token")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Activation token resent successfully"),
+        @ApiResponse(responseCode = "404", description = "Customer not found"),
+        @ApiResponse(responseCode = "409", description = "Activation token cannot be resent for the current customer state")
+    })
+    @PostMapping("/{customerId}/activation/resend")
+    public ResponseEntity<Void> resendActivationToken(@PathVariable final String customerId) {
+        customerFacade.resendActivationToken(customerId);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Delete customer")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Customer deleted successfully"),

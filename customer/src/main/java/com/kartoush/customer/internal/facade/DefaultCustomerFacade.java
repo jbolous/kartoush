@@ -85,9 +85,14 @@ public class DefaultCustomerFacade implements CustomerFacade {
     }
 
     @Override
-    public CustomerView activateCustomer(final String customerId) {
-        final Customer customer = customerService.activateCustomer(customerId);
+    public CustomerView activateCustomer(final String customerId, final String rawToken) {
+        final Customer customer = customerService.activateCustomer(customerId, rawToken);
         return toCustomerView(customer);
+    }
+
+    @Override
+    public void resendActivationToken(final String customerId) {
+        customerService.resendActivationToken(customerId);
     }
 
     @Override

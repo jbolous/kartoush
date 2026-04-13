@@ -20,6 +20,7 @@ import java.time.Instant;
 import com.kartoush.platform.types.ActivationTokenId;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.ulid.UlidGenerator;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -58,6 +59,27 @@ public class DefaultActivationTokenService implements ActivationTokenService {
             throw new CustomerNotFoundException(customerId.value());
         }
 
+        return createActivationToken(customerId);
+    }
+
+    @Override
+    public ActivationToken resendFor(CustomerId customerId) {
+        Instant consumedAt = Instant.now(clock);
+        List<ActivationTokenEntity> activeTokens = activationTokenRepository.findAllByCustomerIdAndConsumedAtIsNull(
+            CustomerIdEmbeddable.from(customerId));
+
+        for (ActivationTokenEntity activeToken : activeTokens) {
+            activeToken.setConsumedAt(consumedAt);
+        }
+
+        if (!activeTokens.isEmpty()) {
+            activationTokenRepository.saveAll(activeTokens);
+        }
+
+        return createFor(customerId);
+    }
+
+    private ActivationToken createActivationToken(CustomerId customerId) {
         Instant createdAt = Instant.now(clock);
         Instant expiresAt = createdAt.plus(ACTIVATION_TOKEN_TTL);
 
@@ -102,5 +124,13 @@ public class DefaultActivationTokenService implements ActivationTokenService {
         }
 
         return activationToken;
+    }
+
+    @Override
+    public ActivationToken consume(ActivationToken activationToken) {
+        ActivationToken consumedActivationToken = activationToken.consume(Instant.now(clock));
+        ActivationTokenEntity activationTokenEntity = activationTokenMapper.toEntity(consumedActivationToken);
+
+        return activationTokenMapper.toDomain(activationTokenRepository.save(activationTokenEntity));
     }
 }

@@ -2,6 +2,7 @@ package com.kartoush.api.customer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kartoush.api.error.ApiProblemFactory;
+import com.kartoush.api.error.ErrorCode;
 import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.model.CreateCustomerRequest;
 import com.kartoush.customer.facade.model.CustomerView;
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -124,6 +127,53 @@ class CustomerControllerWebMvcTest {
             .andExpect(status().isNoContent());
 
         verify(customerFacade).deleteCustomer(eq(CUSTOMER_ID));
+    }
+
+    @Test
+    void shouldActivateCustomer() throws Exception {
+        final ActivateCustomerRequest request = new ActivateCustomerRequest("valid-activation-token");
+
+        when(customerFacade.activateCustomer(eq(CUSTOMER_ID), eq(request.token())))
+            .thenReturn(mockCustomerView());
+
+        mockMvc.perform(post(BASE_URL + "/{customerId}/activation", CUSTOMER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.customerId").value(CUSTOMER_ID));
+
+        verify(customerFacade).activateCustomer(eq(CUSTOMER_ID), eq(request.token()));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenActivationTokenIsBlank() throws Exception {
+        final ActivateCustomerRequest request = new ActivateCustomerRequest("   ");
+        final ProblemDetail validationProblem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            "One or more validation errors occurred.");
+        validationProblem.setTitle("Validation Failed");
+        validationProblem.setProperty("errorCode", ErrorCode.VALIDATION_FAILED.name());
+        validationProblem.setProperty("errors", List.of());
+
+        when(apiProblemFactory.create(
+            eq(HttpStatus.BAD_REQUEST),
+            eq("Validation Failed"),
+            eq("One or more validation errors occurred."),
+            eq(ErrorCode.VALIDATION_FAILED),
+            any())).thenReturn(validationProblem);
+
+        mockMvc.perform(post(BASE_URL + "/{customerId}/activation", CUSTOMER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldResendActivationToken() throws Exception {
+        mockMvc.perform(post(BASE_URL + "/{customerId}/activation/resend", CUSTOMER_ID))
+            .andExpect(status().isNoContent());
+
+        verify(customerFacade).resendActivationToken(eq(CUSTOMER_ID));
     }
 
     private CustomerView mockCustomerView() {
