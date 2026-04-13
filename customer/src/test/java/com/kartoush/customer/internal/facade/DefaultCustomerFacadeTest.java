@@ -27,6 +27,7 @@ class DefaultCustomerFacadeTest {
     private static final String CUSTOMER_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
     private static final String EMAIL = "jack@kartoush.com";
     private static final String PASSWORD = "password";
+    private static final String RAW_TOKEN = "raw-token";
     private static final String PHONE_NUMBER = "312-555-0100";
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
@@ -62,6 +63,31 @@ class DefaultCustomerFacadeTest {
         verify(validator).validate(request);
     }
 
+    @Test
+    void shouldActivateCustomerByToken() {
+        // given
+        final Customer activatedCustomer = buildActivatedCustomer();
+        final CustomerView activatedView = buildActivatedCustomerView();
+
+        when(customerService.activateCustomer(CUSTOMER_ID, RAW_TOKEN)).thenReturn(activatedCustomer);
+
+        // when
+        final CustomerView result = facade.activateCustomer(CUSTOMER_ID, RAW_TOKEN);
+
+        // then
+        assertThat(result).isEqualTo(activatedView);
+        verify(customerService).activateCustomer(CUSTOMER_ID, RAW_TOKEN);
+    }
+
+    @Test
+    void shouldResendActivationToken() {
+        // when
+        facade.resendActivationToken(CUSTOMER_ID);
+
+        // then
+        verify(customerService).resendActivationToken(CUSTOMER_ID);
+    }
+
     private CreateCustomerRequest buildCustomerRequest(){
         return  new CreateCustomerRequest(
                 FIRST_NAME,
@@ -89,5 +115,27 @@ class DefaultCustomerFacadeTest {
                                 EMAIL,
                                 PHONE_NUMBER,
                                 CustomerStatus.PENDING);
+    }
+
+    private Customer buildActivatedCustomer() {
+        final CustomerId customerId = CustomerId.of(CUSTOMER_ID);
+        final CustomerProfile profile = CustomerProfile.of(FIRST_NAME, LAST_NAME, PHONE_NUMBER);
+        final Customer customer = Customer.createNew(
+            customerId,
+            profile,
+            new Email(EMAIL),
+            PASSWORD);
+        customer.activate();
+        return customer;
+    }
+
+    private CustomerView buildActivatedCustomerView() {
+        return new CustomerView(
+            CUSTOMER_ID,
+            FIRST_NAME,
+            LAST_NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            CustomerStatus.ACTIVE);
     }
 }

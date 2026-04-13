@@ -7,4 +7,8 @@ public interface ActivationTokenService {
     ActivationToken createFor(CustomerId customerId);
 
     ActivationToken validate(CustomerId customerId, String rawToken);
+
+    ActivationToken consume(ActivationToken activationToken);
+
+    ActivationToken resendFor(CustomerId customerId);
 }

@@ -2,6 +2,9 @@ package com.kartoush.customer.service.impl;
 
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
+import com.kartoush.customer.domain.ActivationToken;
+import com.kartoush.customer.exception.InvalidCustomerActivationException;
+import com.kartoush.customer.exception.InvalidActivationTokenResendException;
 import com.kartoush.customer.exception.CustomerAlreadyExistsException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.exception.CustomerPendingActivationException;
@@ -10,6 +13,7 @@ import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.mapper.CustomerMapper;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
+import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
 
 import java.util.List;
@@ -29,12 +33,15 @@ public class DefaultCustomerService implements CustomerService
     private static final Logger LOG = LoggerFactory.getLogger(DefaultCustomerService.class);
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
+    private final ActivationTokenService activationTokenService;
 
     public DefaultCustomerService(
             final CustomerRepository customerRepository,
-            final CustomerMapper customerMapper) {
+            final CustomerMapper customerMapper,
+            final ActivationTokenService activationTokenService) {
         this.customerRepository = customerRepository;
         this.customerMapper = customerMapper;
+        this.activationTokenService = activationTokenService;
     }
 
     @Override
@@ -155,20 +162,44 @@ public class DefaultCustomerService implements CustomerService
 
     @Override
     @Transactional
-    public Customer activateCustomer(String customerId) {
+    public Customer activateCustomer(String customerId, String rawToken) {
         final CustomerEntity customerEntity = customerRepository
                 .findById(CustomerIdEmbeddable.from(customerId))
                 .orElseThrow(() -> new CustomerNotFoundException(customerId));
 
+        final CustomerId customerIdValue = CustomerId.of(customerId);
+        final ActivationToken activationToken = activationTokenService.validate(customerIdValue, rawToken);
+
         final Customer customer = customerMapper.toDomain(customerEntity);
+
+        if (customer.getStatus() != CustomerStatus.PENDING) {
+            throw new InvalidCustomerActivationException(customer.getStatus());
+        }
 
         customer.activate();
 
         customerMapper.updateEntity(customer, customerEntity);
 
         final CustomerEntity savedCustomer = customerRepository.save(customerEntity);
+        activationTokenService.consume(activationToken);
 
         return customerMapper.toDomain(savedCustomer);
+    }
+
+    @Override
+    @Transactional
+    public void resendActivationToken(final String customerId) {
+        final CustomerEntity customerEntity = customerRepository
+            .findById(CustomerIdEmbeddable.from(customerId))
+            .orElseThrow(() -> new CustomerNotFoundException(customerId));
+
+        final Customer customer = customerMapper.toDomain(customerEntity);
+
+        if (customer.getStatus() != CustomerStatus.PENDING) {
+            throw new InvalidActivationTokenResendException(customer.getStatus());
+        }
+
+        activationTokenService.resendFor(customer.getId());
     }
 
     private void validateCustomerCanBeUpdated(final CustomerEntity customer) {

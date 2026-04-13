@@ -18,7 +18,9 @@ public interface CustomerService
 
     Customer createCustomer(final Customer customer);
 
-    Customer activateCustomer(final String customerId);
+    Customer activateCustomer(final String customerId, final String rawToken);
+
+    void resendActivationToken(final String customerId);
 
     Customer reactivateCustomer(final String customerId);
 

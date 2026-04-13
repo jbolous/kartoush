@@ -1,6 +1,7 @@
 package com.kartoush.customer.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.kartoush.platform.types.ActivationTokenId;
 import com.kartoush.platform.types.CustomerId;
@@ -115,5 +116,41 @@ class ActivationTokenTest {
         // then
         assertThat(consumed).isTrue();
         assertThat(activationToken.getConsumedAt()).isEqualTo(CONSUMED_AT);
+    }
+
+    @Test
+    void shouldConsumeActivationToken() {
+        // given
+        final ActivationToken activationToken = ActivationToken.fromPersistence(
+            ActivationTokenId.newId(ulidGenerator),
+            CustomerId.newId(ulidGenerator),
+            TOKEN_HASH,
+            EXPIRES_AT,
+            null,
+            CREATED_AT);
+
+        // when
+        final ActivationToken consumedActivationToken = activationToken.consume(CONSUMED_AT);
+
+        // then
+        assertThat(consumedActivationToken.getConsumedAt()).isEqualTo(CONSUMED_AT);
+        assertThat(consumedActivationToken.isConsumed()).isTrue();
+    }
+
+    @Test
+    void shouldThrowWhenConsumedAtIsNull() {
+        // given
+        final ActivationToken activationToken = ActivationToken.fromPersistence(
+            ActivationTokenId.newId(ulidGenerator),
+            CustomerId.newId(ulidGenerator),
+            TOKEN_HASH,
+            EXPIRES_AT,
+            null,
+            CREATED_AT);
+
+        // when/then
+        assertThatThrownBy(() -> activationToken.consume(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessage("consumedAt must not be null");
     }
 }

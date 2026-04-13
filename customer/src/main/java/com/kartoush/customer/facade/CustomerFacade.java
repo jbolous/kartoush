@@ -18,7 +18,9 @@ public interface CustomerFacade {
 
     CustomerView updateCustomer(String customerId, UpdateCustomerRequest request);
 
-    CustomerView activateCustomer(String customerId);
+    CustomerView activateCustomer(String customerId, String rawToken);
+
+    void resendActivationToken(String customerId);
 
     CustomerView reactivateCustomer(String customerId);
 

@@ -7,6 +7,8 @@ import com.kartoush.customer.exception.CustomerPendingActivationException;
 import com.kartoush.customer.exception.ActivationTokenConsumedException;
 import com.kartoush.customer.exception.ActivationTokenExpiredException;
 import com.kartoush.customer.exception.ActivationTokenNotFoundException;
+import com.kartoush.customer.exception.InvalidActivationTokenResendException;
+import com.kartoush.customer.exception.InvalidCustomerActivationException;
 import com.kartoush.customer.exception.InvalidCustomerReactivationException;
 import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.exception.InvalidCustomerStatusTransitionException;
@@ -221,6 +223,30 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             "Activation Token Already Consumed",
             ex.getMessage(),
             ErrorCode.ACTIVATION_TOKEN_CONSUMED,
+            request);
+    }
+
+    @ExceptionHandler(InvalidCustomerActivationException.class)
+    public ProblemDetail handleInvalidCustomerActivationException(
+        final InvalidCustomerActivationException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Invalid Customer Activation",
+            ex.getMessage(),
+            ErrorCode.INVALID_CUSTOMER_ACTIVATION,
+            request);
+    }
+
+    @ExceptionHandler(InvalidActivationTokenResendException.class)
+    public ProblemDetail handleInvalidActivationTokenResendException(
+        final InvalidActivationTokenResendException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Invalid Activation Token Resend",
+            ex.getMessage(),
+            ErrorCode.INVALID_ACTIVATION_TOKEN_RESEND,
             request);
     }
 

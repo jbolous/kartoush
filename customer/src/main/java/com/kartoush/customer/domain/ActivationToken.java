@@ -4,6 +4,7 @@ import com.kartoush.platform.types.ActivationTokenId;
 import com.kartoush.platform.types.CustomerId;
 
 import java.time.Instant;
+import java.util.Objects;
 
 public class ActivationToken {
 
@@ -95,5 +96,20 @@ public class ActivationToken {
 
     public boolean isExpired(final Instant now) {
         return !expiresAt.isAfter(now);
+    }
+
+    public ActivationToken consume(final Instant consumedAt) {
+        if (isConsumed()) {
+            return this;
+        }
+
+        return new ActivationToken(
+            id,
+            customerId,
+            tokenHash,
+            expiresAt,
+            Objects.requireNonNull(consumedAt, "consumedAt must not be null"),
+            createdAt
+        );
     }
 }
