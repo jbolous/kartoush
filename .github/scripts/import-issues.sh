@@ -3,19 +3,43 @@ set -euo pipefail
 
 VERBOSE="false"
 DRY_RUN="false"
+ASSIGN_TO_SELF="false"
+
+print_help() {
+  cat <<'EOF'
+Usage:
+  .github/scripts/import-issues.sh [options]
+
+Options:
+  -n, --dry-run         Validate and simulate issue creation without changing GitHub
+  -v, --verbose         Print verbose diagnostic output
+  -a, --assign-to-self  Assign newly created issues to the authenticated GitHub user
+  -h, --help            Show this help text
+EOF
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --dry-run)
+    -n|--dry-run)
       DRY_RUN="true"
       shift
       ;;
-    --verbose)
+    -v|--verbose)
       VERBOSE="true"
       shift
       ;;
+    -a|--assign-to-self)
+      ASSIGN_TO_SELF="true"
+      shift
+      ;;
+    -h|--help)
+      print_help
+      exit 0
+      ;;
     *)
       echo "Unknown argument: $1" >&2
+      printf '\n' >&2
+      print_help >&2
       exit 1
       ;;
   esac
@@ -32,8 +56,17 @@ SCRIPT_PATH="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 # shellcheck source=/dev/null
 source "$SCRIPT_PATH/issue-import-common.sh"
 
+AUTHENTICATED_USER=""
+
 setup_repo_paths
 preflight_import
+
+if [[ "$DRY_RUN" != "true" && "$ASSIGN_TO_SELF" == "true" ]]; then
+  if ! lookup_authenticated_user; then
+    print_error "✗ Unable to determine authenticated GitHub user"
+    exit 1
+  fi
+fi
 
 print_verbose "REPO=$REPO"
 print_verbose "REPO_ROOT=$REPO_ROOT"
@@ -42,12 +75,17 @@ print_verbose "PENDING_DIR=$PENDING_DIR"
 print_verbose "IMPORTED_DIR=$IMPORTED_DIR"
 print_verbose "FAILED_DIR=$FAILED_DIR"
 print_verbose "DRY_RUN=$DRY_RUN"
+print_verbose "ASSIGN_TO_SELF=$ASSIGN_TO_SELF"
+if [[ -n "$AUTHENTICATED_USER" ]]; then
+  print_verbose "AUTHENTICATED_USER=$AUTHENTICATED_USER"
+fi
 
 declare -A FILE_PARENT
 declare -A FILE_ISSUE_NUMBER
 declare -A FILE_ISSUE_ID
 declare -A FILE_ISSUE_URL
 declare -A TITLE_TO_ISSUE_NUMBER
+declare -A SOURCE_TO_ISSUE_NUMBER
 
 created_count=0
 linked_count=0
@@ -99,9 +137,36 @@ parse_existing_issue_metadata() {
   EXISTING_ISSUE_URL="$META_URL"
 }
 
+lookup_authenticated_user() {
+  local gh_output
+  local gh_exit_code
+
+  set +e
+  gh_output="$(gh api user --jq '.login' 2>&1)"
+  gh_exit_code=$?
+  set -e
+
+  if [[ $gh_exit_code -ne 0 ]]; then
+    print_verbose "gh api user lookup failed: $gh_output"
+    return 1
+  fi
+
+  AUTHENTICATED_USER="$gh_output"
+}
+
 append_footer() {
   local body_file="$1"
   printf '\n\n---\n\n<sub>Created via Kartoush issue import workflow</sub>\n' >> "$body_file"
+}
+
+build_issue_body_file() {
+  local body_file="$1"
+  local output_file
+
+  output_file="$(mktemp)"
+  cat "$body_file" > "$output_file"
+  append_footer "$output_file"
+  BUILT_ISSUE_BODY_FILE="$output_file"
 }
 
 lookup_issue_rest_id() {
@@ -169,6 +234,149 @@ lookup_existing_parent_issue_number() {
   return 1
 }
 
+lookup_issue_number_by_source_name_in_dir() {
+  local dir="$1"
+  local source_name="$2"
+  local matches file
+
+  mapfile -t matches < <(find "$dir" -maxdepth 1 -type f -name "*-${source_name}.md" | sort)
+
+  if [[ ${#matches[@]} -eq 0 ]]; then
+    return 1
+  fi
+
+  if [[ ${#matches[@]} -gt 1 ]]; then
+    print_verbose "Multiple files matched dependency source '$source_name' in $dir"
+    return 1
+  fi
+
+  file="${matches[0]}"
+  parse_trailing_metadata "$file"
+
+  if [[ -z "$META_ISSUE_NUMBER" ]]; then
+    print_verbose "Matched dependency source '$source_name' in $file but no issue number was present"
+    return 1
+  fi
+
+  LOOKED_UP_DEPENDENCY_ISSUE_NUMBER="$META_ISSUE_NUMBER"
+}
+
+resolve_dependency_issue_number() {
+  local dependency_source="$1"
+  local source_key
+
+  if [[ -n "${SOURCE_TO_ISSUE_NUMBER[$dependency_source]:-}" ]]; then
+    RESOLVED_DEPENDENCY_ISSUE_NUMBER="${SOURCE_TO_ISSUE_NUMBER[$dependency_source]}"
+    return 0
+  fi
+
+  for source_key in "${!SOURCE_TO_ISSUE_NUMBER[@]}"; do
+    if [[ "$source_key" == *-"$dependency_source" ]]; then
+      RESOLVED_DEPENDENCY_ISSUE_NUMBER="${SOURCE_TO_ISSUE_NUMBER[$source_key]}"
+      return 0
+    fi
+  done
+
+  if lookup_issue_number_by_source_name_in_dir "$IMPORTED_DIR" "$dependency_source"; then
+    RESOLVED_DEPENDENCY_ISSUE_NUMBER="$LOOKED_UP_DEPENDENCY_ISSUE_NUMBER"
+    return 0
+  fi
+
+  if lookup_issue_number_by_source_name_in_dir "$FAILED_DIR" "$dependency_source"; then
+    RESOLVED_DEPENDENCY_ISSUE_NUMBER="$LOOKED_UP_DEPENDENCY_ISSUE_NUMBER"
+    return 0
+  fi
+
+  return 1
+}
+
+normalize_dependency_reference() {
+  local raw_reference="$1"
+  local normalized
+
+  normalized="$(trim "$raw_reference")"
+  normalized="${normalized#\`}"
+  normalized="${normalized%\`}"
+  normalized="${normalized%.md}"
+
+  NORMALIZED_DEPENDENCY_REFERENCE="$normalized"
+}
+
+rewrite_dependencies_in_body_file() {
+  local body_file="$1"
+  local rewritten_file
+  local dependency_warnings=()
+  local dependency_logs=()
+  local in_dependencies="false"
+
+  rewritten_file="$(mktemp)"
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^#{1,6}[[:space:]]+Dependencies[[:space:]]*$ ]]; then
+      in_dependencies="true"
+      printf '%s\n' "$line" >> "$rewritten_file"
+      continue
+    fi
+
+    if [[ "$line" =~ ^#{1,6}[[:space:]]+ && ! "$line" =~ ^#{1,6}[[:space:]]+Dependencies[[:space:]]*$ ]]; then
+      in_dependencies="false"
+      printf '%s\n' "$line" >> "$rewritten_file"
+      continue
+    fi
+
+    if [[ "$in_dependencies" == "true" && "$line" =~ ^([[:space:]]*[-*][[:space:]]+)(.+)$ ]]; then
+      local dependency_prefix dependency_reference
+      dependency_prefix="${BASH_REMATCH[1]}"
+      dependency_reference="${BASH_REMATCH[2]}"
+
+      normalize_dependency_reference "$dependency_reference"
+
+      if [[ -z "$NORMALIZED_DEPENDENCY_REFERENCE" || "$NORMALIZED_DEPENDENCY_REFERENCE" == "None" ]]; then
+        printf '%s\n' "$line" >> "$rewritten_file"
+        continue
+      fi
+
+      if resolve_dependency_issue_number "$NORMALIZED_DEPENDENCY_REFERENCE"; then
+        dependency_logs+=("$NORMALIZED_DEPENDENCY_REFERENCE -> #$RESOLVED_DEPENDENCY_ISSUE_NUMBER")
+        printf '%s#%s\n' "$dependency_prefix" "$RESOLVED_DEPENDENCY_ISSUE_NUMBER" >> "$rewritten_file"
+      else
+        dependency_warnings+=("$NORMALIZED_DEPENDENCY_REFERENCE")
+        printf '%s\n' "$line" >> "$rewritten_file"
+      fi
+      continue
+    fi
+
+    printf '%s\n' "$line" >> "$rewritten_file"
+  done < "$body_file"
+
+  REWRITTEN_BODY_FILE="$rewritten_file"
+  DEPENDENCY_WARNINGS=("${dependency_warnings[@]}")
+  RESOLVED_DEPENDENCY_LOGS=("${dependency_logs[@]}")
+}
+
+update_issue_body() {
+  local issue_number="$1"
+  local body_file="$2"
+  local gh_output
+  local gh_exit_code
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    print_info "  [DRY RUN] Update issue body"
+    return 0
+  fi
+
+  print_verbose "Executing: gh issue edit $issue_number --repo $REPO --body-file $body_file"
+  set +e
+  gh_output="$(gh issue edit "$issue_number" --repo "$REPO" --body-file "$body_file" 2>&1)"
+  gh_exit_code=$?
+  set -e
+
+  if [[ $gh_exit_code -ne 0 ]]; then
+    print_verbose "gh issue edit failed: $gh_output"
+    return 1
+  fi
+}
+
 move_to_failed() {
   local file="$1"
   local error_message="$2"
@@ -204,7 +412,7 @@ move_to_failed() {
   {
     cat "$file"
     printf '\n\n<!--\n'
-    printf 'Imported: FAILED\n'
+    printf 'Imported: Failed\n'
     printf 'Timestamp: %s\n' "$failed_at"
     printf 'IssueCreated: %s\n' "$issue_created"
     if [[ -n "$issue_number" ]]; then
@@ -259,8 +467,21 @@ create_issue() {
   local file="$1"
   local title="$2"
   local body_file="$3"
+  local issue_body_file
+  local -a gh_create_args
 
-  append_footer "$body_file"
+  build_issue_body_file "$body_file"
+  issue_body_file="$BUILT_ISSUE_BODY_FILE"
+  gh_create_args=(
+    issue create
+    --repo "$REPO"
+    --title "$title"
+    --body-file "$issue_body_file"
+  )
+
+  if [[ "$ASSIGN_TO_SELF" == "true" ]]; then
+    gh_create_args+=(--assignee "$AUTHENTICATED_USER")
+  fi
 
   if [[ "$DRY_RUN" == "true" ]]; then
     local key
@@ -269,20 +490,25 @@ create_issue() {
     dry_run_issue_number=$((1000 + created_count))
     print_info "  [DRY RUN] Create issue"
     printf '    Title: %s\n' "$title"
+    if [[ "$ASSIGN_TO_SELF" == "true" ]]; then
+      printf '    Assign to self: yes\n'
+    fi
     CREATED_ISSUE_URL="dry-run://$key"
     CREATED_ISSUE_NUMBER="$dry_run_issue_number"
     CREATED_ISSUE_ID="DRY-ID-$dry_run_issue_number"
     created_count=$((created_count + 1))
+    rm -f "$issue_body_file"
     return 0
   fi
 
   local gh_output issue_url issue_number
 
-  print_verbose "Executing: gh issue create --repo $REPO --title \"$title\" --body-file $body_file"
+  print_verbose "Executing: gh ${gh_create_args[*]}"
   set +e
-  gh_output="$(gh issue create --repo "$REPO" --title "$title" --body-file "$body_file" 2>&1)"
+  gh_output="$(gh "${gh_create_args[@]}" 2>&1)"
   local gh_exit_code=$?
   set -e
+  rm -f "$issue_body_file"
 
   if [[ $gh_exit_code -ne 0 ]]; then
     print_verbose "gh issue create failed: $gh_output"
@@ -411,6 +637,7 @@ for file in "${files[@]}"; do
     FILE_ISSUE_ID["$file"]="$LOOKED_UP_ISSUE_ID"
     FILE_ISSUE_URL["$file"]="$EXISTING_ISSUE_URL"
     TITLE_TO_ISSUE_NUMBER["$PARSED_TITLE"]="$EXISTING_ISSUE_NUMBER"
+    SOURCE_TO_ISSUE_NUMBER["$(basename "$file" .md)"]="$EXISTING_ISSUE_NUMBER"
 
     rm -f "$PARSED_BODY_FILE"
     printf '\n'
@@ -428,6 +655,7 @@ for file in "${files[@]}"; do
   FILE_ISSUE_ID["$file"]="$CREATED_ISSUE_ID"
   FILE_ISSUE_URL["$file"]="$CREATED_ISSUE_URL"
   TITLE_TO_ISSUE_NUMBER["$PARSED_TITLE"]="$CREATED_ISSUE_NUMBER"
+  SOURCE_TO_ISSUE_NUMBER["$(basename "$file" .md)"]="$CREATED_ISSUE_NUMBER"
 
   rm -f "$PARSED_BODY_FILE"
   printf '\n'
@@ -446,6 +674,38 @@ for file in "${files[@]}"; do
   num="${FILE_ISSUE_NUMBER[$file]}"
   id="${FILE_ISSUE_ID[$file]}"
   url="${FILE_ISSUE_URL[$file]}"
+
+  parse_metadata "$file"
+  rewrite_dependencies_in_body_file "$PARSED_BODY_FILE"
+
+  if [[ ${#RESOLVED_DEPENDENCY_LOGS[@]} -gt 0 ]]; then
+    printf '  Dependencies\n'
+    for dependency_log in "${RESOLVED_DEPENDENCY_LOGS[@]}"; do
+      if [[ "$DRY_RUN" == "true" ]]; then
+        printf '    [DRY RUN] %s\n' "$dependency_log"
+      else
+        printf '    %s\n' "$dependency_log"
+      fi
+    done
+
+    build_issue_body_file "$REWRITTEN_BODY_FILE"
+    if ! update_issue_body "$num" "$BUILT_ISSUE_BODY_FILE"; then
+      rm -f "$PARSED_BODY_FILE" "$REWRITTEN_BODY_FILE" "$BUILT_ISSUE_BODY_FILE"
+      move_to_failed "$file" "Dependency body update failed" "true" "$num" "$url"
+      print_warning "  Issue #$num was created but dependency update failed"
+      printf '\n'
+      continue
+    fi
+    rm -f "$BUILT_ISSUE_BODY_FILE"
+  fi
+
+  if [[ ${#DEPENDENCY_WARNINGS[@]} -gt 0 ]]; then
+    for unresolved_dependency in "${DEPENDENCY_WARNINGS[@]}"; do
+      print_warning "  Warning: unresolved dependency '$unresolved_dependency'"
+    done
+  fi
+
+  rm -f "$PARSED_BODY_FILE" "$REWRITTEN_BODY_FILE"
 
   if [[ -n "$parent" ]]; then
     if resolve_parent_issue_number "$parent"; then
@@ -474,5 +734,5 @@ printf '%sLinked:%s  %s\n' "$COLOR_BOLD" "$COLOR_RESET" "$linked_count"
 if (( failed_count > 0 )); then
   print_error "${COLOR_BOLD}Failed:${COLOR_RESET}  $failed_count"
 else
-  print_info "${COLOR_BOLD}Failed:${COLOR_RESET}  $failed_count"
+  printf '%s%sFailed:%s  %s%s\n' "$COLOR_RED" "$COLOR_BOLD" "$COLOR_RESET" "$failed_count" "$COLOR_RESET"
 fi

@@ -6,18 +6,45 @@ DRY_RUN="false"
 declare -a ISSUE_NUMBERS=()
 MAX_RETRY_COUNT=3
 
+print_help() {
+  cat <<'EOF'
+Usage:
+  .github/scripts/requeue-failed-imports.sh [options] [issue_number[,issue_number...]] ...
+
+Options:
+  -n, --dry-run  Show what would be requeued without moving files
+  -v, --verbose  Print verbose diagnostic output
+  -h, --help     Show this help text
+
+Arguments:
+  issue_number  Requeue only the specified failed issue number
+                Comma-separated values are also supported
+
+Examples:
+  .github/scripts/requeue-failed-imports.sh
+  .github/scripts/requeue-failed-imports.sh --dry-run
+  .github/scripts/requeue-failed-imports.sh 159 160 161
+EOF
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --dry-run)
+    -n|--dry-run)
       DRY_RUN="true"
       shift
       ;;
-    --verbose)
+    -v|--verbose)
       VERBOSE="true"
       shift
       ;;
+    -h|--help)
+      print_help
+      exit 0
+      ;;
     --*)
       echo "Unknown argument: $1" >&2
+      printf '\n' >&2
+      print_help >&2
       exit 1
       ;;
     *)

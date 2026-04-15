@@ -54,6 +54,8 @@ Rules:
   error
 - `Title:` is required
 - `Parent:` is optional
+- dependency references belong in a markdown `Dependencies` section in the body,
+  not in the metadata header
 
 Example epic:
 
@@ -88,6 +90,21 @@ the same import run.
 - create a task via import script
 - link it to the epic using metadata
 - verify linkage in GitHub UI
+```
+
+Example task with dependencies:
+
+```md
+Title: [Task]: Configure compute infrastructure
+
+## Summary
+
+Provision the compute layer after the network is available.
+
+## Dependencies
+
+- 03-task-vpc-and-networking
+- 04-task-shared-security-groups
 ```
 
 ## Parent Resolution
@@ -151,13 +168,19 @@ Pass 1: create issues
   ```
 
 - creates the issue with `gh issue create`
+- optionally assigns the issue to the authenticated GitHub user when
+  `--assign-to-self` is used
 - records the created issue number, URL, and internal GitHub issue id for use in
   pass 2
 
 Pass 2: link sub-issues and move files
 
 - resolves each `Parent:` value
+- resolves dependency source-file references from any `Dependencies` section
+- updates issue bodies to replace resolved dependency references with GitHub
+  issue references such as `#123`
 - links child issues using the GitHub sub-issues API
+- logs warnings for unresolved dependencies
 - moves successfully processed files to `imported/`
 - moves failed files to `failed/`
 
@@ -185,6 +208,12 @@ Import with verbose logging:
 
 ```bash
 .github/scripts/import-issues.sh --verbose
+```
+
+Import and assign newly created issues to yourself:
+
+```bash
+.github/scripts/import-issues.sh --assign-to-self
 ```
 
 Import into a different repository:
@@ -392,6 +421,9 @@ Before running the import:
   GitHub sub-issues API
 
 For real imports, `gh` must be authenticated against GitHub.
+
+If you use `--assign-to-self`, the authenticated user must also be assignable in
+the target repository.
 
 For `--dry-run`, `gh` must still be installed, but GitHub authentication is not
 required.
