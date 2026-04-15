@@ -13,8 +13,10 @@ import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.mapper.CustomerMapper;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
+import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
+import com.kartoush.customer.service.IssuedActivationToken;
 
 import java.util.List;
 import java.util.Optional;
@@ -188,7 +190,7 @@ public class DefaultCustomerService implements CustomerService
 
     @Override
     @Transactional
-    public void resendActivationToken(final String customerId) {
+    public ActivationEmailDelivery issueActivationTokenForResend(final String customerId) {
         final CustomerEntity customerEntity = customerRepository
             .findById(CustomerIdEmbeddable.from(customerId))
             .orElseThrow(() -> new CustomerNotFoundException(customerId));
@@ -199,7 +201,8 @@ public class DefaultCustomerService implements CustomerService
             throw new InvalidActivationTokenResendException(customer.getStatus());
         }
 
-        activationTokenService.resendFor(customer.getId());
+        final IssuedActivationToken issuedActivationToken = activationTokenService.resendFor(customer.getId());
+        return new ActivationEmailDelivery(customer.getEmail(), issuedActivationToken.rawToken());
     }
 
     private void validateCustomerCanBeUpdated(final CustomerEntity customer) {

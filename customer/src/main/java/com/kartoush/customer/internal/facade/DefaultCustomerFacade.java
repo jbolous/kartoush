@@ -9,7 +9,11 @@ import com.kartoush.customer.facade.model.CustomerView;
 import com.kartoush.customer.facade.model.UpdateCustomerRequest;
 import com.kartoush.customer.internal.validation.CreateCustomerRequestValidator;
 import com.kartoush.customer.internal.validation.UpdateCustomerRequestValidator;
+import com.kartoush.customer.service.ActivationEmailDelivery;
+import com.kartoush.customer.service.ActivationEmailService;
+import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
+import com.kartoush.customer.service.IssuedActivationToken;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.Email;
 import com.kartoush.platform.ulid.UlidGenerator;
@@ -21,21 +25,27 @@ import java.util.List;
 public class DefaultCustomerFacade implements CustomerFacade {
 
     /* TODO(#82): Move credential handling to a dedicated authentication module.
-     * Customer should not own passwordHash long-term as part of proper domain separation. 
+     * Customer should not own passwordHash long-term as part of proper domain separation.
      */
     private static final String TEMPORARY_PASSWORD_HASH = "TEMPORARY_PASSWORD_HASH";
 
     private final CustomerService customerService;
+    private final ActivationEmailService activationEmailService;
+    private final ActivationTokenService activationTokenService;
     private final UlidGenerator ulidGenerator;
     private final CreateCustomerRequestValidator createCustomerRequestValidator;
     private final UpdateCustomerRequestValidator updateCustomerRequestValidator;
 
     public DefaultCustomerFacade(
             final CustomerService customerService,
+            final ActivationEmailService activationEmailService,
+            final ActivationTokenService activationTokenService,
             final UlidGenerator ulidGenerator,
             final CreateCustomerRequestValidator createCustomerRequestValidator,
             final UpdateCustomerRequestValidator updateCustomerRequestValidator) {
         this.customerService = customerService;
+        this.activationEmailService = activationEmailService;
+        this.activationTokenService = activationTokenService;
         this.ulidGenerator = ulidGenerator;
         this.createCustomerRequestValidator = createCustomerRequestValidator;
         this.updateCustomerRequestValidator = updateCustomerRequestValidator;
@@ -62,7 +72,11 @@ public class DefaultCustomerFacade implements CustomerFacade {
                 new Email(request.email()),
                 TEMPORARY_PASSWORD_HASH);
 
-        final var savedCustomer = customerService.createCustomer(customer);
+        final Customer savedCustomer = customerService.createCustomer(customer);
+        final IssuedActivationToken issuedActivationToken = activationTokenService.createFor(savedCustomer.getId());
+
+        activationEmailService.sendActivationToken(savedCustomer.getEmail(), issuedActivationToken.rawToken());
+
         return toCustomerView(savedCustomer);
     }
 
@@ -92,7 +106,8 @@ public class DefaultCustomerFacade implements CustomerFacade {
 
     @Override
     public void resendActivationToken(final String customerId) {
-        customerService.resendActivationToken(customerId);
+        final ActivationEmailDelivery activationEmailDelivery = customerService.issueActivationTokenForResend(customerId);
+        activationEmailService.sendActivationToken(activationEmailDelivery.email(), activationEmailDelivery.rawToken());
     }
 
     @Override
