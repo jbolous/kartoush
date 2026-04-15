@@ -21,6 +21,7 @@ import com.kartoush.customer.persistence.repository.ActivationTokenRepository;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
 import com.kartoush.customer.service.ActivationTokenGenerator;
 import com.kartoush.customer.service.ActivationTokenHasher;
+import com.kartoush.customer.service.IssuedActivationToken;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -94,7 +95,8 @@ class DefaultActivationTokenServiceTest {
             .thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
-        ActivationToken activationToken = activationTokenService.createFor(customerId);
+        IssuedActivationToken issuedActivationToken = activationTokenService.createFor(customerId);
+        ActivationToken activationToken = issuedActivationToken.activationToken();
 
         // then
         verify(activationTokenGenerator).generate();
@@ -116,6 +118,7 @@ class DefaultActivationTokenServiceTest {
         assertThat(activationToken.getCreatedAt()).isEqualTo(FIXED_INSTANT);
         assertThat(activationToken.getExpiresAt()).isEqualTo(FIXED_INSTANT.plusSeconds(TWENTY_FOUR_HOURS_IN_SECONDS));
         assertThat(activationToken.getConsumedAt()).isNull();
+        assertThat(issuedActivationToken.rawToken()).isEqualTo(RAW_TOKEN);
     }
 
     @Test
@@ -515,13 +518,15 @@ class DefaultActivationTokenServiceTest {
             .thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
-        ActivationToken resentToken = activationTokenService.resendFor(customerId);
+        IssuedActivationToken issuedActivationToken = activationTokenService.resendFor(customerId);
+        ActivationToken resentToken = issuedActivationToken.activationToken();
 
         // then
         verify(activationTokenRepository).findAllByCustomerIdAndConsumedAtIsNull(CustomerIdEmbeddable.from(customerId));
         verify(activationTokenRepository).saveAll(any());
         assertThat(existingToken.getConsumedAt()).isEqualTo(FIXED_INSTANT);
         assertThat(resentToken.getTokenHash()).isEqualTo(TOKEN_HASH);
+        assertThat(issuedActivationToken.rawToken()).isEqualTo(RAW_TOKEN);
     }
 
     private void stubExistingCustomer(CustomerId customerId) {

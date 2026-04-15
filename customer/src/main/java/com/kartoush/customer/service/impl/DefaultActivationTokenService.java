@@ -13,6 +13,7 @@ import com.kartoush.customer.persistence.repository.CustomerRepository;
 import com.kartoush.customer.service.ActivationTokenGenerator;
 import com.kartoush.customer.service.ActivationTokenHasher;
 import com.kartoush.customer.service.ActivationTokenService;
+import com.kartoush.customer.service.IssuedActivationToken;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -54,7 +55,7 @@ public class DefaultActivationTokenService implements ActivationTokenService {
     }
 
     @Override
-    public ActivationToken createFor(CustomerId customerId) {
+    public IssuedActivationToken createFor(CustomerId customerId) {
         if (!customerRepository.existsById(CustomerIdEmbeddable.from(customerId))) {
             throw new CustomerNotFoundException(customerId.value());
         }
@@ -63,7 +64,7 @@ public class DefaultActivationTokenService implements ActivationTokenService {
     }
 
     @Override
-    public ActivationToken resendFor(CustomerId customerId) {
+    public IssuedActivationToken resendFor(CustomerId customerId) {
         Instant consumedAt = Instant.now(clock);
         List<ActivationTokenEntity> activeTokens = activationTokenRepository.findAllByCustomerIdAndConsumedAtIsNull(
             CustomerIdEmbeddable.from(customerId));
@@ -79,7 +80,7 @@ public class DefaultActivationTokenService implements ActivationTokenService {
         return createFor(customerId);
     }
 
-    private ActivationToken createActivationToken(CustomerId customerId) {
+    private IssuedActivationToken createActivationToken(CustomerId customerId) {
         Instant createdAt = Instant.now(clock);
         Instant expiresAt = createdAt.plus(ACTIVATION_TOKEN_TTL);
 
@@ -96,7 +97,10 @@ public class DefaultActivationTokenService implements ActivationTokenService {
 
         ActivationTokenEntity activationTokenEntity = activationTokenMapper.toEntity(activationToken);
 
-        return activationTokenMapper.toDomain(activationTokenRepository.save(activationTokenEntity));
+        ActivationToken savedActivationToken =
+            activationTokenMapper.toDomain(activationTokenRepository.save(activationTokenEntity));
+
+        return new IssuedActivationToken(savedActivationToken, rawToken);
     }
 
     @Override

@@ -10,7 +10,9 @@ import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.mapper.CustomerMapper;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
+import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationTokenService;
+import com.kartoush.customer.service.IssuedActivationToken;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
@@ -335,27 +337,34 @@ class DefaultCustomerServiceTest
     }
 
     @Test
-    void shouldResendActivationTokenForPendingCustomer() {
+    void shouldIssueActivationTokenForResendForPendingCustomer() {
         // given
         final CustomerEntity customerEntity = mock(CustomerEntity.class);
         final Customer customer = mock(Customer.class);
+        final IssuedActivationToken issuedActivationToken =
+            new IssuedActivationToken(mock(com.kartoush.customer.domain.ActivationToken.class), RAW_TOKEN);
 
         given(customerRepository.findById(CUSTOMER_ID_EMBEDDABLE)).willReturn(Optional.of(customerEntity));
         given(customerMapper.toDomain(customerEntity)).willReturn(customer);
         given(customer.getStatus()).willReturn(CustomerStatus.PENDING);
         given(customer.getId()).willReturn(CUSTOMER_ID);
+        given(customer.getEmail()).willReturn(EMAIL);
+        given(activationTokenService.resendFor(CUSTOMER_ID)).willReturn(issuedActivationToken);
 
         // when
-        defaultCustomerService.resendActivationToken(CUSTOMER_ID_VALUE);
+        final ActivationEmailDelivery activationEmail =
+            defaultCustomerService.issueActivationTokenForResend(CUSTOMER_ID_VALUE);
 
         // then
         verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
         verify(customerMapper).toDomain(customerEntity);
         verify(activationTokenService).resendFor(CUSTOMER_ID);
+        assertThat(activationEmail.email()).isEqualTo(EMAIL);
+        assertThat(activationEmail.rawToken()).isEqualTo(RAW_TOKEN);
     }
 
     @Test
-    void shouldThrowWhenResendingActivationTokenForNonPendingCustomer() {
+    void shouldThrowWhenIssuingActivationTokenForResendForNonPendingCustomer() {
         // given
         final CustomerEntity customerEntity = mock(CustomerEntity.class);
         final Customer customer = mock(Customer.class);
@@ -365,7 +374,7 @@ class DefaultCustomerServiceTest
         given(customer.getStatus()).willReturn(CustomerStatus.ACTIVE);
 
         // when / then
-        assertThatThrownBy(() -> defaultCustomerService.resendActivationToken(CUSTOMER_ID_VALUE))
+        assertThatThrownBy(() -> defaultCustomerService.issueActivationTokenForResend(CUSTOMER_ID_VALUE))
             .isInstanceOf(InvalidActivationTokenResendException.class)
             .hasMessage("Activation token cannot be resent while customer is in ACTIVE status");
 
@@ -373,6 +382,4 @@ class DefaultCustomerServiceTest
         verify(customerMapper).toDomain(customerEntity);
         verify(activationTokenService, never()).resendFor(any());
     }
-
-
 }

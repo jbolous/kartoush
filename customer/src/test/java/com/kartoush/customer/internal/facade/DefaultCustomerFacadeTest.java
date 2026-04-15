@@ -5,7 +5,11 @@ import com.kartoush.customer.domain.CustomerProfile;
 import com.kartoush.customer.facade.model.CreateCustomerRequest;
 import com.kartoush.customer.facade.model.CustomerView;
 import com.kartoush.customer.internal.validation.CreateCustomerRequestValidator;
+import com.kartoush.customer.service.ActivationEmailDelivery;
+import com.kartoush.customer.service.ActivationEmailService;
+import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
+import com.kartoush.customer.service.IssuedActivationToken;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
@@ -18,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,26 +46,36 @@ class DefaultCustomerFacadeTest {
     @Mock
     private CustomerService customerService;
 
+    @Mock
+    private ActivationEmailService activationEmailService;
+
+    @Mock
+    private ActivationTokenService activationTokenService;
+
     @InjectMocks
     private DefaultCustomerFacade facade;
 
     @Test
     void shouldCreateCustomer() {
-
         // given
         final var request = buildCustomerRequest();
         final var saved = buildCustomer();
         final var view = buildCustomerView();
+        final var issuedActivationToken = new IssuedActivationToken(mock(com.kartoush.customer.domain.ActivationToken.class), RAW_TOKEN);
 
         // when
         when(ulidGenerator.next()).thenReturn(CUSTOMER_ID);
         when(customerService.createCustomer(any())).thenReturn(saved);
+        when(activationTokenService.createFor(CustomerId.of(CUSTOMER_ID))).thenReturn(issuedActivationToken);
 
         final var result = facade.createCustomer(request);
 
         // then
         assertThat(result).isEqualTo(view);
         verify(validator).validate(request);
+        verify(customerService).createCustomer(any());
+        verify(activationTokenService).createFor(CustomerId.of(CUSTOMER_ID));
+        verify(activationEmailService).sendActivationToken(new Email(EMAIL), RAW_TOKEN);
     }
 
     @Test
@@ -81,11 +96,17 @@ class DefaultCustomerFacadeTest {
 
     @Test
     void shouldResendActivationToken() {
+        // given
+        final ActivationEmailDelivery activationEmail =
+            new ActivationEmailDelivery(new Email(EMAIL), RAW_TOKEN);
+        when(customerService.issueActivationTokenForResend(CUSTOMER_ID)).thenReturn(activationEmail);
+
         // when
         facade.resendActivationToken(CUSTOMER_ID);
 
         // then
-        verify(customerService).resendActivationToken(CUSTOMER_ID);
+        verify(customerService).issueActivationTokenForResend(CUSTOMER_ID);
+        verify(activationEmailService).sendActivationToken(new Email(EMAIL), RAW_TOKEN);
     }
 
     private CreateCustomerRequest buildCustomerRequest(){

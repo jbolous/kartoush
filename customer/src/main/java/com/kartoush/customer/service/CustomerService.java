@@ -20,7 +20,7 @@ public interface CustomerService
 
     Customer activateCustomer(final String customerId, final String rawToken);
 
-    void resendActivationToken(final String customerId);
+    ActivationEmailDelivery issueActivationTokenForResend(final String customerId);
 
     Customer reactivateCustomer(final String customerId);
 
