@@ -15,6 +15,8 @@ the file lifecycle visible in the repository.
 - `failed/`
   Contains files that could not be fully processed and were annotated with
   failure details.
+- `templates/`
+  Contains starter markdown templates for creating new epic and task files.
 
 The `.gitignore` in this directory keeps these folders in the repository while
 allowing imported artifacts to be ignored by default, except for `.gitkeep` and
@@ -24,6 +26,10 @@ this README.
 
 Each issue definition must be a markdown file in `pending/` with a small
 metadata header followed by a blank line and then the issue body.
+
+The easiest way to start a new import file is to copy one of the templates in
+`templates/` and rename it with the numeric prefix you want to use in
+`pending/`.
 
 Use a numeric filename prefix to make import order explicit, for example:
 
@@ -44,6 +50,7 @@ Required metadata:
 Optional metadata:
 
 - `Parent:`
+- `Labels:`
 
 Rules:
 
@@ -54,6 +61,7 @@ Rules:
   error
 - `Title:` is required
 - `Parent:` is optional
+- `Labels:` is optional and accepts comma-separated label names
 - dependency references belong in a markdown `Dependencies` section in the body,
   not in the metadata header
 
@@ -61,6 +69,7 @@ Example epic:
 
 ```md
 Title: Epic: Issue Import and Workflow Tooling
+Labels: enhancement, documentation
 
 ### Goal
 
@@ -79,6 +88,7 @@ Example child task:
 ```md
 Title: Task: Validate sub-issue linking during import
 Parent: Epic: Issue Import and Workflow Tooling
+Labels: enhancement, application
 
 ### Summary
 
@@ -104,8 +114,48 @@ Provision the compute layer after the network is available.
 ## Dependencies
 
 - 03-task-vpc-and-networking
-- 04-task-shared-security-groups
+- #123
 ```
+
+## Templates
+
+Starter templates are available in:
+
+- `templates/epic-template.md`
+- `templates/task-template.md`
+
+The task template includes a `Parent:` example for epic-linked work. Remove
+that line when creating a standalone task.
+
+The task template also shows:
+
+- how to use `Parent: #123` when the parent issue number is already known
+- where to list `Dependencies` using source file names or GitHub issue numbers that the importer can resolve
+- how to provide optional comma-separated `Labels:` metadata
+
+Recommended workflow:
+
+1. Copy the appropriate template into `pending/`
+2. Rename it with a numeric prefix such as `00-` or `01-`
+3. Replace the placeholder title and section content
+4. Run a dry run before importing for real
+
+Example:
+
+```bash
+cp .github/issue-import/templates/task-template.md \
+  .github/issue-import/pending/00-task-example.md
+```
+
+You can also print a template directly from the importer:
+
+```bash
+.github/scripts/import-issues.sh --print-template epic
+.github/scripts/import-issues.sh --print-template task
+```
+
+Template files must remain outside `pending/` so they are not imported
+accidentally.
 
 ## Parent Resolution
 
@@ -123,6 +173,32 @@ children to be imported together from `pending/`.
 If the parent cannot be resolved, the child issue may already exist in GitHub,
 but the file will be moved to `failed/` and marked for manual follow-up.
 
+## Dependency Resolution
+
+Entries in a `Dependencies` section can be defined in either of these ways:
+
+- by source file name, for example: `03-task-vpc-and-networking`
+- by explicit GitHub issue number, for example: `#123`
+
+Source file names are useful when related work is being imported from local
+markdown files. GitHub issue numbers are useful when a dependency already
+exists in GitHub and is not represented by a local import file.
+
+## Label Handling
+
+`Labels:` can be defined as a comma-separated metadata value, for example:
+
+```md
+Labels: customer, application
+```
+
+During import, the script validates requested labels against the repository's
+existing GitHub labels.
+
+- valid labels are applied during issue creation
+- invalid labels are ignored so they do not block issue creation
+- ignored labels are reported as warnings in the importer output
+
 ## Import Script
 
 The main import entrypoint is:
@@ -135,6 +211,7 @@ Optional flag:
 
 - `--dry-run`
 - `--verbose`
+- `--print-template epic|task`
 
 Environment variables supported by the script:
 
@@ -159,6 +236,7 @@ Pass 1: create issues
 
 - reads each `pending/*.md` file
 - parses `Title:` and optional `Parent:`
+- parses optional `Labels:`
 - appends this footer to the GitHub issue body:
 
   ```html
@@ -168,6 +246,7 @@ Pass 1: create issues
   ```
 
 - creates the issue with `gh issue create`
+- applies any valid requested labels during issue creation
 - optionally assigns the issue to the authenticated GitHub user when
   `--assign-to-self` is used
 - records the created issue number, URL, and internal GitHub issue id for use in
@@ -196,6 +275,18 @@ Dry run with verbose logging:
 
 ```bash
 .github/scripts/import-issues.sh --dry-run --verbose
+```
+
+Print the epic template:
+
+```bash
+.github/scripts/import-issues.sh --print-template epic
+```
+
+Print the task template:
+
+```bash
+.github/scripts/import-issues.sh --print-template task
 ```
 
 Import into the default repository:

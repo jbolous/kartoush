@@ -4,6 +4,8 @@ set -euo pipefail
 VERBOSE="false"
 DRY_RUN="false"
 ASSIGN_TO_SELF="false"
+PRINT_TEMPLATE=""
+declare -A REPO_LABELS
 
 print_help() {
   cat <<'EOF'
@@ -14,8 +16,39 @@ Options:
   -n, --dry-run         Validate and simulate issue creation without changing GitHub
   -v, --verbose         Print verbose diagnostic output
   -a, --assign-to-self  Assign newly created issues to the authenticated GitHub user
+      --print-template  Print the requested template (`epic` or `task`) and exit
   -h, --help            Show this help text
+
+Templates:
+  Epic template: .github/issue-import/templates/epic-template.md
+  Task template: .github/issue-import/templates/task-template.md
 EOF
+}
+
+print_template() {
+  local template_name="$1"
+  local template_file
+
+  case "$template_name" in
+    epic)
+      template_file="$IMPORT_ROOT/templates/epic-template.md"
+      ;;
+    task)
+      template_file="$IMPORT_ROOT/templates/task-template.md"
+      ;;
+    *)
+      print_error "✗ Unknown template: $template_name"
+      print_info "  Supported templates: epic, task"
+      exit 1
+      ;;
+  esac
+
+  if [[ ! -f "$template_file" ]]; then
+    print_error "✗ Template file not found: $template_file"
+    exit 1
+  fi
+
+  cat "$template_file"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -31,6 +64,14 @@ while [[ $# -gt 0 ]]; do
     -a|--assign-to-self)
       ASSIGN_TO_SELF="true"
       shift
+      ;;
+    --print-template)
+      [[ $# -ge 2 ]] || {
+        print_error "✗ --print-template requires a value: epic or task"
+        exit 1
+      }
+      PRINT_TEMPLATE="$2"
+      shift 2
       ;;
     -h|--help)
       print_help
@@ -59,28 +100,14 @@ source "$SCRIPT_PATH/issue-import-common.sh"
 AUTHENTICATED_USER=""
 
 setup_repo_paths
-preflight_import
 
-if [[ "$DRY_RUN" != "true" && "$ASSIGN_TO_SELF" == "true" ]]; then
-  if ! lookup_authenticated_user; then
-    print_error "✗ Unable to determine authenticated GitHub user"
-    exit 1
-  fi
-fi
-
-print_verbose "REPO=$REPO"
-print_verbose "REPO_ROOT=$REPO_ROOT"
-print_verbose "IMPORT_ROOT=$IMPORT_ROOT"
-print_verbose "PENDING_DIR=$PENDING_DIR"
-print_verbose "IMPORTED_DIR=$IMPORTED_DIR"
-print_verbose "FAILED_DIR=$FAILED_DIR"
-print_verbose "DRY_RUN=$DRY_RUN"
-print_verbose "ASSIGN_TO_SELF=$ASSIGN_TO_SELF"
-if [[ -n "$AUTHENTICATED_USER" ]]; then
-  print_verbose "AUTHENTICATED_USER=$AUTHENTICATED_USER"
+if [[ -n "$PRINT_TEMPLATE" ]]; then
+  print_template "$PRINT_TEMPLATE"
+  exit 0
 fi
 
 declare -A FILE_PARENT
+declare -A FILE_LABELS
 declare -A FILE_ISSUE_NUMBER
 declare -A FILE_ISSUE_ID
 declare -A FILE_ISSUE_URL
@@ -95,6 +122,7 @@ parse_metadata() {
   local file="$1"
   local title=""
   local parent=""
+  local labels=""
   local body_file
   local in_metadata="true"
 
@@ -109,6 +137,8 @@ parse_metadata() {
         title="$(trim "${line#Title:}")"
       elif [[ "$line" == Parent:* ]]; then
         parent="$(trim "${line#Parent:}")"
+      elif [[ "$line" == Labels:* ]]; then
+        labels="$(trim "${line#Labels:}")"
       else
         print_verbose "Invalid metadata line in $(basename "$file"): $line"
         rm -f "$body_file"
@@ -127,6 +157,7 @@ parse_metadata() {
 
   PARSED_TITLE="$title"
   PARSED_PARENT="$parent"
+  PARSED_LABELS="$labels"
   PARSED_BODY_FILE="$body_file"
 }
 
@@ -153,6 +184,101 @@ lookup_authenticated_user() {
 
   AUTHENTICATED_USER="$gh_output"
 }
+
+load_repo_labels() {
+  local gh_output
+  local gh_exit_code
+  local label_name
+
+  set +e
+  gh_output="$(
+    gh api \
+      --paginate \
+      "/repos/$REPO/labels" \
+      --jq '.[].name' 2>&1
+  )"
+  gh_exit_code=$?
+  set -e
+
+  if [[ $gh_exit_code -ne 0 ]]; then
+    print_verbose "gh api label lookup failed: $gh_output"
+    return 1
+  fi
+
+  while IFS= read -r label_name || [[ -n "$label_name" ]]; do
+    [[ -n "$label_name" ]] || continue
+    REPO_LABELS["$label_name"]="true"
+  done <<< "$gh_output"
+}
+
+parse_label_list() {
+  local raw_labels="$1"
+  local -a parsed_labels=()
+  local label
+
+  if [[ -z "$raw_labels" ]]; then
+    PARSED_LABEL_LIST=()
+    return 0
+  fi
+
+  IFS=',' read -r -a parsed_labels <<< "$raw_labels"
+
+  PARSED_LABEL_LIST=()
+  for label in "${parsed_labels[@]}"; do
+    label="$(trim "$label")"
+    [[ -n "$label" ]] || continue
+    PARSED_LABEL_LIST+=("$label")
+  done
+}
+
+filter_valid_labels() {
+  local -a requested_labels=("$@")
+  local label
+
+  FILTERED_VALID_LABELS=()
+  FILTERED_INVALID_LABELS=()
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    FILTERED_VALID_LABELS=("${requested_labels[@]}")
+    return 0
+  fi
+
+  for label in "${requested_labels[@]}"; do
+    if [[ -n "${REPO_LABELS[$label]:-}" ]]; then
+      FILTERED_VALID_LABELS+=("$label")
+    else
+      FILTERED_INVALID_LABELS+=("$label")
+    fi
+  done
+}
+
+preflight_import
+
+if [[ "$DRY_RUN" != "true" ]]; then
+  if ! load_repo_labels; then
+    print_error "✗ Unable to load repository labels"
+    exit 1
+  fi
+fi
+
+if [[ "$DRY_RUN" != "true" && "$ASSIGN_TO_SELF" == "true" ]]; then
+  if ! lookup_authenticated_user; then
+    print_error "✗ Unable to determine authenticated GitHub user"
+    exit 1
+  fi
+fi
+
+print_verbose "REPO=$REPO"
+print_verbose "REPO_ROOT=$REPO_ROOT"
+print_verbose "IMPORT_ROOT=$IMPORT_ROOT"
+print_verbose "PENDING_DIR=$PENDING_DIR"
+print_verbose "IMPORTED_DIR=$IMPORTED_DIR"
+print_verbose "FAILED_DIR=$FAILED_DIR"
+print_verbose "DRY_RUN=$DRY_RUN"
+print_verbose "ASSIGN_TO_SELF=$ASSIGN_TO_SELF"
+if [[ -n "$AUTHENTICATED_USER" ]]; then
+  print_verbose "AUTHENTICATED_USER=$AUTHENTICATED_USER"
+fi
 
 append_footer() {
   local body_file="$1"
@@ -189,6 +315,28 @@ lookup_issue_rest_id() {
   fi
 
   LOOKED_UP_ISSUE_ID="$issue_id"
+}
+
+lookup_issue_rest_id_with_retry() {
+  local issue_number="$1"
+  local max_attempts="${2:-5}"
+  local sleep_seconds="${3:-1}"
+  local attempt=1
+
+  while (( attempt <= max_attempts )); do
+    if lookup_issue_rest_id "$issue_number"; then
+      return 0
+    fi
+
+    if (( attempt < max_attempts )); then
+      print_verbose "Retrying issue lookup for #$issue_number (attempt $((attempt + 1))/$max_attempts)"
+      sleep "$sleep_seconds"
+    fi
+
+    attempt=$((attempt + 1))
+  done
+
+  return 1
 }
 
 lookup_issue_number_by_title_in_dir() {
@@ -264,6 +412,11 @@ lookup_issue_number_by_source_name_in_dir() {
 resolve_dependency_issue_number() {
   local dependency_source="$1"
   local source_key
+
+  if [[ "$dependency_source" =~ ^#([0-9]+)$ ]]; then
+    RESOLVED_DEPENDENCY_ISSUE_NUMBER="${BASH_REMATCH[1]}"
+    return 0
+  fi
 
   if [[ -n "${SOURCE_TO_ISSUE_NUMBER[$dependency_source]:-}" ]]; then
     RESOLVED_DEPENDENCY_ISSUE_NUMBER="${SOURCE_TO_ISSUE_NUMBER[$dependency_source]}"
@@ -467,8 +620,11 @@ create_issue() {
   local file="$1"
   local title="$2"
   local body_file="$3"
+  shift 3
+  local -a labels=("$@")
   local issue_body_file
   local -a gh_create_args
+  local label
 
   build_issue_body_file "$body_file"
   issue_body_file="$BUILT_ISSUE_BODY_FILE"
@@ -483,6 +639,10 @@ create_issue() {
     gh_create_args+=(--assignee "$AUTHENTICATED_USER")
   fi
 
+  for label in "${labels[@]}"; do
+    gh_create_args+=(--label "$label")
+  done
+
   if [[ "$DRY_RUN" == "true" ]]; then
     local key
     local dry_run_issue_number
@@ -492,6 +652,9 @@ create_issue() {
     printf '    Title: %s\n' "$title"
     if [[ "$ASSIGN_TO_SELF" == "true" ]]; then
       printf '    Assign to self: yes\n'
+    fi
+    if [[ ${#labels[@]} -gt 0 ]]; then
+      printf '    Labels: %s\n' "$(IFS=', '; printf '%s' "${labels[*]}")"
     fi
     CREATED_ISSUE_URL="dry-run://$key"
     CREATED_ISSUE_NUMBER="$dry_run_issue_number"
@@ -518,12 +681,13 @@ create_issue() {
   issue_url="$(printf '%s\n' "$gh_output" | tail -n 1 | tr -d '\r')"
   issue_number="$(echo "$issue_url" | sed -E 's#.*/issues/([0-9]+)$#\1#')"
 
-  if ! lookup_issue_rest_id "$issue_number"; then
+  CREATED_ISSUE_URL="$issue_url"
+  CREATED_ISSUE_NUMBER="$issue_number"
+
+  if ! lookup_issue_rest_id_with_retry "$issue_number"; then
     return 1
   fi
 
-  CREATED_ISSUE_URL="$issue_url"
-  CREATED_ISSUE_NUMBER="$issue_number"
   CREATED_ISSUE_ID="$LOOKED_UP_ISSUE_ID"
 
   created_count=$((created_count + 1))
@@ -618,15 +782,39 @@ for file in "${files[@]}"; do
   else
     print_verbose "Parsed parent: <none>"
   fi
+  if [[ -n "$PARSED_LABELS" ]]; then
+    print_verbose "Parsed labels: $PARSED_LABELS"
+  else
+    print_verbose "Parsed labels: <none>"
+  fi
 
   FILE_PARENT["$file"]="$PARSED_PARENT"
+  FILE_LABELS["$file"]="$PARSED_LABELS"
+
+  parse_label_list "$PARSED_LABELS"
+  filter_valid_labels "${PARSED_LABEL_LIST[@]}"
+
+  if [[ ${#FILTERED_VALID_LABELS[@]} -gt 0 ]]; then
+    printf '  Labels\n'
+    if [[ "$DRY_RUN" == "true" ]]; then
+      printf '    [DRY RUN] %s\n' "$(IFS=', '; printf '%s' "${FILTERED_VALID_LABELS[*]}")"
+    else
+      printf '    %s\n' "$(IFS=', '; printf '%s' "${FILTERED_VALID_LABELS[*]}")"
+    fi
+  fi
+
+  if [[ ${#FILTERED_INVALID_LABELS[@]} -gt 0 ]]; then
+    for invalid_label in "${FILTERED_INVALID_LABELS[@]}"; do
+      print_warning "  Warning: ignoring unknown label '$invalid_label'"
+    done
+  fi
 
   parse_existing_issue_metadata "$file"
 
   if [[ -n "$EXISTING_ISSUE_NUMBER" ]]; then
     print_info "  Reusing existing issue #$EXISTING_ISSUE_NUMBER"
 
-    if ! lookup_issue_rest_id "$EXISTING_ISSUE_NUMBER"; then
+    if ! lookup_issue_rest_id_with_retry "$EXISTING_ISSUE_NUMBER"; then
       rm -f "$PARSED_BODY_FILE"
       move_to_failed "$file" "Existing issue lookup failed" "true" "$EXISTING_ISSUE_NUMBER" "$EXISTING_ISSUE_URL"
       printf '\n'
@@ -644,9 +832,13 @@ for file in "${files[@]}"; do
     continue
   fi
 
-  if ! create_issue "$file" "$PARSED_TITLE" "$PARSED_BODY_FILE"; then
+  if ! create_issue "$file" "$PARSED_TITLE" "$PARSED_BODY_FILE" "${FILTERED_VALID_LABELS[@]}"; then
     rm -f "$PARSED_BODY_FILE"
-    move_to_failed "$file" "Create failed"
+    if [[ -n "${CREATED_ISSUE_NUMBER:-}" ]]; then
+      move_to_failed "$file" "Create follow-up failed" "true" "$CREATED_ISSUE_NUMBER" "$CREATED_ISSUE_URL"
+    else
+      move_to_failed "$file" "Create failed"
+    fi
     printf '\n'
     continue
   fi

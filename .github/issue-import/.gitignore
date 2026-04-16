@@ -7,3 +7,5 @@
 !imported/.gitkeep
 !failed/
 !failed/.gitkeep
+!templates/
+!templates/*.md
