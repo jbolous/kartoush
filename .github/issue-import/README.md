@@ -198,6 +198,7 @@ existing GitHub labels.
 - valid labels are applied during issue creation
 - invalid labels are ignored so they do not block issue creation
 - ignored labels are reported as warnings in the importer output
+- when the title starts with `[Task]`, `Task:`, `[Epic]`, or `Epic:`, the importer automatically adds the corresponding `task` or `epic` label if it is not already present
 
 ## Import Script
 
@@ -270,6 +271,8 @@ Dry run:
 ```bash
 .github/scripts/import-issues.sh --dry-run
 ```
+
+Dry-run performs read-only GitHub validation for importer prerequisites such as authentication and label lookup, but it does not create, edit, or link issues.
 
 Dry run with verbose logging:
 
@@ -516,8 +519,8 @@ For real imports, `gh` must be authenticated against GitHub.
 If you use `--assign-to-self`, the authenticated user must also be assignable in
 the target repository.
 
-For `--dry-run`, `gh` must still be installed, but GitHub authentication is not
-required.
+For `--dry-run`, `gh` must still be installed and authenticated so the importer
+can validate safe read-only GitHub dependencies without mutating issues.
 
 ### Install GitHub CLI
 

@@ -106,12 +106,12 @@ preflight_import() {
 
   print_success "✓ GitHub CLI found"
 
-  if [[ "${DRY_RUN:-false}" == "true" ]]; then
-    print_info "• Skipping GitHub authentication check in dry-run mode"
-  elif ! gh auth status >/dev/null 2>&1; then
+  if ! gh auth status >/dev/null 2>&1; then
     print_error "✗ GitHub CLI is not authenticated"
     print_info "  Run: gh auth login"
     exit 1
+  elif [[ "${DRY_RUN:-false}" == "true" ]]; then
+    print_success "✓ GitHub CLI authenticated (read-only validation enabled for dry-run)"
   else
     print_success "✓ GitHub CLI authenticated"
   fi

@@ -231,17 +231,36 @@ parse_label_list() {
   done
 }
 
+add_inferred_type_label() {
+  local title="$1"
+  local inferred_label=""
+  local label
+
+  if [[ "$title" =~ ^\[Task\]:[[:space:]] || "$title" =~ ^Task:[[:space:]] ]]; then
+    inferred_label="task"
+  elif [[ "$title" =~ ^\[Epic\]:[[:space:]] || "$title" =~ ^Epic:[[:space:]] ]]; then
+    inferred_label="epic"
+  fi
+
+  if [[ -z "$inferred_label" ]]; then
+    return 0
+  fi
+
+  for label in "${PARSED_LABEL_LIST[@]}"; do
+    if [[ "$label" == "$inferred_label" ]]; then
+      return 0
+    fi
+  done
+
+  PARSED_LABEL_LIST+=("$inferred_label")
+}
+
 filter_valid_labels() {
   local -a requested_labels=("$@")
   local label
 
   FILTERED_VALID_LABELS=()
   FILTERED_INVALID_LABELS=()
-
-  if [[ "$DRY_RUN" == "true" ]]; then
-    FILTERED_VALID_LABELS=("${requested_labels[@]}")
-    return 0
-  fi
 
   for label in "${requested_labels[@]}"; do
     if [[ -n "${REPO_LABELS[$label]:-}" ]]; then
@@ -254,14 +273,12 @@ filter_valid_labels() {
 
 preflight_import
 
-if [[ "$DRY_RUN" != "true" ]]; then
-  if ! load_repo_labels; then
-    print_error "✗ Unable to load repository labels"
-    exit 1
-  fi
+if ! load_repo_labels; then
+  print_error "✗ Unable to load repository labels"
+  exit 1
 fi
 
-if [[ "$DRY_RUN" != "true" && "$ASSIGN_TO_SELF" == "true" ]]; then
+if [[ "$ASSIGN_TO_SELF" == "true" ]]; then
   if ! lookup_authenticated_user; then
     print_error "✗ Unable to determine authenticated GitHub user"
     exit 1
@@ -792,6 +809,7 @@ for file in "${files[@]}"; do
   FILE_LABELS["$file"]="$PARSED_LABELS"
 
   parse_label_list "$PARSED_LABELS"
+  add_inferred_type_label "$PARSED_TITLE"
   filter_valid_labels "${PARSED_LABEL_LIST[@]}"
 
   if [[ ${#FILTERED_VALID_LABELS[@]} -gt 0 ]]; then
