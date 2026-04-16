@@ -207,6 +207,39 @@ Integration tests use Testcontainers and will:
 - configure the datasource at runtime
 - run against a real database instance
 
+Docker Desktop typically works with Testcontainers without any additional
+configuration.
+
+#### Rancher Desktop on macOS
+
+If you use Rancher Desktop on macOS, Testcontainers may need explicit Docker
+environment configuration.
+
+Recommended local environment variables:
+
+```bash
+export DOCKER_HOST="unix://$HOME/.rd/docker.sock"
+export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE="/var/run/docker.sock"
+export TESTCONTAINERS_HOST_OVERRIDE="$(rdctl shell ip a show vznat | awk '/inet / {sub("/.*", ""); print $2}')"
+```
+
+If `vznat` is not available in your Rancher Desktop VM, inspect the available
+interfaces with:
+
+```bash
+rdctl shell ip a
+```
+
+Then replace `vznat` in the command above with the correct interface name.
+
+If IntelliJ still skips or fails integration tests, add the same values to the
+environment variables for your IntelliJ JUnit and Gradle run configuration
+templates. IntelliJ may not inherit your shell environment reliably on macOS.
+
+A common failure mode is Ryuk failing to mount `$HOME/.rd/docker.sock`. If that
+happens, verify that `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock`
+is set.
+
 ---
 
 ## Testing Strategy
