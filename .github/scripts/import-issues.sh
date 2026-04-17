@@ -117,6 +117,8 @@ declare -A SOURCE_TO_ISSUE_NUMBER
 created_count=0
 linked_count=0
 failed_count=0
+warning_count=0
+LOOKUP_ISSUE_ID_ATTEMPTS=0
 
 parse_metadata() {
   local file="$1"
@@ -231,17 +233,36 @@ parse_label_list() {
   done
 }
 
+add_inferred_type_label() {
+  local title="$1"
+  local inferred_label=""
+  local label
+
+  if [[ "$title" =~ ^\[Task\]:[[:space:]] || "$title" =~ ^Task:[[:space:]] ]]; then
+    inferred_label="task"
+  elif [[ "$title" =~ ^\[Epic\]:[[:space:]] || "$title" =~ ^Epic:[[:space:]] ]]; then
+    inferred_label="epic"
+  fi
+
+  if [[ -z "$inferred_label" ]]; then
+    return 0
+  fi
+
+  for label in "${PARSED_LABEL_LIST[@]}"; do
+    if [[ "$label" == "$inferred_label" ]]; then
+      return 0
+    fi
+  done
+
+  PARSED_LABEL_LIST+=("$inferred_label")
+}
+
 filter_valid_labels() {
   local -a requested_labels=("$@")
   local label
 
   FILTERED_VALID_LABELS=()
   FILTERED_INVALID_LABELS=()
-
-  if [[ "$DRY_RUN" == "true" ]]; then
-    FILTERED_VALID_LABELS=("${requested_labels[@]}")
-    return 0
-  fi
 
   for label in "${requested_labels[@]}"; do
     if [[ -n "${REPO_LABELS[$label]:-}" ]]; then
@@ -252,16 +273,20 @@ filter_valid_labels() {
   done
 }
 
+emit_warning() {
+  local message="$1"
+  warning_count=$((warning_count + 1))
+  print_warning "$message"
+}
+
 preflight_import
 
-if [[ "$DRY_RUN" != "true" ]]; then
-  if ! load_repo_labels; then
-    print_error "✗ Unable to load repository labels"
-    exit 1
-  fi
+if ! load_repo_labels; then
+  print_error "✗ Unable to load repository labels"
+  exit 1
 fi
 
-if [[ "$DRY_RUN" != "true" && "$ASSIGN_TO_SELF" == "true" ]]; then
+if [[ "$ASSIGN_TO_SELF" == "true" ]]; then
   if ! lookup_authenticated_user; then
     print_error "✗ Unable to determine authenticated GitHub user"
     exit 1
@@ -310,7 +335,6 @@ lookup_issue_rest_id() {
   set -e
 
   if [[ $gh_exit_code -ne 0 ]]; then
-    print_verbose "gh api issue lookup failed: $issue_id"
     return 1
   fi
 
@@ -323,16 +347,23 @@ lookup_issue_rest_id_with_retry() {
   local sleep_seconds="${3:-1}"
   local attempt=1
 
+  LOOKUP_ISSUE_ID_ATTEMPTS=0
+
   while (( attempt <= max_attempts )); do
+    LOOKUP_ISSUE_ID_ATTEMPTS="$attempt"
+
     if lookup_issue_rest_id "$issue_number"; then
+      if (( attempt > 1 )); then
+        print_verbose "Recovered REST issue ID lookup for #$issue_number after $attempt attempts"
+      fi
       return 0
     fi
 
-    if (( attempt < max_attempts )); then
-      print_verbose "Retrying issue lookup for #$issue_number (attempt $((attempt + 1))/$max_attempts)"
-      sleep "$sleep_seconds"
+    if (( attempt == max_attempts )); then
+      return 1
     fi
 
+    sleep "$sleep_seconds"
     attempt=$((attempt + 1))
   done
 
@@ -528,6 +559,8 @@ update_issue_body() {
     print_verbose "gh issue edit failed: $gh_output"
     return 1
   fi
+
+  print_success "  Updated dependencies"
 }
 
 move_to_failed() {
@@ -580,7 +613,7 @@ move_to_failed() {
   } > "$failed_file"
 
   rm -f "$file"
-  print_warning "  Failed"
+  print_warning "  Failed: $error_message"
 }
 
 move_to_imported() {
@@ -684,6 +717,10 @@ create_issue() {
   CREATED_ISSUE_URL="$issue_url"
   CREATED_ISSUE_NUMBER="$issue_number"
 
+  print_success "  Created (#$issue_number)"
+  printf '    URL: %s\n' "$issue_url"
+  print_verbose "Looking up REST issue ID for #$issue_number"
+
   if ! lookup_issue_rest_id_with_retry "$issue_number"; then
     return 1
   fi
@@ -691,8 +728,6 @@ create_issue() {
   CREATED_ISSUE_ID="$LOOKED_UP_ISSUE_ID"
 
   created_count=$((created_count + 1))
-  print_success "  Created (#$issue_number)"
-  printf '    URL: %s\n' "$issue_url"
   print_verbose "Issue ID: $LOOKED_UP_ISSUE_ID"
 }
 
@@ -792,6 +827,7 @@ for file in "${files[@]}"; do
   FILE_LABELS["$file"]="$PARSED_LABELS"
 
   parse_label_list "$PARSED_LABELS"
+  add_inferred_type_label "$PARSED_TITLE"
   filter_valid_labels "${PARSED_LABEL_LIST[@]}"
 
   if [[ ${#FILTERED_VALID_LABELS[@]} -gt 0 ]]; then
@@ -805,7 +841,7 @@ for file in "${files[@]}"; do
 
   if [[ ${#FILTERED_INVALID_LABELS[@]} -gt 0 ]]; then
     for invalid_label in "${FILTERED_INVALID_LABELS[@]}"; do
-      print_warning "  Warning: ignoring unknown label '$invalid_label'"
+      emit_warning "  Warning: ignoring unknown label '$invalid_label'"
     done
   fi
 
@@ -835,7 +871,7 @@ for file in "${files[@]}"; do
   if ! create_issue "$file" "$PARSED_TITLE" "$PARSED_BODY_FILE" "${FILTERED_VALID_LABELS[@]}"; then
     rm -f "$PARSED_BODY_FILE"
     if [[ -n "${CREATED_ISSUE_NUMBER:-}" ]]; then
-      move_to_failed "$file" "Create follow-up failed" "true" "$CREATED_ISSUE_NUMBER" "$CREATED_ISSUE_URL"
+      move_to_failed "$file" "Issue created but REST issue ID lookup failed after $LOOKUP_ISSUE_ID_ATTEMPTS attempts" "true" "$CREATED_ISSUE_NUMBER" "$CREATED_ISSUE_URL"
     else
       move_to_failed "$file" "Create failed"
     fi
@@ -893,7 +929,7 @@ for file in "${files[@]}"; do
 
   if [[ ${#DEPENDENCY_WARNINGS[@]} -gt 0 ]]; then
     for unresolved_dependency in "${DEPENDENCY_WARNINGS[@]}"; do
-      print_warning "  Warning: unresolved dependency '$unresolved_dependency'"
+      emit_warning "  Warning: unresolved dependency '$unresolved_dependency'"
     done
   fi
 
@@ -923,6 +959,11 @@ printf '%sSummary%s\n' "$COLOR_BOLD" "$COLOR_RESET"
 printf '%s\n' "-------"
 printf '%sCreated:%s %s\n' "$COLOR_BOLD" "$COLOR_RESET" "$created_count"
 printf '%sLinked:%s  %s\n' "$COLOR_BOLD" "$COLOR_RESET" "$linked_count"
+if (( warning_count > 0 )); then
+  print_warning "${COLOR_BOLD}Warnings:${COLOR_RESET} $warning_count"
+else
+  printf '%s%sWarnings:%s %s%s\n' "$COLOR_YELLOW" "$COLOR_BOLD" "$COLOR_RESET" "$warning_count" "$COLOR_RESET"
+fi
 if (( failed_count > 0 )); then
   print_error "${COLOR_BOLD}Failed:${COLOR_RESET}  $failed_count"
 else
