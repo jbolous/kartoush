@@ -255,6 +255,7 @@ Integration tests are treated as first-class and are designed to catch issues th
 For detailed testing conventions and design decisions, see:
 
 - `docs/architecture/decisions/0023-testing-strategy-and-conventions.md`
+- `docs/testing/api-testing-strategy.md`
 
 ---
 
