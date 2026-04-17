@@ -6,6 +6,11 @@ ext {
     javaToolchainVersion = 25
 }
 
+tasks.register('verifyAll') {
+    group = 'verification'
+    description = 'Runs all project verification tasks, including integration tests where defined.'
+}
+
 allprojects {
     group = 'com.kartoush'
     version = '0.0.1-SNAPSHOT'
@@ -36,5 +41,19 @@ subprojects {
 
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
+    }
+}
+
+subprojects {
+    def rootVerifyAll = rootProject.tasks.named('verifyAll')
+
+    rootVerifyAll.configure {
+        dependsOn(tasks.named('test'))
+    }
+
+    tasks.matching { it.name == 'integrationTest' }.configureEach { integrationTestTask ->
+        rootVerifyAll.configure {
+            dependsOn(integrationTestTask)
+        }
     }
 }
