@@ -6,6 +6,7 @@ dependencies {
     api(libs.testcontainers)
     api(libs.testcontainersJunitJupiter)
     api(libs.testcontainersPostgresql)
+    api(libs.restAssured)
 
     api(libs.springBootTest)
     api(libs.springBootTestAutoconfigure)
