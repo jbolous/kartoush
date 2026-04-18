@@ -3,20 +3,27 @@ package com.kartoush.testsupport;
 import java.time.Duration;
 
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
-@Testcontainers
-public abstract class PostgresSpringIntegrationTest
-{
-    @Container
+public abstract class PostgresSpringIntegrationTest {
+
+    private static final String POSTGRES_DOCKER_IMAGE_NAME = "postgres:16-alpine";
+    private static final String DATABASE_NAME = "kartoush";
+    private static final String USERNAME = "kartoush";
+    private static final String PASSWORD = "kartoush";
+    private static final int STARTUP_ATTEMPTS = 3;
+    private static final Duration STARTUP_TIMEOUT_DURATION = Duration.ofSeconds(60);
+
     @ServiceConnection
     protected static final PostgreSQLContainer POSTGRES =
-        new PostgreSQLContainer("postgres:16-alpine")
-            .withDatabaseName("kartoush")
-            .withUsername("kartoush")
-            .withPassword("kartoush")
-            .withStartupAttempts(3)
-            .withStartupTimeout(Duration.ofSeconds(60));
+        new PostgreSQLContainer(POSTGRES_DOCKER_IMAGE_NAME)
+            .withDatabaseName(DATABASE_NAME)
+            .withUsername(USERNAME)
+            .withPassword(PASSWORD)
+            .withStartupAttempts(STARTUP_ATTEMPTS)
+            .withStartupTimeout(STARTUP_TIMEOUT_DURATION);
+
+    static {
+        POSTGRES.start();
+    }
 }
