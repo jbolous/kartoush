@@ -117,6 +117,36 @@ The customer status is set to DELETED, and the record remains in persistence. Th
 
 ### Endpoints
 
+### Registration requirements
+
+Kartoush currently treats `POST /api/customers` as the registration entry
+point for new customers.
+
+A registration request is valid only when all of the following requirements are
+satisfied:
+
+- first name is present and not blank
+- last name is present and not blank
+- email is present and valid
+- phone number is optional, but if provided it must be valid
+
+Successful registration always creates a customer in `PENDING` status. The
+public API does not allow callers to choose an alternative initial lifecycle
+state.
+
+If registration validation fails:
+
+- the request is rejected with a ProblemDetails response
+- no customer record is created
+- no activation token is issued
+
+These requirements define the current registration contract and are separate
+from future onboarding requirements such as Terms of Service acceptance.
+Terms of Service acceptance is planned as a future registration requirement
+but is not yet enforced by the current API.
+
+---
+
 #### Get all customers
 
 `GET /api/customers`
