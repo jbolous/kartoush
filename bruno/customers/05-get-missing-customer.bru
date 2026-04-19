@@ -1,0 +1,17 @@
+meta {
+  name: Get missing customer
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{host}}/api/customers/{{missingCustomerId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 404", function() {
+    expect(res.status).to.equal(404);
+  });
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Create customer with invalid email
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{host}}/api/customers
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body {
+  {
+    "firstName": "{{firstName}}",
+    "lastName": "{{lastName}}",
+    "email": "{{invalidEmail}}",
+    "phoneNumber": "{{phoneNumber}}"
+  }
+}
+
+tests {
+  test("should return 400", function() {
+    expect(res.status).to.equal(400);
+  });
+}

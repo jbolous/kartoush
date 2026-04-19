@@ -1,0 +1,27 @@
+meta {
+  name: Activate customer
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{host}}/api/customers/{{customerId}}/activation
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body {
+  {
+    "token": "{{activationToken}}"
+  }
+}
+
+tests {
+  test("should return 200 when a valid activation token is supplied", function() {
+    expect(res.status).to.equal(200);
+  });
+}

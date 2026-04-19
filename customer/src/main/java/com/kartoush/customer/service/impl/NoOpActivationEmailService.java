@@ -14,7 +14,9 @@ public class NoOpActivationEmailService implements ActivationEmailService {
     @Override
     public void sendActivationToken(final Email email, final String rawToken) {
         LOG.warn(
-            "Activation email delivery requested for email={} but no concrete email delivery provider is configured",
-            email.value());
+            "Activation email delivery requested for email={} but no concrete email delivery provider is configured. " +
+                "Development activation token={}",
+            email.value(),
+            rawToken);
     }
 }

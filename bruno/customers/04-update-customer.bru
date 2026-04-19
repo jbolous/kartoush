@@ -1,0 +1,29 @@
+meta {
+  name: Update customer
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{host}}/api/customers/{{customerId}}
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body {
+  {
+    "firstName": "{{updatedFirstName}}",
+    "lastName": "{{updatedLastName}}",
+    "phoneNumber": "{{updatedPhoneNumber}}"
+  }
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Activate customer with blank token
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{host}}/api/customers/{{customerId}}/activation
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body {
+  {
+    "token": "   "
+  }
+}
+
+tests {
+  test("should return 400", function() {
+    expect(res.status).to.equal(400);
+  });
+}

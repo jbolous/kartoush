@@ -1,0 +1,17 @@
+meta {
+  name: Resend activation token
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{host}}/api/customers/{{customerId}}/activation/resend
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}
