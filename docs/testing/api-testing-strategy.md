@@ -112,6 +112,25 @@ Use Bruno while building the endpoint to answer questions such as:
 Bruno is the fastest feedback loop while you are still discovering and
 adjusting behavior.
 
+When Bruno is available for the domain, start from the committed collection
+instead of building one-off requests from scratch. This keeps manual API
+exploration aligned with the repository and makes it easier to turn a manual
+scenario into a repeatable automated test later.
+
+For the current customer API collection:
+
+1. open `bruno/` in Bruno
+2. select the `local` environment
+3. run the relevant request sequence for the behavior you are exploring
+4. inspect the response payload, headers, and status code
+5. capture any behavior that should become part of the automated contract
+
+Bruno is where you should answer questions like:
+
+- what does the error payload actually look like right now?
+- which fields are stable enough that clients will depend on them?
+- which scenario is important enough to automate instead of checking manually?
+
 ### 3. Convert important scenarios into REST Assured tests
 
 Once the behavior is understood, add REST Assured coverage for the scenarios
@@ -127,11 +146,105 @@ At a minimum, prioritize:
 Assertions should validate both status and payload. A `200 OK` is not enough
 if the response body is incomplete or malformed.
 
+The conversion from Bruno to REST Assured should be direct:
+
+1. keep the same request shape you validated manually
+2. preserve the same success or failure scenario
+3. assert the parts of the response that matter to callers
+4. avoid over-asserting implementation noise that is not part of the contract
+
+If a Bruno request helped uncover the correct behavior, the REST Assured test
+should explain that behavior clearly enough that a future reader does not need
+to reconstruct the manual debugging session.
+
 ### 4. Let CI enforce it
 
 After the REST Assured test exists, it becomes part of the automated safety
 net. CI should be able to fail the pull request when the runtime API contract
 changes unexpectedly.
+
+CI is the final gate, not the discovery tool. The intended progression is:
+
+- Swagger to define the contract
+- Bruno to explore and debug it
+- REST Assured to preserve it
+- CI to enforce it on every branch and pull request
+
+## Debugging Workflow With DevTools
+
+Spring Boot DevTools is useful while iterating on API behavior because it
+keeps the local feedback loop short without changing the testing strategy.
+
+Use DevTools during API work when you need to:
+
+- adjust controller or validation behavior and retry quickly
+- inspect logs after manual Bruno requests
+- reproduce a failure path before deciding what should be automated
+
+Recommended local debugging loop:
+
+1. run the application locally with DevTools enabled
+2. make a targeted change to the controller, validation, or facade behavior
+3. let the application restart
+4. re-run the relevant Bruno request
+5. inspect logs and response payloads
+6. once the behavior is correct, add or update the REST Assured test
+7. run the relevant automated tests before pushing
+
+DevTools helps shorten the manual iteration cycle, but it should not become a
+substitute for writing the automated test that locks the behavior in.
+
+## Step-By-Step Example
+
+The customer create endpoint is a good example of the intended workflow.
+
+### Example: add or refine customer creation behavior
+
+1. confirm the contract in Swagger
+
+   Check that `POST /api/customers` documents:
+
+   - the `CreateCustomerRequest` fields
+   - the `201 Created` happy path
+   - the `400` validation failure path
+   - the `409` conflict path
+
+2. explore the endpoint manually with Bruno
+
+   Use the customer requests in `bruno/customers/`:
+
+   - `02-create-customer.bru` for the happy path
+   - `10-create-customer-invalid-email.bru` for validation behavior
+   - `11-create-customer-duplicate-pending.bru` for conflict behavior
+
+   While exploring, verify:
+
+   - the `Location` header is returned on create
+   - the response body contains the expected customer fields
+   - validation failures return the expected ProblemDetails structure
+
+3. convert the important scenarios into REST Assured coverage
+
+   The current customer API tests show the intended shape:
+
+   - `CustomerCreationRestAssuredIntegrationTest` covers create and validation
+   - `CustomerDuplicateEmailRestAssuredIntegrationTest` covers a meaningful
+     lifecycle conflict scenario
+
+   These tests assert more than status codes. They validate response fields,
+   headers, and error payload details that clients depend on.
+
+4. let CI enforce the contract
+
+   Once the REST Assured coverage is in place, CI runs the app integration
+   test classes and fails the pull request if the contract changes
+   unexpectedly.
+
+This example is the intended pattern for future endpoints:
+
+- use Bruno to discover behavior quickly
+- use REST Assured to preserve the important scenarios
+- let CI make those expectations non-optional
 
 ## Choosing The Right Tool
 
