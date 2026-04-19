@@ -139,6 +139,10 @@ Returns a single customer. Returns 404 if the customer does not exist.
 
 Creates a new customer and returns 201 Created with the created customer.
 
+New customers are created in `PENDING` status. Customer creation also issues an
+activation token and requests delivery through the configured activation email
+service.
+
 Validation rules:
 
 - First name and last name are required
@@ -149,6 +153,31 @@ Error scenarios:
 
 - 400 Bad Request for validation failures
 - 409 Conflict if the customer already exists or is in a conflicting state
+
+---
+
+#### Activate customer
+
+`POST /api/customers/{customerId}/activation`
+
+Activates a pending customer using a valid activation token and returns the
+updated customer.
+
+Activation behavior:
+
+- the customer must exist
+- the customer must currently be in `PENDING` status
+- the activation token must belong to the target customer
+- the activation token must exist, be unexpired, and not already be consumed
+- a successful activation moves the customer to `ACTIVE`
+- a successful activation consumes the activation token so it cannot be reused
+
+Error scenarios:
+
+- 400 Bad Request for request validation failures, such as a blank token
+- 404 Not Found if the customer or activation token does not exist
+- 409 Conflict if the token is expired, already consumed, or the customer
+  cannot be activated from the current lifecycle state
 
 ---
 
@@ -164,6 +193,28 @@ Error scenarios:
 
 - 400 Bad Request for validation failures
 - 404 Not Found if the customer does not exist
+
+---
+
+#### Resend activation token
+
+`POST /api/customers/{customerId}/activation/resend`
+
+Issues a new activation token for a pending customer and returns 204 No
+Content.
+
+Resend behavior:
+
+- resend is allowed only for customers in `PENDING` status
+- issuing a new activation token consumes any existing active token for that
+  customer before creating the replacement
+- the new token becomes the only valid activation token for that customer
+- token delivery is delegated to the configured activation email service
+
+Error scenarios:
+
+- 404 Not Found if the customer does not exist
+- 409 Conflict if the customer is not in a state that allows resend
 
 ---
 
@@ -207,13 +258,13 @@ Validation errors are standardized across both custom validation logic and frame
 
 ---
 
-## Deferred / Not Yet Exposed
+## Not Yet Exposed
 
 The following capabilities are not currently exposed via the API:
 
-- Activation endpoint
 - Reactivation endpoint
-- Token-based activation or verification flows
+- Administrative or support-oriented activation recovery flows
+- Public token introspection or token management APIs
 
 These will be introduced in a future iteration.
 
