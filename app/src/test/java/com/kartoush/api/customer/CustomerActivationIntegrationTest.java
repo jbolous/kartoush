@@ -54,6 +54,7 @@ class CustomerActivationIntegrationTest extends PostgresSpringIntegrationTest {
     private static final String EMAIL_LOCAL_PART_PREFIX = "jack+";
     private static final String EMAIL_DOMAIN = "@kartoush.com";
     private static final String EXPIRED_RAW_TOKEN = "expired-activation-token";
+    private static final String CURRENT_TERMS_VERSION = "2026-04";
 
     @Autowired
     private MockMvc mockMvc;
@@ -218,7 +219,9 @@ class CustomerActivationIntegrationTest extends PostgresSpringIntegrationTest {
             FIRST_NAME,
             LAST_NAME,
             email,
-            PHONE_NUMBER);
+            PHONE_NUMBER,
+            true,
+            CURRENT_TERMS_VERSION);
 
         final String responseBody = mockMvc.perform(post(BASE_URL)
                 .contentType(MediaType.APPLICATION_JSON)

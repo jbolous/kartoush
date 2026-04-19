@@ -13,6 +13,8 @@ import static org.hamcrest.Matchers.notNullValue;
 
 class CustomerDuplicateEmailRestAssuredIntegrationTest extends AbstractCustomerRestAssuredIntegrationTest {
 
+    private static final String CURRENT_TERMS_VERSION = "2026-04";
+
     @Test
     void shouldReturnConflictProblemForDuplicateEmailWhenCustomerIsActive() {
         // given
@@ -21,7 +23,9 @@ class CustomerDuplicateEmailRestAssuredIntegrationTest extends AbstractCustomerR
             FIRST_NAME,
             LAST_NAME,
             email,
-            PHONE_NUMBER);
+            PHONE_NUMBER,
+            true,
+            CURRENT_TERMS_VERSION);
 
         final String customerId = given()
             .contentType(MediaType.APPLICATION_JSON_VALUE)

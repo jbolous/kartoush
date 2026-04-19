@@ -45,6 +45,8 @@ class CustomerControllerWebMvcTest {
 
     private static final String PHONE = "+16305551234";
 
+    private static final String TERMS_VERSION = "2026-04";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -83,7 +85,9 @@ class CustomerControllerWebMvcTest {
             FIRST_NAME,
             LAST_NAME,
             EMAIL,
-            PHONE
+            PHONE,
+            true,
+            TERMS_VERSION
         );
 
         when(customerFacade.createCustomer(any()))

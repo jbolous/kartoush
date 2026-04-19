@@ -31,6 +31,20 @@ public record CreateCustomerRequest(
         example = "+16305551234",
         requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
-    String phoneNumber
+    String phoneNumber,
+
+    @Schema(
+        description = "Whether the customer explicitly accepted the current Terms of Service",
+        example = "true",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    Boolean termsAccepted,
+
+    @Schema(
+        description = "The Terms of Service version accepted during registration",
+        example = "2026-04",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    String termsVersion
 ) {
 }
