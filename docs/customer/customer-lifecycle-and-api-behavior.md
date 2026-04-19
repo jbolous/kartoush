@@ -129,6 +129,8 @@ satisfied:
 - last name is present and not blank
 - email is present and valid
 - phone number is optional, but if provided it must be valid
+- Terms of Service acceptance must be explicitly true
+- the submitted Terms version must match the current supported Terms version
 
 Successful registration always creates a customer in `PENDING` status. The
 public API does not allow callers to choose an alternative initial lifecycle
@@ -140,10 +142,8 @@ If registration validation fails:
 - no customer record is created
 - no activation token is issued
 
-These requirements define the current registration contract and are separate
-from future onboarding requirements such as Terms of Service acceptance.
-Terms of Service acceptance is planned as a future registration requirement
-but is not yet enforced by the current API.
+These requirements define the current registration contract for onboarding a
+new customer into the `PENDING` lifecycle state.
 
 ---
 

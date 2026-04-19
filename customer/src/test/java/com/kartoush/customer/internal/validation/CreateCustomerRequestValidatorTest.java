@@ -1,6 +1,7 @@
 package com.kartoush.customer.internal.validation;
 
 import com.kartoush.customer.facade.model.CreateCustomerRequest;
+import com.kartoush.customer.internal.registration.TermsOfServicePolicy;
 import com.kartoush.platform.validation.RequestValidationException;
 import org.junit.jupiter.api.Test;
 
@@ -16,8 +17,11 @@ class CreateCustomerRequestValidatorTest {
     private static final String INVALID_EMAIL = "@";
     private static final String VALID_PHONE = "+16305551234";
     private static final String INVALID_PHONE = "abc123";
+    private static final String CURRENT_TERMS_VERSION = "2026-04";
+    private static final String INVALID_TERMS_VERSION = "2026-03";
 
-    private final CreateCustomerRequestValidator validator = new CreateCustomerRequestValidator();
+    private final CreateCustomerRequestValidator validator =
+        new CreateCustomerRequestValidator(new TermsOfServicePolicy());
 
     @Test
     void shouldAllowValidRequest() {
@@ -25,7 +29,9 @@ class CreateCustomerRequestValidatorTest {
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
-            VALID_PHONE);
+            VALID_PHONE,
+            true,
+            CURRENT_TERMS_VERSION);
 
         assertThatCode(() -> validator.validate(request)).doesNotThrowAnyException();
     }
@@ -36,7 +42,9 @@ class CreateCustomerRequestValidatorTest {
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
-            null);
+            null,
+            true,
+            CURRENT_TERMS_VERSION);
 
         assertThatCode(() -> validator.validate(request)).doesNotThrowAnyException();
     }
@@ -47,7 +55,9 @@ class CreateCustomerRequestValidatorTest {
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
-            " ");
+            " ",
+            true,
+            CURRENT_TERMS_VERSION);
 
         assertThatCode(() -> validator.validate(request)).doesNotThrowAnyException();
     }
@@ -65,7 +75,9 @@ class CreateCustomerRequestValidatorTest {
             null,
             LAST_NAME,
             VALID_EMAIL,
-            VALID_PHONE);
+            VALID_PHONE,
+            true,
+            CURRENT_TERMS_VERSION);
 
         assertValidationError(request, "firstName");
     }
@@ -76,7 +88,9 @@ class CreateCustomerRequestValidatorTest {
             " ",
             LAST_NAME,
             VALID_EMAIL,
-            VALID_PHONE);
+            VALID_PHONE,
+            true,
+            CURRENT_TERMS_VERSION);
 
         assertValidationError(request, "firstName");
     }
@@ -87,7 +101,9 @@ class CreateCustomerRequestValidatorTest {
             FIRST_NAME,
             null,
             VALID_EMAIL,
-            VALID_PHONE);
+            VALID_PHONE,
+            true,
+            CURRENT_TERMS_VERSION);
 
         assertValidationError(request, "lastName");
     }
@@ -98,7 +114,9 @@ class CreateCustomerRequestValidatorTest {
             FIRST_NAME,
             " ",
             VALID_EMAIL,
-            VALID_PHONE);
+            VALID_PHONE,
+            true,
+            CURRENT_TERMS_VERSION);
 
         assertValidationError(request, "lastName");
     }
@@ -109,7 +127,9 @@ class CreateCustomerRequestValidatorTest {
             FIRST_NAME,
             LAST_NAME,
             null,
-            VALID_PHONE);
+            VALID_PHONE,
+            true,
+            CURRENT_TERMS_VERSION);
 
         assertValidationError(request, "email");
     }
@@ -120,7 +140,9 @@ class CreateCustomerRequestValidatorTest {
             FIRST_NAME,
             LAST_NAME,
             " ",
-            VALID_PHONE);
+            VALID_PHONE,
+            true,
+            CURRENT_TERMS_VERSION);
 
         assertValidationError(request, "email");
     }
@@ -131,7 +153,9 @@ class CreateCustomerRequestValidatorTest {
             FIRST_NAME,
             LAST_NAME,
             INVALID_EMAIL,
-            VALID_PHONE);
+            VALID_PHONE,
+            true,
+            CURRENT_TERMS_VERSION);
 
         assertValidationError(request, "email");
     }
@@ -142,9 +166,76 @@ class CreateCustomerRequestValidatorTest {
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
-            INVALID_PHONE);
+            INVALID_PHONE,
+            true,
+            CURRENT_TERMS_VERSION);
 
         assertValidationError(request, "phoneNumber");
+    }
+
+    @Test
+    void shouldThrowWhenTermsAcceptedIsMissing() {
+        final CreateCustomerRequest request = new CreateCustomerRequest(
+            FIRST_NAME,
+            LAST_NAME,
+            VALID_EMAIL,
+            VALID_PHONE,
+            null,
+            CURRENT_TERMS_VERSION);
+
+        assertValidationError(request, "termsAccepted");
+    }
+
+    @Test
+    void shouldThrowWhenTermsAcceptedIsFalse() {
+        final CreateCustomerRequest request = new CreateCustomerRequest(
+            FIRST_NAME,
+            LAST_NAME,
+            VALID_EMAIL,
+            VALID_PHONE,
+            false,
+            CURRENT_TERMS_VERSION);
+
+        assertValidationError(request, "termsAccepted");
+    }
+
+    @Test
+    void shouldThrowWhenTermsVersionIsMissing() {
+        final CreateCustomerRequest request = new CreateCustomerRequest(
+            FIRST_NAME,
+            LAST_NAME,
+            VALID_EMAIL,
+            VALID_PHONE,
+            true,
+            null);
+
+        assertValidationError(request, "termsVersion");
+    }
+
+    @Test
+    void shouldThrowWhenTermsVersionIsBlank() {
+        final CreateCustomerRequest request = new CreateCustomerRequest(
+            FIRST_NAME,
+            LAST_NAME,
+            VALID_EMAIL,
+            VALID_PHONE,
+            true,
+            " ");
+
+        assertValidationError(request, "termsVersion");
+    }
+
+    @Test
+    void shouldThrowWhenTermsVersionDoesNotMatchCurrentVersion() {
+        final CreateCustomerRequest request = new CreateCustomerRequest(
+            FIRST_NAME,
+            LAST_NAME,
+            VALID_EMAIL,
+            VALID_PHONE,
+            true,
+            INVALID_TERMS_VERSION);
+
+        assertValidationError(request, "termsVersion");
     }
 
     private void assertValidationError(final CreateCustomerRequest request, final String field) {

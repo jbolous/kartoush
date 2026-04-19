@@ -36,6 +36,7 @@ class DefaultCustomerFacadeTest {
     private static final String PHONE_NUMBER = "312-555-0100";
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
+    private static final String TERMS_VERSION = "2026-04";
 
     @Mock
     private UlidGenerator ulidGenerator;
@@ -114,7 +115,9 @@ class DefaultCustomerFacadeTest {
                 FIRST_NAME,
                 LAST_NAME,
                 EMAIL,
-                PHONE_NUMBER);
+                PHONE_NUMBER,
+                true,
+                TERMS_VERSION);
     }
 
     private Customer buildCustomer(){
