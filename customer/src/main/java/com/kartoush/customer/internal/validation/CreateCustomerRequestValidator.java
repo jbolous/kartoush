@@ -33,7 +33,7 @@ public class CreateCustomerRequestValidator {
         RequestValidationSupport.validateRequiredEmail("email", request.email(), errors);
         RequestValidationSupport.validateRequiredText("firstName", request.firstName(), 100, errors);
         RequestValidationSupport.validateRequiredText("lastName", request.lastName(), 100, errors);
-        RequestValidationSupport.validateOptionalPhoneNumber("phoneNUmber", request.phoneNumber(), errors);
+        RequestValidationSupport.validateOptionalPhoneNumber("phoneNumber", request.phoneNumber(), errors);
 
         throwIfErrors(errors);
     }
