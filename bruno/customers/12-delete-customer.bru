@@ -1,0 +1,17 @@
+meta {
+  name: Delete customer
+  type: http
+  seq: 12
+}
+
+delete {
+  url: {{host}}/api/customers/{{customerId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

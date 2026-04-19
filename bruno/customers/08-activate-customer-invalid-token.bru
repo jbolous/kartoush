@@ -1,0 +1,27 @@
+meta {
+  name: Activate customer with invalid token
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{host}}/api/customers/{{customerId}}/activation
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body {
+  {
+    "token": "{{invalidActivationToken}}"
+  }
+}
+
+tests {
+  test("should return 404", function() {
+    expect(res.status).to.equal(404);
+  });
+}
