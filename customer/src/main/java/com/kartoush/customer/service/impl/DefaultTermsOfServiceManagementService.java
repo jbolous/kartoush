@@ -113,9 +113,9 @@ public class DefaultTermsOfServiceManagementService implements TermsOfServiceMan
     @Transactional
     public TermsOfServiceEntity activateNow(final String termsOfServiceId) {
         final Instant now = Instant.now(clock);
-        final TermsOfServiceEntity termsOfService = findByIdForUpdate(termsOfServiceId);
         final Optional<TermsOfServiceEntity> activeTermsOfService =
             termsOfServiceRepository.findByStatusForUpdate(TermsOfServiceStatus.ACTIVE);
+        final TermsOfServiceEntity termsOfService = findByIdForUpdate(termsOfServiceId);
 
         activeTermsOfService.ifPresent(active -> supersedeIfDifferent(active, termsOfService, now));
 
@@ -132,11 +132,11 @@ public class DefaultTermsOfServiceManagementService implements TermsOfServiceMan
     @Transactional
     public TermsOfServiceEntity promoteDueScheduledTerms() {
         final Instant now = Instant.now(clock);
+        final Optional<TermsOfServiceEntity> activeTermsOfService =
+            termsOfServiceRepository.findByStatusForUpdate(TermsOfServiceStatus.ACTIVE);
         final TermsOfServiceEntity dueScheduledTerms = termsOfServiceRepository
             .findDueScheduledTermsOfServiceForUpdate(now)
             .orElseThrow(NoDueScheduledTermsOfServiceException::new);
-        final Optional<TermsOfServiceEntity> activeTermsOfService =
-            termsOfServiceRepository.findByStatusForUpdate(TermsOfServiceStatus.ACTIVE);
 
         activeTermsOfService.ifPresent(active -> supersedeIfDifferent(active, dueScheduledTerms, now));
 
