@@ -102,6 +102,36 @@ Numbers indicate chronological order and do not imply priority.
 
 ---
 
+## ADR Index
+
+- [0001 - Project Goals and Non-Goals](./0001-project-goals.md)
+- [0002 - Architecture Style](./0002-architecture-style.md)
+- [0003 - Data Ownership](./0003-data-ownership.md)
+- [0004 - Integration Style](./0004-integration-style.md)
+- [0005 - Build Tool](./0005-build-tool.md)
+- [0006 - Deployment Assumptions](./0006-deployment-assumptions.md)
+- [0007 - Inventory Availability](./0007-inventory-availability.md)
+- [0008 - Reservation Ownership and Lifecycle](./0008-reservation-ownership-and-lifecycle.md)
+- [0009 - Cart to Order Conversion](./0009-cart-to-order-conversion.md)
+- [0010 - Payment Lifecycle and Guarantees](./0010-payment-lifecycle-and-guarantees.md)
+- [0011 - Layering and Facade Contracts](./0011-layering-and-facade-contracts.md)
+- [0012 - Non-Reservable Product Behavior](./0012-non-reservable-product-behavior.md)
+- [0013 - Logging and Observability](./0013-logging-and-observability.md)
+- [0014 - B2B vs B2C Channel Strategy](./0014-b2b-vs-b2c-channel-strategy.md)
+- [0015 - Headless and API Strategy](./0015-headless-and-api-strategy.md)
+- [0016 - Order Throughput and Spike Handling](./0016-order-throughput-and-spike-handling.md)
+- [0017 - Performance Testing Strategy](./0017-performance-testing-strategy.md)
+- [0018 - Module Boundaries and Dependencies](./0018-module-boundaries-and-dependencies.md)
+- [0019 - Internal vs External APIs](./0019-internal-vs-external-apis.md)
+- [0020 - Use Dedicated Contract Models for Public Module Facades](./0020-use-dedicated-contract-models-for-public-module-facades.md)
+- [0021 - Branch Naming Convention](./0021-branch-naming-convention.md)
+- [0022 - Merge Strategy](./0022-merge-strategy.md)
+- [0023 - Testing Strategy and Conventions](./0023-testing-strategy-and-conventions.md)
+- [0024 - Customer Activation Token Ownership and Lifecycle](./0024-customer-activation-token-ownership-and-lifecycle.md)
+- [0025 - Terms of Service Lifecycle and Current Version Resolution](./0025-terms-of-service-lifecycle-and-current-version-resolution.md)
+
+---
+
 ## What ADRs Are Not
 
 ADRs are intentionally not:
