@@ -16,7 +16,7 @@ public interface CustomerService
 
     Customer updateCustomer(final String customerId, final CustomerProfile profile);
 
-    Customer createCustomer(final Customer customer);
+    Customer registerCustomer(final Customer customer, final String termsVersion);
 
     Customer activateCustomer(final String customerId, final String rawToken);
 

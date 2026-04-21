@@ -2,18 +2,24 @@ package com.kartoush.api.customer;
 
 import com.kartoush.api.error.ErrorCode;
 import com.kartoush.customer.facade.model.CreateCustomerRequest;
+import com.kartoush.customer.persistence.repository.TermsAcceptanceRepository;
 import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
 class CustomerDuplicateEmailRestAssuredIntegrationTest extends AbstractCustomerRestAssuredIntegrationTest {
 
     private static final String CURRENT_TERMS_VERSION = "2026.04.01";
+
+    @Autowired
+    private TermsAcceptanceRepository termsAcceptanceRepository;
 
     @Test
     void shouldReturnConflictProblemForDuplicateEmailWhenCustomerIsActive() {
@@ -48,6 +54,8 @@ class CustomerDuplicateEmailRestAssuredIntegrationTest extends AbstractCustomerR
             .statusCode(HttpStatus.OK.value())
             .body("status", equalTo(CustomerStatus.ACTIVE.name()));
 
+        final long acceptanceCountBeforeDuplicateRequest = termsAcceptanceRepository.count();
+
         // when + then
         given()
             .contentType(MediaType.APPLICATION_JSON_VALUE)
@@ -62,5 +70,7 @@ class CustomerDuplicateEmailRestAssuredIntegrationTest extends AbstractCustomerR
             .body("type", equalTo(ErrorCode.CUSTOMER_ALREADY_EXISTS.urn()))
             .body("instance", equalTo(BASE_URL))
             .body("timestamp", notNullValue());
+
+        assertThat(termsAcceptanceRepository.count()).isEqualTo(acceptanceCountBeforeDuplicateRequest);
     }
 }
