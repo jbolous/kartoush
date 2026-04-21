@@ -33,7 +33,7 @@ class TermsAcceptanceRepositoryTest extends PostgresDataJpaTest {
     private static final String EMAIL_PREFIX = "jack";
     private static final String EMAIL_SUFFIX = "@kartoush.com";
     private static final String PASSWORD_HASH = "ABCXYZ123789";
-    private static final String TERMS_VERSION = "2026-04";
+    private static final String TERMS_VERSION = "2026.04.01";
     private static final Instant ACCEPTED_AT = Instant.parse("2026-04-18T18:00:00Z");
 
     private final UlidGenerator ulidGenerator = new DefaultUlidGenerator();

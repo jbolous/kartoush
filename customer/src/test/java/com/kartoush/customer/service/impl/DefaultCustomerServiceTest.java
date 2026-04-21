@@ -55,7 +55,7 @@ class DefaultCustomerServiceTest
             FIRST_NAME,
             LAST_NAME,
             PHONE_NUMBER);
-    private static final String TERMS_VERSION = "2026-04";
+    private static final String TERMS_VERSION = "2026.04.01";
     private static final String RAW_TOKEN = "raw-token";
     private static final Instant NOW = Instant.parse("2026-04-18T19:00:00Z");
     private static final String TERMS_ACCEPTANCE_ID = "01JSA2J4R6PZ4G9D5M1M6J8M6A";
