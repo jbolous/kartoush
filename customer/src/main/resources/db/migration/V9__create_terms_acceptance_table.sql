@@ -7,6 +7,7 @@ create table terms_acceptance
     constraint fk_terms_acceptance_customer
         foreign key (customer_id)
             references customer (id)
+            on delete cascade
 );
 
 create index idx_terms_acceptance_customer_id on terms_acceptance (customer_id);
