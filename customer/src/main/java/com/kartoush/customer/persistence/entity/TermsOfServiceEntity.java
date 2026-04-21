@@ -179,6 +179,17 @@ public class TermsOfServiceEntity implements Persistable<String> {
         validateState();
     }
 
+    public void unschedule() {
+        if (status != TermsOfServiceStatus.SCHEDULED) {
+            throw new IllegalStateException("Terms of Service can only be unscheduled from SCHEDULED");
+        }
+
+        this.status = TermsOfServiceStatus.DRAFT;
+        this.effectiveAt = null;
+        this.supersededAt = null;
+        validateState();
+    }
+
     public void activate(final Instant effectiveAt) {
         if (status != TermsOfServiceStatus.DRAFT && status != TermsOfServiceStatus.SCHEDULED) {
             throw new IllegalStateException("Terms of Service can only be activated from DRAFT or SCHEDULED");

@@ -15,6 +15,10 @@ public interface TermsOfServiceRepository extends JpaRepository<TermsOfServiceEn
 
     Optional<TermsOfServiceEntity> findByVersion(String version);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select terms from TermsOfServiceEntity terms where terms.id = :id")
+    Optional<TermsOfServiceEntity> findByIdForUpdate(@Param("id") String id);
+
     Optional<TermsOfServiceEntity> findByStatus(TermsOfServiceStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
