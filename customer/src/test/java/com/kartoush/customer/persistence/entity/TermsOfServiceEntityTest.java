@@ -74,6 +74,25 @@ class TermsOfServiceEntityTest {
     }
 
     @Test
+    void shouldUnscheduleScheduledTermsOfService() {
+        // given
+        final TermsOfServiceEntity terms = TermsOfServiceEntity.draft(
+            TERMS_ID,
+            VERSION,
+            CONTENT,
+            TermsOfServiceContentType.PLAIN_TEXT
+        );
+        terms.schedule(EFFECTIVE_AT);
+
+        // when
+        terms.unschedule();
+
+        // then
+        assertThat(terms.getStatus()).isEqualTo(TermsOfServiceStatus.DRAFT);
+        assertThat(terms.getEffectiveAt()).isNull();
+    }
+
+    @Test
     void shouldActivateScheduledTermsOfService() {
         // given
         final TermsOfServiceEntity terms = TermsOfServiceEntity.draft(
