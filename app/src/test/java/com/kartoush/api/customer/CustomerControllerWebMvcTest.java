@@ -45,7 +45,7 @@ class CustomerControllerWebMvcTest {
 
     private static final String PHONE = "+16305551234";
 
-    private static final String TERMS_VERSION = "2026-04";
+    private static final String TERMS_VERSION = "2026.04.01";
 
     @Autowired
     private MockMvc mockMvc;

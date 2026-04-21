@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.startsWith;
 class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAssuredIntegrationTest {
 
     private static final String INVALID_EMAIL = "not-an-email";
-    private static final String CURRENT_TERMS_VERSION = "2026-04";
+    private static final String CURRENT_TERMS_VERSION = "2026.04.01";
 
     @Autowired
     private CustomerRepository customerRepository;

@@ -1,7 +1,7 @@
 package com.kartoush.customer.internal.validation;
 
 import com.kartoush.customer.facade.model.CreateCustomerRequest;
-import com.kartoush.customer.internal.registration.TermsOfServicePolicy;
+import com.kartoush.customer.internal.registration.TermsOfServiceCatalog;
 import com.kartoush.platform.validation.RequestValidationException;
 import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
@@ -19,10 +19,10 @@ public class CreateCustomerRequestValidator {
 
     private static final String VALIDATION_MESSAGE = "Request validation failed";
 
-    private final TermsOfServicePolicy termsOfServicePolicy;
+    private final TermsOfServiceCatalog termsOfServiceCatalog;
 
-    public CreateCustomerRequestValidator(final TermsOfServicePolicy termsOfServicePolicy) {
-        this.termsOfServicePolicy = termsOfServicePolicy;
+    public CreateCustomerRequestValidator(final TermsOfServiceCatalog termsOfServiceCatalog) {
+        this.termsOfServiceCatalog = termsOfServiceCatalog;
     }
 
     public void validate(final CreateCustomerRequest request) {
@@ -68,7 +68,7 @@ public class CreateCustomerRequestValidator {
             return;
         }
 
-        if (!termsOfServicePolicy.currentVersion().equals(request.termsVersion())) {
+        if (!termsOfServiceCatalog.currentVersion().equals(request.termsVersion())) {
             errors.add(new ValidationError("termsVersion", "termsVersion must match the current supported Terms of Service version"));
         }
     }
