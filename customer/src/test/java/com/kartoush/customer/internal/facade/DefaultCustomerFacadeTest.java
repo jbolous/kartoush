@@ -36,7 +36,7 @@ class DefaultCustomerFacadeTest {
     private static final String PHONE_NUMBER = "312-555-0100";
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
-    private static final String TERMS_VERSION = "2026-04";
+    private static final String TERMS_VERSION = "2026.04.01";
 
     @Mock
     private UlidGenerator ulidGenerator;

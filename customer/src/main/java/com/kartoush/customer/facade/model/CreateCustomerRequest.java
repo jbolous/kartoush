@@ -42,7 +42,7 @@ public record CreateCustomerRequest(
 
     @Schema(
         description = "The Terms of Service version accepted during registration",
-        example = "2026-04",
+        example = "2026.04.01",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
     String termsVersion

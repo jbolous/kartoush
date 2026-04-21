@@ -1,9 +1,12 @@
 package com.kartoush.customer.internal.validation;
 
 import com.kartoush.customer.facade.model.CreateCustomerRequest;
-import com.kartoush.customer.internal.registration.TermsOfServicePolicy;
+import com.kartoush.customer.internal.registration.TermsOfServiceCatalog;
 import com.kartoush.platform.validation.RequestValidationException;
 import org.junit.jupiter.api.Test;
+
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -17,11 +20,16 @@ class CreateCustomerRequestValidatorTest {
     private static final String INVALID_EMAIL = "@";
     private static final String VALID_PHONE = "+16305551234";
     private static final String INVALID_PHONE = "abc123";
-    private static final String CURRENT_TERMS_VERSION = "2026-04";
+    private static final String CURRENT_TERMS_VERSION = "2026.04.01";
     private static final String INVALID_TERMS_VERSION = "2026-03";
 
+    private final TermsOfServiceCatalog termsOfServiceCatalog = mock(TermsOfServiceCatalog.class);
     private final CreateCustomerRequestValidator validator =
-        new CreateCustomerRequestValidator(new TermsOfServicePolicy());
+        new CreateCustomerRequestValidator(termsOfServiceCatalog);
+
+    CreateCustomerRequestValidatorTest() {
+        given(termsOfServiceCatalog.currentVersion()).willReturn(CURRENT_TERMS_VERSION);
+    }
 
     @Test
     void shouldAllowValidRequest() {

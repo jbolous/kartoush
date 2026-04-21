@@ -54,7 +54,7 @@ class CustomerActivationIntegrationTest extends PostgresSpringIntegrationTest {
     private static final String EMAIL_LOCAL_PART_PREFIX = "jack+";
     private static final String EMAIL_DOMAIN = "@kartoush.com";
     private static final String EXPIRED_RAW_TOKEN = "expired-activation-token";
-    private static final String CURRENT_TERMS_VERSION = "2026-04";
+    private static final String CURRENT_TERMS_VERSION = "2026.04.01";
 
     @Autowired
     private MockMvc mockMvc;
