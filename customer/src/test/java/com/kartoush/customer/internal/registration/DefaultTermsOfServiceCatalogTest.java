@@ -51,8 +51,8 @@ class DefaultTermsOfServiceCatalogTest {
         );
 
         given(clock.instant()).willReturn(NOW);
-        given(termsOfServiceRepository.findByStatus(TermsOfServiceStatus.ACTIVE)).willReturn(Optional.of(activeTerms));
-        given(termsOfServiceRepository.findDueScheduledTermsOfService(NOW)).willReturn(Optional.empty());
+        given(termsOfServiceRepository.findByStatusForUpdate(TermsOfServiceStatus.ACTIVE)).willReturn(Optional.of(activeTerms));
+        given(termsOfServiceRepository.findDueScheduledTermsOfServiceForUpdate(NOW)).willReturn(Optional.empty());
 
         // when
         final String currentVersion = termsOfServiceCatalog.currentVersion();
@@ -77,7 +77,7 @@ class DefaultTermsOfServiceCatalogTest {
         );
         final TermsOfServiceEntity scheduledTerms = TermsOfServiceEntity.rehydrate(
             "01JSVBKEC9M0XSB0YQ0CZPCHKS",
-            "2026-05",
+            "2026.05.01",
             "Scheduled terms",
             TermsOfServiceContentType.MARKDOWN,
             TermsOfServiceStatus.SCHEDULED,
@@ -88,15 +88,15 @@ class DefaultTermsOfServiceCatalogTest {
         );
 
         given(clock.instant()).willReturn(NOW);
-        given(termsOfServiceRepository.findByStatus(TermsOfServiceStatus.ACTIVE)).willReturn(Optional.of(activeTerms));
-        given(termsOfServiceRepository.findDueScheduledTermsOfService(NOW)).willReturn(Optional.of(scheduledTerms));
+        given(termsOfServiceRepository.findByStatusForUpdate(TermsOfServiceStatus.ACTIVE)).willReturn(Optional.of(activeTerms));
+        given(termsOfServiceRepository.findDueScheduledTermsOfServiceForUpdate(NOW)).willReturn(Optional.of(scheduledTerms));
         given(termsOfServiceRepository.save(any(TermsOfServiceEntity.class))).willAnswer(invocation -> invocation.getArgument(0));
 
         // when
         final TermsOfServiceEntity currentTerms = termsOfServiceCatalog.currentTerms();
 
         // then
-        assertThat(currentTerms.getVersion()).isEqualTo("2026-05");
+        assertThat(currentTerms.getVersion()).isEqualTo("2026.05.01");
         assertThat(currentTerms.getStatus()).isEqualTo(TermsOfServiceStatus.ACTIVE);
         assertThat(activeTerms.getStatus()).isEqualTo(TermsOfServiceStatus.SUPERSEDED);
         assertThat(activeTerms.getSupersededAt()).isEqualTo(NOW);
@@ -120,8 +120,8 @@ class DefaultTermsOfServiceCatalogTest {
         );
 
         given(clock.instant()).willReturn(NOW);
-        given(termsOfServiceRepository.findByStatus(TermsOfServiceStatus.ACTIVE)).willReturn(Optional.of(activeTerms));
-        given(termsOfServiceRepository.findDueScheduledTermsOfService(NOW)).willReturn(Optional.empty());
+        given(termsOfServiceRepository.findByStatusForUpdate(TermsOfServiceStatus.ACTIVE)).willReturn(Optional.of(activeTerms));
+        given(termsOfServiceRepository.findDueScheduledTermsOfServiceForUpdate(NOW)).willReturn(Optional.empty());
 
         // when
         final TermsOfServiceEntity currentTerms = termsOfServiceCatalog.currentTerms();
@@ -135,8 +135,8 @@ class DefaultTermsOfServiceCatalogTest {
     void shouldThrowWhenNoActiveTermsAreConfigured() {
         // given
         given(clock.instant()).willReturn(NOW);
-        given(termsOfServiceRepository.findByStatus(TermsOfServiceStatus.ACTIVE)).willReturn(Optional.empty());
-        given(termsOfServiceRepository.findDueScheduledTermsOfService(NOW)).willReturn(Optional.empty());
+        given(termsOfServiceRepository.findByStatusForUpdate(TermsOfServiceStatus.ACTIVE)).willReturn(Optional.empty());
+        given(termsOfServiceRepository.findDueScheduledTermsOfServiceForUpdate(NOW)).willReturn(Optional.empty());
 
         // when / then
         assertThatThrownBy(() -> termsOfServiceCatalog.currentTerms())

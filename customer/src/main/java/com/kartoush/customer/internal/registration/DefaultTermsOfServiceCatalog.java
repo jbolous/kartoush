@@ -33,13 +33,15 @@ public class DefaultTermsOfServiceCatalog implements TermsOfServiceCatalog {
     @Transactional
     public TermsOfServiceEntity currentTerms() {
         final Instant now = Instant.now(clock);
-        final Optional<TermsOfServiceEntity> activeTermsOfService = termsOfServiceRepository.findByStatus(TermsOfServiceStatus.ACTIVE);
-        final Optional<TermsOfServiceEntity> dueScheduledTermsOfService = termsOfServiceRepository.findDueScheduledTermsOfService(now);
+        final Optional<TermsOfServiceEntity> activeTermsOfService =
+            termsOfServiceRepository.findByStatusForUpdate(TermsOfServiceStatus.ACTIVE);
+        final Optional<TermsOfServiceEntity> dueScheduledTermsOfService =
+            termsOfServiceRepository.findDueScheduledTermsOfServiceForUpdate(now);
 
         if (dueScheduledTermsOfService.isPresent()) {
             final TermsOfServiceEntity scheduledTermsOfService = dueScheduledTermsOfService.get();
-            // Promote the due scheduled Terms and supersede the previous active Terms
-            // in the same transaction so "current Terms" never becomes ambiguous.
+            // Lock both the ACTIVE and due SCHEDULED Terms rows before promotion so only one
+            // transaction can supersede and activate them, keeping lifecycle timestamps stable.
             activeTermsOfService.ifPresent(active -> {
                 if (!Objects.equals(active.getId(), scheduledTermsOfService.getId())) {
                     active.supersede(now);

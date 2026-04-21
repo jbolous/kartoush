@@ -6,13 +6,20 @@ import java.time.Instant;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.query.Param;
+
+import jakarta.persistence.LockModeType;
 
 public interface TermsOfServiceRepository extends JpaRepository<TermsOfServiceEntity, String> {
 
     Optional<TermsOfServiceEntity> findByVersion(String version);
 
     Optional<TermsOfServiceEntity> findByStatus(TermsOfServiceStatus status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select terms from TermsOfServiceEntity terms where terms.status = :status")
+    Optional<TermsOfServiceEntity> findByStatusForUpdate(@Param("status") TermsOfServiceStatus status);
 
     @Query(
         value = """
@@ -28,8 +35,9 @@ public interface TermsOfServiceRepository extends JpaRepository<TermsOfServiceEn
             from terms_of_service
             where status = 'SCHEDULED'
               and effective_at <= :effectiveAt
+            for update
             """,
         nativeQuery = true
     )
-    Optional<TermsOfServiceEntity> findDueScheduledTermsOfService(@Param("effectiveAt") Instant effectiveAt);
+    Optional<TermsOfServiceEntity> findDueScheduledTermsOfServiceForUpdate(@Param("effectiveAt") Instant effectiveAt);
 }

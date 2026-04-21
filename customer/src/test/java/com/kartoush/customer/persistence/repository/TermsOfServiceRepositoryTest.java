@@ -25,7 +25,7 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration(classes = CustomerTestApplication.class)
 class TermsOfServiceRepositoryTest extends PostgresDataJpaTest {
 
-    private static final String VERSION = "2026-05";
+    private static final String VERSION = "2026.05.01";
     private static final String CONTENT = "Terms content";
     private static final Instant EFFECTIVE_AT = Instant.parse("2026-05-01T00:00:00Z");
 
@@ -36,7 +36,8 @@ class TermsOfServiceRepositoryTest extends PostgresDataJpaTest {
 
     @BeforeEach
     void setUp() {
-        termsOfServiceRepository.deleteAll();
+        termsOfServiceRepository.deleteAllInBatch();
+        termsOfServiceRepository.flush();
     }
 
     @Test
@@ -68,7 +69,7 @@ class TermsOfServiceRepositoryTest extends PostgresDataJpaTest {
         // given
         final TermsOfServiceEntity terms = TermsOfServiceEntity.draft(
             ulidGenerator.next(),
-            "2026-06",
+            "2026.06.01",
             CONTENT,
             TermsOfServiceContentType.PLAIN_TEXT
         );
