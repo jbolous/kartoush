@@ -66,7 +66,7 @@ class DefaultCustomerFacadeTest {
 
         // when
         when(ulidGenerator.next()).thenReturn(CUSTOMER_ID);
-        when(customerService.createCustomer(any())).thenReturn(saved);
+        when(customerService.registerCustomer(any(), any())).thenReturn(saved);
         when(activationTokenService.createFor(CustomerId.of(CUSTOMER_ID))).thenReturn(issuedActivationToken);
 
         final var result = facade.createCustomer(request);
@@ -74,7 +74,7 @@ class DefaultCustomerFacadeTest {
         // then
         assertThat(result).isEqualTo(view);
         verify(validator).validate(request);
-        verify(customerService).createCustomer(any());
+        verify(customerService).registerCustomer(any(), org.mockito.ArgumentMatchers.eq(TERMS_VERSION));
         verify(activationTokenService).createFor(CustomerId.of(CUSTOMER_ID));
         verify(activationEmailService).sendActivationToken(new Email(EMAIL), RAW_TOKEN);
     }

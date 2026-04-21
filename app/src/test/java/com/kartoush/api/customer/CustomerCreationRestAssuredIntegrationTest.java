@@ -2,12 +2,17 @@ package com.kartoush.api.customer;
 
 import com.kartoush.api.error.ErrorCode;
 import com.kartoush.customer.facade.model.CreateCustomerRequest;
+import com.kartoush.customer.persistence.entity.TermsAcceptanceEntity;
+import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
+import com.kartoush.customer.persistence.repository.TermsAcceptanceRepository;
 import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+
+import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +32,9 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
     @Autowired
     private CustomerRepository customerRepository;
 
+    @Autowired
+    private TermsAcceptanceRepository termsAcceptanceRepository;
+
     @Test
     void shouldCreateCustomerThroughHttp() {
         // given
@@ -40,7 +48,7 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
             CURRENT_TERMS_VERSION);
 
         // when + then
-        given()
+        final String customerId = given()
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .body(request)
         .when()
@@ -53,13 +61,23 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
             .body("lastName", equalTo(LAST_NAME))
             .body("email", equalTo(email))
             .body("phoneNumber", equalTo(PHONE_NUMBER))
-            .body("status", equalTo(CustomerStatus.PENDING.name()));
+            .body("status", equalTo(CustomerStatus.PENDING.name()))
+            .extract()
+            .path("customerId");
+
+        final List<TermsAcceptanceEntity> acceptances =
+            termsAcceptanceRepository.findAllByCustomerIdOrderByAcceptedAtAsc(CustomerIdEmbeddable.from(customerId));
+
+        assertThat(acceptances).hasSize(1);
+        assertThat(acceptances.getFirst().getTermsVersion()).isEqualTo(CURRENT_TERMS_VERSION);
+        assertThat(acceptances.getFirst().getAcceptedAt()).isNotNull();
     }
 
     @Test
     void shouldReturnValidationProblemForInvalidEmail() {
         // given
         final long customerCountBeforeRequest = customerRepository.count();
+        final long termsAcceptanceCountBeforeRequest = termsAcceptanceRepository.count();
         final CreateCustomerRequest request = new CreateCustomerRequest(
             FIRST_NAME,
             LAST_NAME,
@@ -88,12 +106,14 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
             .body("errors[0].rejectedValue", nullValue());
 
         assertThat(customerRepository.count()).isEqualTo(customerCountBeforeRequest);
+        assertThat(termsAcceptanceRepository.count()).isEqualTo(termsAcceptanceCountBeforeRequest);
     }
 
     @Test
     void shouldReturnValidationProblemForInvalidPhoneNumber() {
         // given
         final long customerCountBeforeRequest = customerRepository.count();
+        final long termsAcceptanceCountBeforeRequest = termsAcceptanceRepository.count();
         final CreateCustomerRequest request = new CreateCustomerRequest(
             FIRST_NAME,
             LAST_NAME,
@@ -122,12 +142,14 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
             .body("errors[0].rejectedValue", nullValue());
 
         assertThat(customerRepository.count()).isEqualTo(customerCountBeforeRequest);
+        assertThat(termsAcceptanceRepository.count()).isEqualTo(termsAcceptanceCountBeforeRequest);
     }
 
     @Test
     void shouldReturnValidationProblemWhenTermsAreNotAccepted() {
         // given
         final long customerCountBeforeRequest = customerRepository.count();
+        final long termsAcceptanceCountBeforeRequest = termsAcceptanceRepository.count();
         final CreateCustomerRequest request = new CreateCustomerRequest(
             FIRST_NAME,
             LAST_NAME,
@@ -154,12 +176,14 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
             .body("errors[0].field", equalTo("termsAccepted"));
 
         assertThat(customerRepository.count()).isEqualTo(customerCountBeforeRequest);
+        assertThat(termsAcceptanceRepository.count()).isEqualTo(termsAcceptanceCountBeforeRequest);
     }
 
     @Test
     void shouldReturnValidationProblemWhenTermsVersionIsInvalid() {
         // given
         final long customerCountBeforeRequest = customerRepository.count();
+        final long termsAcceptanceCountBeforeRequest = termsAcceptanceRepository.count();
         final CreateCustomerRequest request = new CreateCustomerRequest(
             FIRST_NAME,
             LAST_NAME,
@@ -186,5 +210,6 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
             .body("errors[0].field", equalTo("termsVersion"));
 
         assertThat(customerRepository.count()).isEqualTo(customerCountBeforeRequest);
+        assertThat(termsAcceptanceRepository.count()).isEqualTo(termsAcceptanceCountBeforeRequest);
     }
 }

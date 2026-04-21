@@ -72,7 +72,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
                 new Email(request.email()),
                 TEMPORARY_PASSWORD_HASH);
 
-        final Customer savedCustomer = customerService.createCustomer(customer);
+        final Customer savedCustomer = customerService.registerCustomer(customer, request.termsVersion());
         final IssuedActivationToken issuedActivationToken = activationTokenService.createFor(savedCustomer.getId());
 
         activationEmailService.sendActivationToken(savedCustomer.getEmail(), issuedActivationToken.rawToken());

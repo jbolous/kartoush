@@ -10,14 +10,18 @@ import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.exception.CustomerPendingActivationException;
 import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
+import com.kartoush.customer.persistence.entity.TermsAcceptanceEntity;
 import com.kartoush.customer.persistence.mapper.CustomerMapper;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
+import com.kartoush.customer.persistence.repository.TermsAcceptanceRepository;
 import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
 import com.kartoush.customer.service.IssuedActivationToken;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,22 +32,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.kartoush.platform.ulid.UlidGenerator;
 
 @Service
 public class DefaultCustomerService implements CustomerService
 {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultCustomerService.class);
     private final CustomerRepository customerRepository;
+    private final TermsAcceptanceRepository termsAcceptanceRepository;
     private final CustomerMapper customerMapper;
     private final ActivationTokenService activationTokenService;
+    private final UlidGenerator ulidGenerator;
+    private final Clock clock;
 
     public DefaultCustomerService(
             final CustomerRepository customerRepository,
+            final TermsAcceptanceRepository termsAcceptanceRepository,
             final CustomerMapper customerMapper,
-            final ActivationTokenService activationTokenService) {
+            final ActivationTokenService activationTokenService,
+            final UlidGenerator ulidGenerator,
+            final Clock clock) {
         this.customerRepository = customerRepository;
+        this.termsAcceptanceRepository = termsAcceptanceRepository;
         this.customerMapper = customerMapper;
         this.activationTokenService = activationTokenService;
+        this.ulidGenerator = ulidGenerator;
+        this.clock = clock;
     }
 
     @Override
@@ -65,7 +79,7 @@ public class DefaultCustomerService implements CustomerService
 
     @Override
     @Transactional
-    public Customer createCustomer(final Customer customer) {
+    public Customer registerCustomer(final Customer customer, final String termsVersion) {
 
         final Optional<CustomerEntity> existingCustomer = customerRepository.findByEmail(customer.getEmail().value());
 
@@ -86,6 +100,14 @@ public class DefaultCustomerService implements CustomerService
         CustomerEntity savedCustomer = customerRepository.save(entity);
 
         LOG.debug("Returned from save customer entity id={} email={}", savedCustomer.getId(), savedCustomer.getEmail());
+
+        final TermsAcceptanceEntity termsAcceptance = TermsAcceptanceEntity.of(
+            ulidGenerator.next(),
+            savedCustomer.getCustomerId(),
+            termsVersion,
+            Instant.now(clock)
+        );
+        termsAcceptanceRepository.save(termsAcceptance);
 
         return customerMapper.toDomain(savedCustomer);
     }

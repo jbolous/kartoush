@@ -7,27 +7,33 @@ import com.kartoush.customer.exception.InvalidCustomerActivationException;
 import com.kartoush.customer.exception.InvalidActivationTokenResendException;
 import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
+import com.kartoush.customer.persistence.entity.TermsAcceptanceEntity;
 import com.kartoush.customer.persistence.mapper.CustomerMapper;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
+import com.kartoush.customer.persistence.repository.TermsAcceptanceRepository;
 import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.IssuedActivationToken;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
+import com.kartoush.platform.ulid.UlidGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -49,16 +55,28 @@ class DefaultCustomerServiceTest
             FIRST_NAME,
             LAST_NAME,
             PHONE_NUMBER);
+    private static final String TERMS_VERSION = "2026.04.01";
     private static final String RAW_TOKEN = "raw-token";
+    private static final Instant NOW = Instant.parse("2026-04-18T19:00:00Z");
+    private static final String TERMS_ACCEPTANCE_ID = "01JSA2J4R6PZ4G9D5M1M6J8M6A";
 
     @Mock
     private CustomerRepository customerRepository;
+
+    @Mock
+    private TermsAcceptanceRepository termsAcceptanceRepository;
 
     @Mock
     private CustomerMapper customerMapper;
 
     @Mock
     private ActivationTokenService activationTokenService;
+
+    @Mock
+    private UlidGenerator ulidGenerator;
+
+    @Mock
+    private Clock clock;
 
     @InjectMocks
     private DefaultCustomerService defaultCustomerService;
@@ -119,7 +137,7 @@ class DefaultCustomerServiceTest
     }
 
     @Test
-    void shouldCreateCustomer() {
+    void shouldRegisterCustomerAndPersistTermsAcceptance() {
         // given
         final Customer inputCustomer = mock(Customer.class);
         final CustomerEntity mappedEntity = mock(CustomerEntity.class);
@@ -127,19 +145,25 @@ class DefaultCustomerServiceTest
         final Customer mappedCustomer = mock(Customer.class);
 
         given(inputCustomer.getEmail()).willReturn(EMAIL);
-
         given(customerMapper.toEntity(any(Customer.class))).willReturn(mappedEntity);
         given(customerRepository.save(mappedEntity)).willReturn(savedEntity);
         given(customerMapper.toDomain(savedEntity)).willReturn(mappedCustomer);
         given(savedEntity.getId()).willReturn(GENERATED_CUSTOMER_ID_VALUE);
-
+        given(savedEntity.getCustomerId()).willReturn(CUSTOMER_ID_EMBEDDABLE);
+        given(ulidGenerator.next()).willReturn(TERMS_ACCEPTANCE_ID);
+        given(clock.instant()).willReturn(NOW);
         // when
-        final Customer result = defaultCustomerService.createCustomer(inputCustomer);
+        final Customer result = defaultCustomerService.registerCustomer(inputCustomer, TERMS_VERSION);
 
         // then
         assertThat(result).isSameAs(mappedCustomer);
         verify(customerMapper).toEntity(any(Customer.class));
         verify(customerRepository).save(mappedEntity);
+        verify(termsAcceptanceRepository).save(argThat(termsAcceptance ->
+            termsAcceptance.getId().equals(TERMS_ACCEPTANCE_ID)
+                && termsAcceptance.getCustomerId().equals(CUSTOMER_ID_EMBEDDABLE)
+                && termsAcceptance.getTermsVersion().equals(TERMS_VERSION)
+                && termsAcceptance.getAcceptedAt().equals(NOW)));
         verify(customerMapper).toDomain(savedEntity);
     }
 
