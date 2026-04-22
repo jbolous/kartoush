@@ -1,7 +1,6 @@
 package com.kartoush.api.customer;
 
 import com.kartoush.api.error.ErrorCode;
-import com.kartoush.customer.facade.model.CreateCustomerRequest;
 import com.kartoush.customer.persistence.repository.TermsAcceptanceRepository;
 import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
