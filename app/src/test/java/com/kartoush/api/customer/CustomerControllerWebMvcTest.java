@@ -5,7 +5,6 @@ import com.kartoush.api.error.ApiProblemFactory;
 import com.kartoush.api.error.ErrorCode;
 import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.model.CustomerView;
-import com.kartoush.customer.facade.model.
 import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -115,7 +114,7 @@ class CustomerControllerWebMvcTest {
 
         when(customerFacade.updateCustomer(
             eq(CUSTOMER_ID),
-            any(UpdateCustomerRequest.class)))
+            any(com.kartoush.customer.facade.model.UpdateCustomerRequest.class)))
             .thenReturn(mockCustomerView());
 
         mockMvc.perform(put(BASE_URL + "/{customerId}", CUSTOMER_ID)
@@ -125,7 +124,7 @@ class CustomerControllerWebMvcTest {
 
         verify(customerFacade).updateCustomer(
             eq(CUSTOMER_ID),
-            any(UpdateCustomerRequest.class));
+            any(com.kartoush.customer.facade.model.UpdateCustomerRequest.class));
     }
 
     @Test
