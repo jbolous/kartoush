@@ -30,7 +30,8 @@ Kartoush HTTP API during local development.
 4. Use the remaining customer requests to inspect success and error
    behavior.
 5. Use the `terms-of-service/` requests to inspect the current supported
-   Terms version and retrieve published historical Terms metadata.
+   Terms version, retrieve a published Terms document by version, and
+   inspect the not-found response for an unpublished or missing version.
 
 The create request also refreshes the `email` environment variable with a
 timestamp-based value so repeated runs stay usable without manual cleanup.
