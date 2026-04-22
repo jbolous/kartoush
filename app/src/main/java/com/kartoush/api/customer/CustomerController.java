@@ -1,9 +1,9 @@
 package com.kartoush.api.customer;
 
 import com.kartoush.customer.facade.CustomerFacade;
-import com.kartoush.customer.facade.model.CreateCustomerCommand;
+import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.facade.model.CustomerView;
-import com.kartoush.customer.facade.model.UpdateCustomerCommand;
+import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -62,11 +62,11 @@ public class CustomerController {
     })
     @PostMapping
     public ResponseEntity<CustomerView> createCustomer(
-        @Valid @RequestBody final CreateCustomerRequest request) {
+        @Valid @RequestBody final CreateCustomerInput request) {
 
         LOG.info("Received create customer request for email={}", request.email());
 
-        final CustomerView createdCustomer = customerFacade.createCustomer(toFacadeRequest(request));
+        final CustomerView createdCustomer = customerFacade.createCustomer(request);
 
         LOG.info("Created customer id={} for email={}", createdCustomer.customerId(), request.email());
 
@@ -84,9 +84,9 @@ public class CustomerController {
     @PutMapping("/{customerId}")
     public ResponseEntity<CustomerView> updateCustomer(
         @PathVariable final String customerId,
-        @Valid @RequestBody final UpdateCustomerRequest request) {
+        @Valid @RequestBody final UpdateCustomerInput request) {
 
-        return ResponseEntity.ok(customerFacade.updateCustomer(customerId, toFacadeRequest(request)));
+        return ResponseEntity.ok(customerFacade.updateCustomer(customerId, request));
     }
 
     @Operation(summary = "Activate customer by token")
@@ -127,24 +127,4 @@ public class CustomerController {
         return ResponseEntity.noContent().build();
     }
 
-    private CreateCustomerCommand toFacadeRequest(
-        final CreateCustomerRequest request) {
-        return new CreateCustomerCommand(
-            request.firstName(),
-            request.lastName(),
-            request.email(),
-            request.phoneNumber(),
-            request.termsAccepted(),
-            request.termsVersion()
-        );
-    }
-
-    private UpdateCustomerCommand toFacadeRequest(
-        final UpdateCustomerRequest request) {
-        return new UpdateCustomerCommand(
-            request.firstName(),
-            request.lastName(),
-            request.phoneNumber()
-        );
-    }
 }
