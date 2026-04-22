@@ -1,0 +1,17 @@
+meta {
+  name: Get published Terms of Service by version
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/api/terms-of-service/{{currentTermsVersion}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

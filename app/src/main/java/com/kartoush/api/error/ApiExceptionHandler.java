@@ -12,6 +12,8 @@ import com.kartoush.customer.exception.InvalidCustomerActivationException;
 import com.kartoush.customer.exception.InvalidCustomerReactivationException;
 import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.exception.InvalidCustomerStatusTransitionException;
+import com.kartoush.customer.exception.CurrentTermsOfServiceNotFoundException;
+import com.kartoush.customer.exception.TermsOfServiceVersionNotFoundException;
 import com.kartoush.platform.validation.RequestValidationException;
 import com.kartoush.platform.validation.ValidationError;
 import jakarta.servlet.http.HttpServletRequest;
@@ -235,6 +237,30 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             "Invalid Customer Activation",
             ex.getMessage(),
             ErrorCode.INVALID_CUSTOMER_ACTIVATION,
+            request);
+    }
+
+    @ExceptionHandler(CurrentTermsOfServiceNotFoundException.class)
+    public ProblemDetail handleCurrentTermsOfServiceNotFoundException(
+        final CurrentTermsOfServiceNotFoundException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.NOT_FOUND,
+            "Terms of Service Not Found",
+            ex.getMessage(),
+            ErrorCode.TERMS_OF_SERVICE_NOT_FOUND,
+            request);
+    }
+
+    @ExceptionHandler(TermsOfServiceVersionNotFoundException.class)
+    public ProblemDetail handleTermsOfServiceVersionNotFoundException(
+        final TermsOfServiceVersionNotFoundException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.NOT_FOUND,
+            "Terms of Service Not Found",
+            ex.getMessage(),
+            ErrorCode.TERMS_OF_SERVICE_NOT_FOUND,
             request);
     }
 

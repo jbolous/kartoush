@@ -44,6 +44,8 @@ jobs:
             test-class: com.kartoush.api.customer.CustomerDuplicateEmailRestAssuredIntegrationTest
           - name: customer-activation-contract
             test-class: com.kartoush.api.customer.CustomerActivationIntegrationTest
+          - name: terms-of-service-metadata-contract
+            test-class: com.kartoush.api.terms.TermsOfServiceMetadataIntegrationTest
 
     name: App integration tests (${{ matrix.name }})
 
