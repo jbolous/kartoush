@@ -237,8 +237,20 @@ The customer create endpoint is a good example of the intended workflow.
 4. let CI enforce the contract
 
    Once the REST Assured coverage is in place, CI runs the app integration
-   test classes and fails the pull request if the contract changes
-   unexpectedly.
+   test groups by stable API package boundaries and fails the pull request if
+   the contract changes unexpectedly.
+
+   App integration CI should not require a workflow edit for each new test
+   class. Grouping by stable package boundaries keeps the workflow
+   maintainable while still allowing parallel execution across API domains.
+
+   Today that means:
+
+   - `com.kartoush.api.customer.*`
+   - `com.kartoush.api.terms.*`
+
+   New integration tests should be added under the correct API package so CI
+   picks them up automatically.
 
 This example is the intended pattern for future endpoints:
 
