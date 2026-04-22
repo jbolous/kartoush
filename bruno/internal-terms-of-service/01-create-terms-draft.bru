@@ -1,0 +1,44 @@
+meta {
+  name: Create Terms draft
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/internal/terms-of-service/drafts
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body {
+  {
+    "version": "{{internalTermsVersion}}",
+    "content": "{{internalTermsContent}}",
+    "contentType": "{{internalTermsContentType}}"
+  }
+}
+
+script:pre-request {
+  const date = new Date();
+  const yyyy = date.getUTCFullYear();
+  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(date.getUTCDate()).padStart(2, "0");
+  const suffix = String(date.getUTCHours()) + String(date.getUTCMinutes()) + String(date.getUTCSeconds());
+  bru.setEnvVar("internalTermsVersion", `${yyyy}.${mm}.${dd}.${suffix}`);
+}
+
+script:post-response {
+  if (res.status === 201 && res.body && res.body.id) {
+    bru.setEnvVar("internalTermsOfServiceId", res.body.id);
+  }
+}
+
+tests {
+  test("should return 201", function() {
+    expect(res.status).to.equal(201);
+  });
+}

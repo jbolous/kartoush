@@ -1,0 +1,17 @@
+meta {
+  name: Promote due Terms
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{host}}/internal/terms-of-service/promote-due
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 200 or 409", function() {
+    expect([200, 409]).to.include(res.status);
+  });
+}

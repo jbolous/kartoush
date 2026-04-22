@@ -16,6 +16,8 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,8 +43,10 @@ public class DefaultTermsOfServiceManagementService implements TermsOfServiceMan
         final String version,
         final String content,
         final TermsOfServiceContentType contentType) {
-        if (termsOfServiceRepository.findByVersion(version).isPresent()) {
-            throw new TermsOfServiceVersionAlreadyExistsException(version);
+        final String normalizedVersion = normalizeVersion(version);
+
+        if (termsOfServiceRepository.findByVersion(normalizedVersion).isPresent()) {
+            throw new TermsOfServiceVersionAlreadyExistsException(normalizedVersion);
         }
 
         final TermsOfServiceEntity termsOfService = TermsOfServiceEntity.draft(
@@ -52,7 +56,11 @@ public class DefaultTermsOfServiceManagementService implements TermsOfServiceMan
             contentType
         );
 
-        return termsOfServiceRepository.save(termsOfService);
+        try {
+            return termsOfServiceRepository.save(termsOfService);
+        } catch (final DataIntegrityViolationException exception) {
+            throw new TermsOfServiceVersionAlreadyExistsException(normalizedVersion);
+        }
     }
 
     @Override
@@ -170,5 +178,9 @@ public class DefaultTermsOfServiceManagementService implements TermsOfServiceMan
             activeTermsOfService.supersede(now);
             termsOfServiceRepository.save(activeTermsOfService);
         }
+    }
+
+    private String normalizeVersion(final String version) {
+        return version == null ? null : version.trim();
     }
 }

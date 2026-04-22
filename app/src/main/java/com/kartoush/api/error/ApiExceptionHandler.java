@@ -13,6 +13,12 @@ import com.kartoush.customer.exception.InvalidCustomerReactivationException;
 import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.exception.InvalidCustomerStatusTransitionException;
 import com.kartoush.customer.exception.CurrentTermsOfServiceNotFoundException;
+import com.kartoush.customer.exception.InvalidTermsOfServiceScheduleException;
+import com.kartoush.customer.exception.InvalidTermsOfServiceTransitionException;
+import com.kartoush.customer.exception.NoDueScheduledTermsOfServiceException;
+import com.kartoush.customer.exception.TermsOfServiceNotFoundException;
+import com.kartoush.customer.exception.TermsOfServiceVersionAlreadyExistsException;
+import com.kartoush.customer.exception.TermsOfServiceVersionAlreadyScheduledException;
 import com.kartoush.customer.exception.TermsOfServiceVersionNotFoundException;
 import com.kartoush.platform.validation.RequestValidationException;
 import com.kartoush.platform.validation.ValidationError;
@@ -261,6 +267,78 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             "Terms of Service Not Found",
             ex.getMessage(),
             ErrorCode.TERMS_OF_SERVICE_NOT_FOUND,
+            request);
+    }
+
+    @ExceptionHandler(TermsOfServiceNotFoundException.class)
+    public ProblemDetail handleTermsOfServiceNotFoundException(
+        final TermsOfServiceNotFoundException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.NOT_FOUND,
+            "Terms of Service Not Found",
+            ex.getMessage(),
+            ErrorCode.TERMS_OF_SERVICE_NOT_FOUND,
+            request);
+    }
+
+    @ExceptionHandler(TermsOfServiceVersionAlreadyExistsException.class)
+    public ProblemDetail handleTermsOfServiceVersionAlreadyExistsException(
+        final TermsOfServiceVersionAlreadyExistsException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Terms of Service Already Exists",
+            ex.getMessage(),
+            ErrorCode.TERMS_OF_SERVICE_ALREADY_EXISTS,
+            request);
+    }
+
+    @ExceptionHandler(TermsOfServiceVersionAlreadyScheduledException.class)
+    public ProblemDetail handleTermsOfServiceVersionAlreadyScheduledException(
+        final TermsOfServiceVersionAlreadyScheduledException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Terms of Service Already Scheduled",
+            ex.getMessage(),
+            ErrorCode.TERMS_OF_SERVICE_ALREADY_SCHEDULED,
+            request);
+    }
+
+    @ExceptionHandler(InvalidTermsOfServiceScheduleException.class)
+    public ProblemDetail handleInvalidTermsOfServiceScheduleException(
+        final InvalidTermsOfServiceScheduleException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.BAD_REQUEST,
+            "Invalid Terms of Service Schedule",
+            ex.getMessage(),
+            ErrorCode.INVALID_TERMS_OF_SERVICE_SCHEDULE,
+            request);
+    }
+
+    @ExceptionHandler(InvalidTermsOfServiceTransitionException.class)
+    public ProblemDetail handleInvalidTermsOfServiceTransitionException(
+        final InvalidTermsOfServiceTransitionException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Invalid Terms of Service Transition",
+            ex.getMessage(),
+            ErrorCode.INVALID_TERMS_OF_SERVICE_TRANSITION,
+            request);
+    }
+
+    @ExceptionHandler(NoDueScheduledTermsOfServiceException.class)
+    public ProblemDetail handleNoDueScheduledTermsOfServiceException(
+        final NoDueScheduledTermsOfServiceException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "No Due Scheduled Terms of Service",
+            ex.getMessage(),
+            ErrorCode.NO_DUE_SCHEDULED_TERMS_OF_SERVICE,
             request);
     }
 

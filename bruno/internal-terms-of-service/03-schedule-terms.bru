@@ -1,0 +1,27 @@
+meta {
+  name: Schedule Terms
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}/internal/terms-of-service/{{internalTermsOfServiceId}}/schedule
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body {
+  {
+    "effectiveAt": "{{internalTermsEffectiveAt}}"
+  }
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

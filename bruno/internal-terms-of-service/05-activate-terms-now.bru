@@ -1,0 +1,17 @@
+meta {
+  name: Activate Terms now
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{host}}/internal/terms-of-service/{{internalTermsOfServiceId}}/activate
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}
