@@ -62,7 +62,7 @@ public class CustomerController {
     })
     @PostMapping
     public ResponseEntity<CustomerView> createCustomer(
-        @Valid @RequestBody final CreateCustomerRequest request) {
+        @RequestBody final CreateCustomerRequest request) {
 
         LOG.info("Received create customer request for email={}", request.email());
 
@@ -84,7 +84,7 @@ public class CustomerController {
     @PutMapping("/{customerId}")
     public ResponseEntity<CustomerView> updateCustomer(
         @PathVariable final String customerId,
-        @Valid @RequestBody final UpdateCustomerRequest request) {
+        @RequestBody final UpdateCustomerRequest request) {
 
         return ResponseEntity.ok(customerFacade.updateCustomer(customerId, request));
     }

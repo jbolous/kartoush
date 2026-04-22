@@ -2,7 +2,10 @@ package com.kartoush.customer.facade.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(name = "CreateCustomerRequest", description = "Request payload for creating a customer")
+@Schema(
+    name = "CreateCustomerRequest",
+    description = "Shared API and facade request payload for creating a customer; validated by the customer facade layer"
+)
 public record CreateCustomerRequest(
 
     @Schema(
