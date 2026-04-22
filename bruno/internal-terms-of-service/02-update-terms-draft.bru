@@ -1,0 +1,28 @@
+meta {
+  name: Update Terms draft
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{host}}/internal/terms-of-service/drafts/{{internalTermsOfServiceId}}
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body {
+  {
+    "content": "## Terms of Service\n\nUpdated internal draft content.",
+    "contentType": "{{internalTermsContentType}}"
+  }
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

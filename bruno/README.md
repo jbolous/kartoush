@@ -18,6 +18,8 @@ Kartoush HTTP API during local development.
   Local environment variables for the running application
 - `customers/`
   Customer API requests, including both happy-path and failure scenarios
+- `internal-terms-of-service/`
+  Internal Terms of Service management requests for draft and lifecycle operations
 - `terms-of-service/`
   Read-only Terms of Service metadata requests
 
@@ -29,7 +31,9 @@ Kartoush HTTP API during local development.
    capture `customerId` into the environment.
 4. Use the remaining customer requests to inspect success and error
    behavior.
-5. Use the `terms-of-service/` requests to inspect the current supported
+5. Use the `internal-terms-of-service/` requests to create and manage
+   draft Terms versions through the internal lifecycle endpoints.
+6. Use the `terms-of-service/` requests to inspect the current supported
    Terms version, retrieve a published Terms document by version, and
    inspect the not-found response for an unpublished or missing version.
 
