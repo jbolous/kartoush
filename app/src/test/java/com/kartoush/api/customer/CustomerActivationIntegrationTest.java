@@ -11,7 +11,6 @@ import com.kartoush.customer.persistence.repository.ActivationTokenRepository;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
 import com.kartoush.customer.service.ActivationEmailService;
 import com.kartoush.customer.service.ActivationTokenHasher;
-import com.kartoush.customer.facade.model.CreateCustomerRequest;
 import com.kartoush.platform.types.ActivationTokenId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;

@@ -1,11 +1,10 @@
-package com.kartoush.customer.facade.model;
+package com.kartoush.api.customer;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-@Schema(
-    name = "CreateCustomerRequest",
-    description = "Shared API and facade request payload for creating a customer; validated by the customer facade layer"
-)
+@Schema(name = "CreateCustomerRequest", description = "Request payload for creating a customer")
 public record CreateCustomerRequest(
 
     @Schema(
@@ -13,6 +12,7 @@ public record CreateCustomerRequest(
         example = "Jack",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
+    @NotBlank(message = "firstName is required")
     String firstName,
 
     @Schema(
@@ -20,6 +20,7 @@ public record CreateCustomerRequest(
         example = "Kartoush",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
+    @NotBlank(message = "lastName is required")
     String lastName,
 
     @Schema(
@@ -27,6 +28,7 @@ public record CreateCustomerRequest(
         example = "jack@kartoush.test",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
+    @NotBlank(message = "email is required")
     String email,
 
     @Schema(
@@ -41,6 +43,7 @@ public record CreateCustomerRequest(
         example = "true",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
+    @NotNull(message = "termsAccepted is required")
     Boolean termsAccepted,
 
     @Schema(
@@ -48,6 +51,7 @@ public record CreateCustomerRequest(
         example = "2026.04.01",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
+    @NotBlank(message = "termsVersion is required")
     String termsVersion
 ) {
 }

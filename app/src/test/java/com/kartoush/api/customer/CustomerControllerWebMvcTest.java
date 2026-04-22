@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kartoush.api.error.ApiProblemFactory;
 import com.kartoush.api.error.ErrorCode;
 import com.kartoush.customer.facade.CustomerFacade;
-import com.kartoush.customer.facade.model.CreateCustomerRequest;
 import com.kartoush.customer.facade.model.CustomerView;
-import com.kartoush.customer.facade.model.UpdateCustomerRequest;
 import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,7 +112,9 @@ class CustomerControllerWebMvcTest {
             PHONE
         );
 
-        when(customerFacade.updateCustomer(eq(CUSTOMER_ID), any(UpdateCustomerRequest.class)))
+        when(customerFacade.updateCustomer(
+            eq(CUSTOMER_ID),
+            any(com.kartoush.customer.facade.model.UpdateCustomerCommand.class)))
             .thenReturn(mockCustomerView());
 
         mockMvc.perform(put(BASE_URL + "/{customerId}", CUSTOMER_ID)
@@ -122,7 +122,9 @@ class CustomerControllerWebMvcTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk());
 
-        verify(customerFacade).updateCustomer(eq(CUSTOMER_ID), any(UpdateCustomerRequest.class));
+        verify(customerFacade).updateCustomer(
+            eq(CUSTOMER_ID),
+            any(com.kartoush.customer.facade.model.UpdateCustomerCommand.class));
     }
 
     @Test

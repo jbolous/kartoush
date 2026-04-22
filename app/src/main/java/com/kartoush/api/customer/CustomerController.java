@@ -1,9 +1,9 @@
 package com.kartoush.api.customer;
 
 import com.kartoush.customer.facade.CustomerFacade;
-import com.kartoush.customer.facade.model.CreateCustomerRequest;
+import com.kartoush.customer.facade.model.CreateCustomerCommand;
 import com.kartoush.customer.facade.model.CustomerView;
-import com.kartoush.customer.facade.model.UpdateCustomerRequest;
+import com.kartoush.customer.facade.model.UpdateCustomerCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -62,11 +62,11 @@ public class CustomerController {
     })
     @PostMapping
     public ResponseEntity<CustomerView> createCustomer(
-        @RequestBody final CreateCustomerRequest request) {
+        @Valid @RequestBody final CreateCustomerRequest request) {
 
         LOG.info("Received create customer request for email={}", request.email());
 
-        final CustomerView createdCustomer = customerFacade.createCustomer(request);
+        final CustomerView createdCustomer = customerFacade.createCustomer(toFacadeRequest(request));
 
         LOG.info("Created customer id={} for email={}", createdCustomer.customerId(), request.email());
 
@@ -84,9 +84,9 @@ public class CustomerController {
     @PutMapping("/{customerId}")
     public ResponseEntity<CustomerView> updateCustomer(
         @PathVariable final String customerId,
-        @RequestBody final UpdateCustomerRequest request) {
+        @Valid @RequestBody final UpdateCustomerRequest request) {
 
-        return ResponseEntity.ok(customerFacade.updateCustomer(customerId, request));
+        return ResponseEntity.ok(customerFacade.updateCustomer(customerId, toFacadeRequest(request)));
     }
 
     @Operation(summary = "Activate customer by token")
@@ -125,5 +125,26 @@ public class CustomerController {
     public ResponseEntity<Void> deleteCustomer(@PathVariable final String customerId) {
         customerFacade.deleteCustomer(customerId);
         return ResponseEntity.noContent().build();
+    }
+
+    private CreateCustomerCommand toFacadeRequest(
+        final CreateCustomerRequest request) {
+        return new CreateCustomerCommand(
+            request.firstName(),
+            request.lastName(),
+            request.email(),
+            request.phoneNumber(),
+            request.termsAccepted(),
+            request.termsVersion()
+        );
+    }
+
+    private UpdateCustomerCommand toFacadeRequest(
+        final UpdateCustomerRequest request) {
+        return new UpdateCustomerCommand(
+            request.firstName(),
+            request.lastName(),
+            request.phoneNumber()
+        );
     }
 }
