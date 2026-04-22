@@ -15,13 +15,13 @@ import com.kartoush.platform.ulid.UlidGenerator;
 import com.kartoush.testsupport.PostgresSpringIntegrationTest;
 import com.kartoush.testsupport.SpringIntegrationTest;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 @SpringIntegrationTest
 @AutoConfigureMockMvc
@@ -32,6 +32,7 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
     private static final String CURRENT_CONTENT = "Current active terms content";
     private static final Instant CURRENT_EFFECTIVE_AT = Instant.parse("2026-04-01T00:00:00Z");
     private static final String DRAFT_VERSION = "2026.06.01";
+    private static final String DRAFT_VERSION_WITH_WHITESPACE = "   2026.06.01   ";
     private static final String ACTIVATED_VERSION = "2026.07.01";
     private static final String PROMOTED_VERSION = "2026.08.01";
 
@@ -51,6 +52,7 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
         deleteIfExists(DRAFT_VERSION);
         deleteIfExists(ACTIVATED_VERSION);
         deleteIfExists(PROMOTED_VERSION);
+        deleteIfExists(DRAFT_VERSION_WITH_WHITESPACE.trim());
         ensureCurrentActiveTerms();
     }
 
@@ -96,7 +98,7 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
             .andExpect(jsonPath("$.content").value("Updated content"))
             .andExpect(jsonPath("$.contentType").value(TermsOfServiceContentType.MARKDOWN.name()));
 
-        final TermsOfServiceEntity updatedDraft = termsOfServiceRepository.findById(draft.getId()).orElseThrow();
+        final TermsOfServiceEntity updatedDraft = termsOfServiceRepository.findById(Objects.requireNonNull(draft.getId())).orElseThrow();
         assertThat(updatedDraft.getContent()).isEqualTo("Updated content");
         assertThat(updatedDraft.getContentType()).isEqualTo(TermsOfServiceContentType.MARKDOWN);
     }
@@ -124,7 +126,7 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
             .andExpect(jsonPath("$.status").value(TermsOfServiceStatus.DRAFT.name()))
             .andExpect(jsonPath("$.effectiveAt").doesNotExist());
 
-        final TermsOfServiceEntity unscheduledDraft = termsOfServiceRepository.findById(draft.getId()).orElseThrow();
+        final TermsOfServiceEntity unscheduledDraft = termsOfServiceRepository.findById(Objects.requireNonNull(draft.getId())).orElseThrow();
         assertThat(unscheduledDraft.getStatus()).isEqualTo(TermsOfServiceStatus.DRAFT);
         assertThat(unscheduledDraft.getEffectiveAt()).isNull();
     }
@@ -143,7 +145,7 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
             .andExpect(jsonPath("$.version").value(ACTIVATED_VERSION))
             .andExpect(jsonPath("$.status").value(TermsOfServiceStatus.ACTIVE.name()));
 
-        final TermsOfServiceEntity activatedTerms = termsOfServiceRepository.findById(draft.getId()).orElseThrow();
+        final TermsOfServiceEntity activatedTerms = termsOfServiceRepository.findById(Objects.requireNonNull(draft.getId())).orElseThrow();
         final TermsOfServiceEntity previousActiveTerms = termsOfServiceRepository.findByVersion(CURRENT_VERSION).orElseThrow();
 
         assertThat(activatedTerms.getStatus()).isEqualTo(TermsOfServiceStatus.ACTIVE);
@@ -170,12 +172,54 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
             .andExpect(jsonPath("$.version").value(PROMOTED_VERSION))
             .andExpect(jsonPath("$.status").value(TermsOfServiceStatus.ACTIVE.name()));
 
-        final TermsOfServiceEntity promotedTerms = termsOfServiceRepository.findById(dueScheduledTerms.getId()).orElseThrow();
+        final TermsOfServiceEntity promotedTerms = termsOfServiceRepository.findById(Objects.requireNonNull(dueScheduledTerms.getId())).orElseThrow();
         final TermsOfServiceEntity previousActiveTerms = termsOfServiceRepository.findByVersion(CURRENT_VERSION).orElseThrow();
 
         assertThat(promotedTerms.getStatus()).isEqualTo(TermsOfServiceStatus.ACTIVE);
         assertThat(previousActiveTerms.getStatus()).isEqualTo(TermsOfServiceStatus.SUPERSEDED);
         assertThat(previousActiveTerms.getSupersededAt()).isNotNull();
+    }
+
+    @Test
+    void shouldReturnConflictWhenDuplicateVersionSubmittedWithWhitespace() throws Exception {
+        final CreateTermsOfServiceDraftRequest request = new CreateTermsOfServiceDraftRequest(
+            DRAFT_VERSION_WITH_WHITESPACE,
+            "Draft terms content",
+            TermsOfServiceContentType.MARKDOWN
+        );
+
+        mockMvc.perform(post(BASE_URL + "/drafts")
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.version").value(DRAFT_VERSION))
+            .andExpect(jsonPath("$.status").value(TermsOfServiceStatus.DRAFT.name()))
+            .andExpect(jsonPath("$.id").isNotEmpty());
+
+        final Optional<TermsOfServiceEntity> createdDraft = termsOfServiceRepository.findByVersion(DRAFT_VERSION);
+        assertThat(createdDraft).isPresent();
+        assertThat(createdDraft.orElseThrow().getVersion()).isEqualTo(DRAFT_VERSION);
+    }
+
+    @Test
+    void shouldReturnConflictWhenEquivalentTrimmedVersionAlreadyExists() throws Exception {
+        termsOfServiceRepository.save(TermsOfServiceEntity.draft(
+            ulidGenerator.next(),
+            DRAFT_VERSION,
+            "Existing draft content",
+            TermsOfServiceContentType.MARKDOWN
+        ));
+
+        final CreateTermsOfServiceDraftRequest request = new CreateTermsOfServiceDraftRequest(
+            DRAFT_VERSION_WITH_WHITESPACE,
+            "Draft terms content",
+            TermsOfServiceContentType.MARKDOWN
+        );
+
+        mockMvc.perform(post(BASE_URL + "/drafts")
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isConflict());
     }
 
     private void deleteIfExists(final String version) {

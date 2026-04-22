@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultTermsOfServiceManagementServiceTest {
@@ -34,6 +35,7 @@ class DefaultTermsOfServiceManagementServiceTest {
     private static final String ACTIVE_TERMS_ID = "01JV00MANAGEDTERMS00000002";
     private static final String SCHEDULED_TERMS_ID = "01JV00MANAGEDTERMS00000003";
     private static final String VERSION = "2026.06.01";
+    private static final String VERSION_WITH_WHITESPACE = "   2026.06.01   ";
     private static final String ACTIVE_VERSION = "2026.04.01";
     private static final String CONTENT = "Draft terms";
     private static final Instant NOW = Instant.parse("2026-05-01T12:00:00Z");
@@ -401,6 +403,73 @@ class DefaultTermsOfServiceManagementServiceTest {
         assertThatThrownBy(() -> termsOfServiceManagementService.activateNow(TERMS_ID))
             .isInstanceOf(InvalidTermsOfServiceTransitionException.class)
             .hasMessage("Terms of Service can only be activated from DRAFT or SCHEDULED");
+    }
+
+    @Test
+    void shouldRejectDuplicateDraftVersionAfterNormalizingWhitespace() {
+        // given
+        final TermsOfServiceEntity existingTerms = TermsOfServiceEntity.draft(
+            TERMS_ID,
+            VERSION,
+            CONTENT,
+            TermsOfServiceContentType.PLAIN_TEXT
+        );
+        given(termsOfServiceRepository.findByVersion(VERSION)).willReturn(Optional.of(existingTerms));
+
+        // when / then
+        assertThatThrownBy(() -> termsOfServiceManagementService.createDraft(
+            VERSION_WITH_WHITESPACE,
+            CONTENT,
+            TermsOfServiceContentType.MARKDOWN
+        ))
+            .isInstanceOf(TermsOfServiceVersionAlreadyExistsException.class)
+            .hasMessage("Terms of Service already exists for version: " + VERSION);
+
+        verify(termsOfServiceRepository).findByVersion(VERSION);
+        verify(termsOfServiceRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldTranslateUniqueConstraintViolationToDuplicateDraftVersion() {
+        // given
+        given(ulidGenerator.next()).willReturn(TERMS_ID);
+        given(termsOfServiceRepository.findByVersion(VERSION)).willReturn(Optional.empty());
+        given(termsOfServiceRepository.save(any(TermsOfServiceEntity.class)))
+            .willThrow(new DataIntegrityViolationException("unique constraint violation"));
+
+        // when / then
+        assertThatThrownBy(() -> termsOfServiceManagementService.createDraft(
+            VERSION_WITH_WHITESPACE,
+            CONTENT,
+            TermsOfServiceContentType.MARKDOWN
+        ))
+            .isInstanceOf(TermsOfServiceVersionAlreadyExistsException.class)
+            .hasMessage("Terms of Service already exists for version: " + VERSION);
+
+        verify(termsOfServiceRepository).findByVersion(VERSION);
+        verify(termsOfServiceRepository).save(any(TermsOfServiceEntity.class));
+    }
+
+    @Test
+    void shouldCreateDraftTermsOfServiceUsingNormalizedVersion() {
+        // given
+        given(ulidGenerator.next()).willReturn(TERMS_ID);
+        given(termsOfServiceRepository.findByVersion(VERSION)).willReturn(Optional.empty());
+        given(termsOfServiceRepository.save(any(TermsOfServiceEntity.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        final TermsOfServiceEntity terms = termsOfServiceManagementService.createDraft(
+            VERSION_WITH_WHITESPACE,
+            CONTENT,
+            TermsOfServiceContentType.MARKDOWN
+        );
+
+        // then
+        assertThat(terms.getId()).isEqualTo(TERMS_ID);
+        assertThat(terms.getVersion()).isEqualTo(VERSION);
+        assertThat(terms.getStatus()).isEqualTo(TermsOfServiceStatus.DRAFT);
+        verify(termsOfServiceRepository).findByVersion(VERSION);
+        verify(termsOfServiceRepository).save(any(TermsOfServiceEntity.class));
     }
 
     private static TermsOfServiceEntity activeTerms(final String id, final String version) {

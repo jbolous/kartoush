@@ -35,4 +35,9 @@ public record CreateTermsOfServiceDraftRequest(
     @NotNull(message = "contentType is required")
     TermsOfServiceContentType contentType
 ) {
+    public CreateTermsOfServiceDraftRequest {
+        if (version != null) {
+            version = version.trim();
+        }
+    }
 }
