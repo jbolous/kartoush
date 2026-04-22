@@ -1,0 +1,17 @@
+meta {
+  name: Get current Terms of Service
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/terms-of-service/current
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

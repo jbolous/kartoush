@@ -20,6 +20,9 @@ public enum ErrorCode {
     INVALID_CUSTOMER_STATUS_TRANSITION,
     INVALID_CUSTOMER_REACTIVATION,
 
+    // Terms of Service
+    TERMS_OF_SERVICE_NOT_FOUND,
+
     // Validation
     VALIDATION_FAILED,
 
