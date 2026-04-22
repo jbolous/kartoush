@@ -6,12 +6,12 @@ import com.kartoush.customer.persistence.model.ActivationTokenIdEmbeddable;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.platform.types.ActivationTokenId;
 import com.kartoush.platform.types.CustomerId;
-import org.mapstruct.Mapper;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring")
-public interface ActivationTokenMapper {
+@Component
+public class ActivationTokenMapper {
 
-    default ActivationToken toDomain(ActivationTokenEntity entity) {
+    public ActivationToken toDomain(final ActivationTokenEntity entity) {
         if (entity == null) {
             return null;
         }
@@ -26,21 +26,22 @@ public interface ActivationTokenMapper {
         );
     }
 
-    default ActivationTokenEntity toEntity(ActivationToken domain) {
+    public ActivationTokenEntity toEntity(final ActivationToken domain) {
         if (domain == null) {
             return null;
         }
 
         return ActivationTokenEntity.of(
-            toEmbeddableId(domain.getId()),
-            toEmbeddableId(domain.getCustomerId()),
+            toEmbeddableActivationTokenId(domain.getId()),
+            toEmbeddableCustomerId(domain.getCustomerId()),
             domain.getTokenHash(),
             domain.getExpiresAt(),
             domain.getConsumedAt(),
-            domain.getCreatedAt());
+            domain.getCreatedAt()
+        );
     }
 
-    default ActivationTokenIdEmbeddable toEmbeddableId(ActivationTokenId activationTokenId) {
+    ActivationTokenIdEmbeddable toEmbeddableActivationTokenId(final ActivationTokenId activationTokenId) {
         if (activationTokenId == null) {
             return null;
         }
@@ -48,7 +49,7 @@ public interface ActivationTokenMapper {
         return ActivationTokenIdEmbeddable.from(activationTokenId);
     }
 
-    default CustomerIdEmbeddable toEmbeddableId(CustomerId customerId) {
+    CustomerIdEmbeddable toEmbeddableCustomerId(final CustomerId customerId) {
         if (customerId == null) {
             return null;
         }
