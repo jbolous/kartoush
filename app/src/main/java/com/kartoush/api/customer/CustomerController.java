@@ -1,9 +1,9 @@
 package com.kartoush.api.customer;
 
 import com.kartoush.customer.facade.CustomerFacade;
-import com.kartoush.customer.facade.model.CreateCustomerRequest;
+import com.kartoush.customer.facade.model.CreateCustomerCommand;
 import com.kartoush.customer.facade.model.CustomerView;
-import com.kartoush.customer.facade.model.UpdateCustomerRequest;
+import com.kartoush.customer.facade.model.UpdateCustomerCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -127,9 +127,9 @@ public class CustomerController {
         return ResponseEntity.noContent().build();
     }
 
-    private CreateCustomerRequest toFacadeRequest(
+    private CreateCustomerCommand toFacadeRequest(
         final CreateCustomerRequest request) {
-        return new CreateCustomerRequest(
+        return new CreateCustomerCommand(
             request.firstName(),
             request.lastName(),
             request.email(),
@@ -139,9 +139,9 @@ public class CustomerController {
         );
     }
 
-    private UpdateCustomerRequest toFacadeRequest(
+    private UpdateCustomerCommand toFacadeRequest(
         final UpdateCustomerRequest request) {
-        return new UpdateCustomerRequest(
+        return new UpdateCustomerCommand(
             request.firstName(),
             request.lastName(),
             request.phoneNumber()

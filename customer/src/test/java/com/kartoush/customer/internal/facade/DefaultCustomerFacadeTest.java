@@ -2,9 +2,9 @@ package com.kartoush.customer.internal.facade;
 
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
-import com.kartoush.customer.facade.model.CreateCustomerRequest;
+import com.kartoush.customer.facade.model.CreateCustomerCommand;
 import com.kartoush.customer.facade.model.CustomerView;
-import com.kartoush.customer.internal.validation.CreateCustomerRequestValidator;
+import com.kartoush.customer.internal.validation.CreateCustomerCommandValidator;
 import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationEmailService;
 import com.kartoush.customer.service.ActivationTokenService;
@@ -42,7 +42,7 @@ class DefaultCustomerFacadeTest {
     private UlidGenerator ulidGenerator;
 
     @Mock
-    private CreateCustomerRequestValidator validator;
+    private CreateCustomerCommandValidator validator;
 
     @Mock
     private CustomerService customerService;
@@ -110,8 +110,8 @@ class DefaultCustomerFacadeTest {
         verify(activationEmailService).sendActivationToken(new Email(EMAIL), RAW_TOKEN);
     }
 
-    private CreateCustomerRequest buildCustomerRequest(){
-        return  new CreateCustomerRequest(
+    private CreateCustomerCommand buildCustomerRequest(){
+        return  new CreateCustomerCommand(
                 FIRST_NAME,
                 LAST_NAME,
                 EMAIL,

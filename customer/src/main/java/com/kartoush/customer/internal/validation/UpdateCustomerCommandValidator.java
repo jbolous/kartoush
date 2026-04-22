@@ -1,9 +1,7 @@
 package com.kartoush.customer.internal.validation;
 
 import com.kartoush.customer.domain.CustomerConstraints;
-import com.kartoush.customer.facade.model.UpdateCustomerRequest;
-import com.kartoush.platform.types.PhoneNumber;
-import com.kartoush.platform.types.exception.InvalidPhoneNumberException;
+import com.kartoush.customer.facade.model.UpdateCustomerCommand;
 import com.kartoush.platform.validation.RequestValidationException;
 import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
@@ -13,21 +11,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class UpdateCustomerRequestValidator {
+public class UpdateCustomerCommandValidator {
     private static final String VALIDATION_MESSAGE = "Request validation failed";
 
-    public void validate(final UpdateCustomerRequest request) {
+    public void validate(final UpdateCustomerCommand command) {
         final List<ValidationError> errors = new ArrayList<>();
 
-        if (request == null) {
-            errors.add(new ValidationError("request", "Request must not be null"));
+        if (command == null) {
+            errors.add(new ValidationError("command", "command must not be null"));
             throwIfErrors(errors);
             return;
         }
 
-        RequestValidationSupport.validateRequiredText("firstName", request.firstName(), CustomerConstraints.NAME_MAX_LENGTH, errors);
-        RequestValidationSupport.validateRequiredText("lastName", request.lastName(), CustomerConstraints.NAME_MAX_LENGTH, errors);
-        RequestValidationSupport.validateOptionalPhoneNumber("phoneNumber", request.phoneNumber(), errors);
+        RequestValidationSupport.validateRequiredText("firstName", command.firstName(), CustomerConstraints.NAME_MAX_LENGTH, errors);
+        RequestValidationSupport.validateRequiredText("lastName", command.lastName(), CustomerConstraints.NAME_MAX_LENGTH, errors);
+        RequestValidationSupport.validateOptionalPhoneNumber("phoneNumber", command.phoneNumber(), errors);
 
         throwIfErrors(errors);
     }

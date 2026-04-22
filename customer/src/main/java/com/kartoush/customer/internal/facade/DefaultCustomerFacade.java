@@ -4,11 +4,11 @@ import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
 import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.facade.CustomerFacade;
-import com.kartoush.customer.facade.model.CreateCustomerRequest;
+import com.kartoush.customer.facade.model.CreateCustomerCommand;
 import com.kartoush.customer.facade.model.CustomerView;
-import com.kartoush.customer.facade.model.UpdateCustomerRequest;
-import com.kartoush.customer.internal.validation.CreateCustomerRequestValidator;
-import com.kartoush.customer.internal.validation.UpdateCustomerRequestValidator;
+import com.kartoush.customer.facade.model.UpdateCustomerCommand;
+import com.kartoush.customer.internal.validation.CreateCustomerCommandValidator;
+import com.kartoush.customer.internal.validation.UpdateCustomerCommandValidator;
 import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationEmailService;
 import com.kartoush.customer.service.ActivationTokenService;
@@ -33,22 +33,22 @@ public class DefaultCustomerFacade implements CustomerFacade {
     private final ActivationEmailService activationEmailService;
     private final ActivationTokenService activationTokenService;
     private final UlidGenerator ulidGenerator;
-    private final CreateCustomerRequestValidator createCustomerRequestValidator;
-    private final UpdateCustomerRequestValidator updateCustomerRequestValidator;
+    private final CreateCustomerCommandValidator createCustomerCommandValidator;
+    private final UpdateCustomerCommandValidator updateCustomerCommandValidator;
 
     public DefaultCustomerFacade(
             final CustomerService customerService,
             final ActivationEmailService activationEmailService,
             final ActivationTokenService activationTokenService,
             final UlidGenerator ulidGenerator,
-            final CreateCustomerRequestValidator createCustomerRequestValidator,
-            final UpdateCustomerRequestValidator updateCustomerRequestValidator) {
+            final CreateCustomerCommandValidator createCustomerCommandValidator,
+            final UpdateCustomerCommandValidator updateCustomerCommandValidator) {
         this.customerService = customerService;
         this.activationEmailService = activationEmailService;
         this.activationTokenService = activationTokenService;
         this.ulidGenerator = ulidGenerator;
-        this.createCustomerRequestValidator = createCustomerRequestValidator;
-        this.updateCustomerRequestValidator = updateCustomerRequestValidator;
+        this.createCustomerCommandValidator = createCustomerCommandValidator;
+        this.updateCustomerCommandValidator = updateCustomerCommandValidator;
     }
 
     @Override
@@ -61,18 +61,18 @@ public class DefaultCustomerFacade implements CustomerFacade {
     }
 
     @Override
-    public CustomerView createCustomer(final CreateCustomerRequest request) {
-        createCustomerRequestValidator.validate(request);
+    public CustomerView createCustomer(final CreateCustomerCommand command) {
+        createCustomerCommandValidator.validate(command);
 
-        final CustomerProfile profile = buildCustomerProfile(request);
+        final CustomerProfile profile = buildCustomerProfile(command);
 
         final Customer customer = Customer.createNew(
                 CustomerId.newId(ulidGenerator),
                 profile,
-                new Email(request.email()),
+                new Email(command.email()),
                 TEMPORARY_PASSWORD_HASH);
 
-        final Customer savedCustomer = customerService.registerCustomer(customer, request.termsVersion());
+        final Customer savedCustomer = customerService.registerCustomer(customer, command.termsVersion());
         final IssuedActivationToken issuedActivationToken = activationTokenService.createFor(savedCustomer.getId());
 
         activationEmailService.sendActivationToken(savedCustomer.getEmail(), issuedActivationToken.rawToken());
@@ -88,11 +88,11 @@ public class DefaultCustomerFacade implements CustomerFacade {
     }
 
     @Override
-    public CustomerView updateCustomer(String customerId, UpdateCustomerRequest request) {
+    public CustomerView updateCustomer(String customerId, UpdateCustomerCommand command) {
 
-        updateCustomerRequestValidator.validate(request);
+        updateCustomerCommandValidator.validate(command);
 
-        CustomerProfile profile = buildCustomerProfile(request);
+        CustomerProfile profile = buildCustomerProfile(command);
         Customer savedCustomer = customerService.updateCustomer(customerId, profile);
 
         return toCustomerView(savedCustomer);
@@ -139,17 +139,17 @@ public class DefaultCustomerFacade implements CustomerFacade {
                 customer.getStatus());
     }
 
-    private CustomerProfile buildCustomerProfile(final UpdateCustomerRequest request) {
+    private CustomerProfile buildCustomerProfile(final UpdateCustomerCommand command) {
         return CustomerProfile.of(
-                request.firstName(),
-                request.lastName(),
-                request.phoneNumber());
+                command.firstName(),
+                command.lastName(),
+                command.phoneNumber());
     }
 
-    private CustomerProfile buildCustomerProfile(final CreateCustomerRequest request) {
+    private CustomerProfile buildCustomerProfile(final CreateCustomerCommand command) {
         return CustomerProfile.of(
-                request.firstName(),
-                request.lastName(),
-                request.phoneNumber());
+                command.firstName(),
+                command.lastName(),
+                command.phoneNumber());
     }
 }

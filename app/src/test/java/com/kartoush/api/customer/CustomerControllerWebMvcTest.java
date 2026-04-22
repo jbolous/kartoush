@@ -114,7 +114,7 @@ class CustomerControllerWebMvcTest {
 
         when(customerFacade.updateCustomer(
             eq(CUSTOMER_ID),
-            any(com.kartoush.customer.facade.model.UpdateCustomerRequest.class)))
+            any(com.kartoush.customer.facade.model.UpdateCustomerCommand.class)))
             .thenReturn(mockCustomerView());
 
         mockMvc.perform(put(BASE_URL + "/{customerId}", CUSTOMER_ID)
@@ -124,7 +124,7 @@ class CustomerControllerWebMvcTest {
 
         verify(customerFacade).updateCustomer(
             eq(CUSTOMER_ID),
-            any(com.kartoush.customer.facade.model.UpdateCustomerRequest.class));
+            any(com.kartoush.customer.facade.model.UpdateCustomerCommand.class));
     }
 
     @Test

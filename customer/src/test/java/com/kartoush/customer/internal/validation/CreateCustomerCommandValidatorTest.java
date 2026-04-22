@@ -1,18 +1,17 @@
 package com.kartoush.customer.internal.validation;
 
-import com.kartoush.customer.facade.model.CreateCustomerRequest;
+import com.kartoush.customer.facade.model.CreateCustomerCommand;
 import com.kartoush.customer.internal.registration.TermsOfServiceCatalog;
 import com.kartoush.platform.validation.RequestValidationException;
 import org.junit.jupiter.api.Test;
 
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
-class CreateCustomerRequestValidatorTest {
+class CreateCustomerCommandValidatorTest {
 
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
@@ -24,16 +23,16 @@ class CreateCustomerRequestValidatorTest {
     private static final String INVALID_TERMS_VERSION = "2026-03";
 
     private final TermsOfServiceCatalog termsOfServiceCatalog = mock(TermsOfServiceCatalog.class);
-    private final CreateCustomerRequestValidator validator =
-        new CreateCustomerRequestValidator(termsOfServiceCatalog);
+    private final CreateCustomerCommandValidator validator =
+        new CreateCustomerCommandValidator(termsOfServiceCatalog);
 
-    CreateCustomerRequestValidatorTest() {
+    CreateCustomerCommandValidatorTest() {
         given(termsOfServiceCatalog.currentVersion()).willReturn(CURRENT_TERMS_VERSION);
     }
 
     @Test
-    void shouldAllowValidRequest() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+    void shouldAllowValidCommand() {
+        final CreateCustomerCommand command = new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -41,12 +40,12 @@ class CreateCustomerRequestValidatorTest {
             true,
             CURRENT_TERMS_VERSION);
 
-        assertThatCode(() -> validator.validate(request)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(command)).doesNotThrowAnyException();
     }
 
     @Test
-    void shouldAllowValidRequestWithNullPhoneNumber() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+    void shouldAllowValidCommandWithNullPhoneNumber() {
+        final CreateCustomerCommand command = new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -54,12 +53,12 @@ class CreateCustomerRequestValidatorTest {
             true,
             CURRENT_TERMS_VERSION);
 
-        assertThatCode(() -> validator.validate(request)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(command)).doesNotThrowAnyException();
     }
 
     @Test
-    void shouldAllowValidRequestWithBlankPhoneNumber() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+    void shouldAllowValidCommandWithBlankPhoneNumber() {
+        final CreateCustomerCommand command = new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -67,11 +66,11 @@ class CreateCustomerRequestValidatorTest {
             true,
             CURRENT_TERMS_VERSION);
 
-        assertThatCode(() -> validator.validate(request)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(command)).doesNotThrowAnyException();
     }
 
     @Test
-    void shouldThrowWhenRequestIsNull() {
+    void shouldThrowWhenCommandIsNull() {
         assertThatThrownBy(() -> validator.validate(null))
             .isInstanceOf(RequestValidationException.class)
             .hasMessage("Request validation failed");
@@ -79,175 +78,149 @@ class CreateCustomerRequestValidatorTest {
 
     @Test
     void shouldThrowWhenFirstNameIsNull() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             null,
             LAST_NAME,
             VALID_EMAIL,
             VALID_PHONE,
             true,
-            CURRENT_TERMS_VERSION);
-
-        assertValidationError(request, "firstName");
+            CURRENT_TERMS_VERSION), "firstName");
     }
 
     @Test
     void shouldThrowWhenFirstNameIsBlank() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             " ",
             LAST_NAME,
             VALID_EMAIL,
             VALID_PHONE,
             true,
-            CURRENT_TERMS_VERSION);
-
-        assertValidationError(request, "firstName");
+            CURRENT_TERMS_VERSION), "firstName");
     }
 
     @Test
     void shouldThrowWhenLastNameIsNull() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             FIRST_NAME,
             null,
             VALID_EMAIL,
             VALID_PHONE,
             true,
-            CURRENT_TERMS_VERSION);
-
-        assertValidationError(request, "lastName");
+            CURRENT_TERMS_VERSION), "lastName");
     }
 
     @Test
     void shouldThrowWhenLastNameIsBlank() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             FIRST_NAME,
             " ",
             VALID_EMAIL,
             VALID_PHONE,
             true,
-            CURRENT_TERMS_VERSION);
-
-        assertValidationError(request, "lastName");
+            CURRENT_TERMS_VERSION), "lastName");
     }
 
     @Test
     void shouldThrowWhenEmailIsNull() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             null,
             VALID_PHONE,
             true,
-            CURRENT_TERMS_VERSION);
-
-        assertValidationError(request, "email");
+            CURRENT_TERMS_VERSION), "email");
     }
 
     @Test
     void shouldThrowWhenEmailIsBlank() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             " ",
             VALID_PHONE,
             true,
-            CURRENT_TERMS_VERSION);
-
-        assertValidationError(request, "email");
+            CURRENT_TERMS_VERSION), "email");
     }
 
     @Test
     void shouldThrowWhenEmailIsInvalid() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             INVALID_EMAIL,
             VALID_PHONE,
             true,
-            CURRENT_TERMS_VERSION);
-
-        assertValidationError(request, "email");
+            CURRENT_TERMS_VERSION), "email");
     }
 
     @Test
     void shouldThrowWhenPhoneNumberIsInvalid() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
             INVALID_PHONE,
             true,
-            CURRENT_TERMS_VERSION);
-
-        assertValidationError(request, "phoneNumber");
+            CURRENT_TERMS_VERSION), "phoneNumber");
     }
 
     @Test
     void shouldThrowWhenTermsAcceptedIsMissing() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
             VALID_PHONE,
             null,
-            CURRENT_TERMS_VERSION);
-
-        assertValidationError(request, "termsAccepted");
+            CURRENT_TERMS_VERSION), "termsAccepted");
     }
 
     @Test
     void shouldThrowWhenTermsAcceptedIsFalse() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
             VALID_PHONE,
             false,
-            CURRENT_TERMS_VERSION);
-
-        assertValidationError(request, "termsAccepted");
+            CURRENT_TERMS_VERSION), "termsAccepted");
     }
 
     @Test
     void shouldThrowWhenTermsVersionIsMissing() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
             VALID_PHONE,
             true,
-            null);
-
-        assertValidationError(request, "termsVersion");
+            null), "termsVersion");
     }
 
     @Test
     void shouldThrowWhenTermsVersionIsBlank() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
             VALID_PHONE,
             true,
-            " ");
-
-        assertValidationError(request, "termsVersion");
+            " "), "termsVersion");
     }
 
     @Test
     void shouldThrowWhenTermsVersionDoesNotMatchCurrentVersion() {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        assertValidationError(new CreateCustomerCommand(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
             VALID_PHONE,
             true,
-            INVALID_TERMS_VERSION);
-
-        assertValidationError(request, "termsVersion");
+            INVALID_TERMS_VERSION), "termsVersion");
     }
 
-    private void assertValidationError(final CreateCustomerRequest request, final String field) {
-        assertThatThrownBy(() -> validator.validate(request))
+    private void assertValidationError(final CreateCustomerCommand command, final String field) {
+        assertThatThrownBy(() -> validator.validate(command))
             .isInstanceOfSatisfying(RequestValidationException.class, exception -> {
                 assertThat(exception.getErrors())
                     .extracting(error -> error.field())
