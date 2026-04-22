@@ -132,14 +132,24 @@ satisfied:
 - Terms of Service acceptance must be explicitly true
 - the submitted Terms version must match the current supported Terms version
 
+The current supported Terms version is resolved from the canonical
+`terms_of_service` model. Registration accepts only the single Terms record
+currently in `ACTIVE` status.
+
 Successful registration always creates a customer in `PENDING` status. The
 public API does not allow callers to choose an alternative initial lifecycle
-state.
+state. Successful registration also persists a Terms acceptance audit record
+containing:
+
+- the customer association
+- the accepted Terms version value
+- the acceptance timestamp
 
 If registration validation fails:
 
 - the request is rejected with a ProblemDetails response
 - no customer record is created
+- no Terms acceptance record is created
 - no activation token is issued
 
 These requirements define the current registration contract for onboarding a
@@ -171,7 +181,8 @@ Creates a new customer and returns 201 Created with the created customer.
 
 New customers are created in `PENDING` status. Customer creation also issues an
 activation token and requests delivery through the configured activation email
-service.
+service. The registration flow also persists a Terms acceptance audit record
+for the accepted Terms version and acceptance timestamp.
 
 Validation rules:
 
