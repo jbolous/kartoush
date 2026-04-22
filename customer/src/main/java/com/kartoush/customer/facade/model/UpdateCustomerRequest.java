@@ -2,7 +2,10 @@ package com.kartoush.customer.facade.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(name = "UpdateCustomerRequest", description = "Request payload for updating customer profile fields")
+@Schema(
+    name = "UpdateCustomerRequest",
+    description = "Shared API and facade request payload for updating customer profile fields; validated by the customer facade layer"
+)
 public record UpdateCustomerRequest(
 
     @Schema(

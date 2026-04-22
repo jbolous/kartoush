@@ -48,3 +48,22 @@ public interface CustomerFacade {
 
     Optional<CustomerView> getCustomerById(CustomerId customerId);
 }
+
+## Current Customer Boundary
+
+The current Customer module uses `CreateCustomerRequest` and
+`UpdateCustomerRequest` as shared contracts between the `app` module and the
+customer facade.
+
+This means:
+
+- the request models live in the customer facade contract package
+- the controller binds HTTP JSON directly into those shared request models
+- create and update validation is owned by `CreateCustomerRequestValidator`
+  and `UpdateCustomerRequestValidator` in the customer facade layer
+- controller-level Jakarta Bean Validation should only be used where the
+  request type actually declares Jakarta validation constraints
+
+This is an intentional current-state boundary, not an app-layer request-model
+split. If that boundary changes later, it should be handled by a separate
+architectural decision rather than inferred from controller annotations.
