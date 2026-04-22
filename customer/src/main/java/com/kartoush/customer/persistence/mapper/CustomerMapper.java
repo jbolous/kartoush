@@ -1,8 +1,10 @@
 package com.kartoush.customer.persistence.mapper;
 
 import com.kartoush.customer.domain.Customer;
+import com.kartoush.customer.domain.CustomerProfile;
 import com.kartoush.customer.persistence.entity.CustomerAddressEntity;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
+import com.kartoush.customer.persistence.entity.CustomerProfileEntity;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.platform.types.CustomerId;
 import java.util.List;
@@ -14,12 +16,9 @@ import org.springframework.stereotype.Component;
 public class CustomerMapper
 {
     private final CustomerAddressMapper customerAddressMapper;
-    private final CustomerProfileMapper customerProfileMapper;
 
-    public CustomerMapper(final CustomerAddressMapper customerAddressMapper,
-                          final CustomerProfileMapper customerProfileMapper) {
+    public CustomerMapper(final CustomerAddressMapper customerAddressMapper) {
         this.customerAddressMapper = customerAddressMapper;
-        this.customerProfileMapper = customerProfileMapper;
     }
 
     public CustomerEntity toEntity(final Customer domain)
@@ -30,7 +29,7 @@ public class CustomerMapper
 
         final CustomerEntity customerEntity = CustomerEntity.newCustomer(
                 toEmbeddableCustomerId(domain.getId()),
-                customerProfileMapper.toEntity(domain.getProfile()),
+                toProfileEntity(domain.getProfile()),
                 domain.getEmail().value(),
                 domain.getPasswordHash(),
                 domain.getStatus()
@@ -53,7 +52,7 @@ public class CustomerMapper
 
         return Customer.fromPersistence(
                 toDomainCustomerId(entity.getCustomerId()),
-                customerProfileMapper.toDomain(entity.getProfile()),
+                toProfileDomain(entity.getProfile()),
                 new Email(entity.getEmail()),
                 entity.getPasswordHash(),
                 entity.getCustomerStatus(),
@@ -64,7 +63,7 @@ public class CustomerMapper
 
     public void updateEntity(final Customer domain, final CustomerEntity entity)
     {
-        entity.setProfile(customerProfileMapper.toEntity(domain.getProfile()));
+        entity.setProfile(toProfileEntity(domain.getProfile()));
         entity.setEmail(domain.getEmail().value());
         entity.setPasswordHash(domain.getPasswordHash());
         entity.setCustomerStatus(domain.getStatus());
@@ -84,5 +83,29 @@ public class CustomerMapper
     private CustomerId toDomainCustomerId(final CustomerIdEmbeddable id)
     {
         return id == null ? null : id.toCustomerId();
+    }
+
+    private CustomerProfileEntity toProfileEntity(final CustomerProfile profile) {
+        if (profile == null) {
+            return null;
+        }
+
+        return new CustomerProfileEntity(
+            profile.firstName(),
+            profile.lastName(),
+            profile.phoneNumber()
+        );
+    }
+
+    private CustomerProfile toProfileDomain(final CustomerProfileEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return new CustomerProfile(
+            entity.getFirstName(),
+            entity.getLastName(),
+            entity.getPhoneNumber()
+        );
     }
 }
