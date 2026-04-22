@@ -38,14 +38,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: customer-creation-contract
-            test-class: com.kartoush.api.customer.CustomerCreationRestAssuredIntegrationTest
-          - name: customer-duplicate-email-contract
-            test-class: com.kartoush.api.customer.CustomerDuplicateEmailRestAssuredIntegrationTest
-          - name: customer-activation-contract
-            test-class: com.kartoush.api.customer.CustomerActivationIntegrationTest
-          - name: terms-of-service-metadata-contract
-            test-class: com.kartoush.api.terms.TermsOfServiceMetadataIntegrationTest
+          - name: customer-api-contracts
+            test-filter: com.kartoush.api.customer.*
+          - name: terms-of-service-api-contracts
+            test-filter: com.kartoush.api.terms.*
 
     name: App integration tests (${{ matrix.name }})
 
@@ -63,8 +59,8 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Run app integration test class
-        run: ./gradlew --no-daemon :app:integrationTest --tests ${{ matrix.test-class }}
+      - name: Run app integration test group
+        run: ./gradlew --no-daemon :app:integrationTest --tests '${{ matrix.test-filter }}'
 
   customer-integration-tests:
     runs-on: ubuntu-latest
