@@ -45,11 +45,16 @@ Successful registration will:
 - persist a separate Terms acceptance audit record
 - issue an activation token for subsequent account activation
 
-Failed registration will not create:
+If registration validation fails, Kartoush will not create:
 
 - a customer record
 - a Terms acceptance record
 - an activation token
+
+After customer and Terms acceptance persistence succeeds, downstream activation
+token issuance or delivery may still fail independently. In that case the API
+request may fail after the customer and Terms acceptance records have already
+been committed.
 
 ## Current Terms Version Strategy
 
