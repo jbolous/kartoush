@@ -62,13 +62,48 @@ setup_repo_paths() {
   SCRIPT_DIR="$(cd -P "$(dirname "$source")" && pwd)"
   REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || pwd)"
 
-  REPO="${REPO:-jbolous/kartoush}"
+  REPO="${REPO:-}"
   IMPORT_ROOT="${IMPORT_ROOT:-$REPO_ROOT/.github/issue-import}"
   PENDING_DIR="${PENDING_DIR:-$IMPORT_ROOT/pending}"
   IMPORTED_DIR="${IMPORTED_DIR:-$IMPORT_ROOT/imported}"
   FAILED_DIR="${FAILED_DIR:-$IMPORT_ROOT/failed}"
 
   mkdir -p "$PENDING_DIR" "$IMPORTED_DIR" "$FAILED_DIR"
+}
+
+read_config_value() {
+  local file="$1"
+  local key="$2"
+  local line
+  local parsed_key
+  local parsed_value
+
+  [[ -f "$file" ]] || return 1
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line#"${line%%[![:space:]]*}"}"
+    [[ -n "$line" ]] || continue
+    [[ "$line" == \#* ]] && continue
+    [[ "$line" == *"="* ]] || continue
+
+    parsed_key="${line%%=*}"
+    parsed_value="${line#*=}"
+    parsed_key="$(trim "$parsed_key")"
+    parsed_value="$(trim "$parsed_value")"
+
+    if [[ "$parsed_value" =~ ^\"(.*)\"$ ]]; then
+      parsed_value="${BASH_REMATCH[1]}"
+    elif [[ "$parsed_value" =~ ^\'(.*)\'$ ]]; then
+      parsed_value="${BASH_REMATCH[1]}"
+    fi
+
+    if [[ "$parsed_key" == "$key" ]]; then
+      printf '%s\n' "$parsed_value"
+      return 0
+    fi
+  done < "$file"
+
+  return 1
 }
 
 preflight_common() {

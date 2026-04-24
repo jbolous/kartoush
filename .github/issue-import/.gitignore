@@ -1,6 +1,8 @@
 *
 !.gitkeep
 !README.md
+!config.env
+!config.local.env.example
 !pending/
 !pending/.gitkeep
 !imported/
@@ -9,3 +11,4 @@
 !failed/.gitkeep
 !templates/
 !templates/*.md
+config.local.env

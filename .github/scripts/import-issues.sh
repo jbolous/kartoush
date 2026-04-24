@@ -6,6 +6,14 @@ DRY_RUN="false"
 ASSIGN_TO_SELF="false"
 PRINT_TEMPLATE=""
 declare -A REPO_LABELS
+declare -A PROJECT_STATUS_OPTIONS
+
+DEFAULT_STATUS="Backlog"
+PROJECT_ID="${PROJECT_ID:-}"
+PROJECT_TITLE="${PROJECT_TITLE:-}"
+PROJECT_STATUS_FIELD_ID=""
+IMPORT_CONFIG_FILE=""
+IMPORT_LOCAL_CONFIG_FILE=""
 
 print_help() {
   cat <<'EOF'
@@ -101,6 +109,49 @@ AUTHENTICATED_USER=""
 
 setup_repo_paths
 
+load_import_config() {
+  local default_config_file
+  local local_config_file
+  local config_value
+
+  default_config_file="${IMPORT_ROOT}/config.env"
+  local_config_file="${IMPORT_ROOT}/config.local.env"
+
+  IMPORT_CONFIG_FILE="$default_config_file"
+  IMPORT_LOCAL_CONFIG_FILE="$local_config_file"
+
+  if [[ -z "${REPO:-}" ]]; then
+    if config_value="$(read_config_value "$local_config_file" "REPO" 2>/dev/null)"; then
+      REPO="$config_value"
+    elif config_value="$(read_config_value "$default_config_file" "REPO" 2>/dev/null)"; then
+      REPO="$config_value"
+    else
+      REPO="jbolous/kartoush"
+    fi
+  fi
+
+  if [[ -z "$PROJECT_TITLE" ]]; then
+    if config_value="$(read_config_value "$local_config_file" "PROJECT_TITLE" 2>/dev/null)"; then
+      PROJECT_TITLE="$config_value"
+    elif config_value="$(read_config_value "$default_config_file" "PROJECT_TITLE" 2>/dev/null)"; then
+      PROJECT_TITLE="$config_value"
+    else
+      PROJECT_TITLE="Kartoush - MVP"
+    fi
+  fi
+
+  if [[ -z "$PROJECT_ID" ]]; then
+    if config_value="$(read_config_value "$local_config_file" "PROJECT_ID" 2>/dev/null)"; then
+      PROJECT_ID="$config_value"
+    elif config_value="$(read_config_value "$default_config_file" "PROJECT_ID" 2>/dev/null)"; then
+      PROJECT_ID="$config_value"
+    fi
+  fi
+
+}
+
+load_import_config
+
 if [[ -n "$PRINT_TEMPLATE" ]]; then
   print_template "$PRINT_TEMPLATE"
   exit 0
@@ -108,6 +159,8 @@ fi
 
 declare -A FILE_PARENT
 declare -A FILE_LABELS
+declare -A FILE_STATUS
+declare -A FILE_EFFECTIVE_STATUS
 declare -A FILE_ISSUE_NUMBER
 declare -A FILE_ISSUE_ID
 declare -A FILE_ISSUE_URL
@@ -125,6 +178,7 @@ parse_metadata() {
   local title=""
   local parent=""
   local labels=""
+  local status=""
   local body_file
   local in_metadata="true"
 
@@ -141,6 +195,8 @@ parse_metadata() {
         parent="$(trim "${line#Parent:}")"
       elif [[ "$line" == Labels:* ]]; then
         labels="$(trim "${line#Labels:}")"
+      elif [[ "$line" == Status:* ]]; then
+        status="$(trim "${line#Status:}")"
       else
         print_verbose "Invalid metadata line in $(basename "$file"): $line"
         rm -f "$body_file"
@@ -160,6 +216,7 @@ parse_metadata() {
   PARSED_TITLE="$title"
   PARSED_PARENT="$parent"
   PARSED_LABELS="$labels"
+  PARSED_STATUS="$status"
   PARSED_BODY_FILE="$body_file"
 }
 
@@ -211,6 +268,259 @@ load_repo_labels() {
     [[ -n "$label_name" ]] || continue
     REPO_LABELS["$label_name"]="true"
   done <<< "$gh_output"
+}
+
+resolve_project_id() {
+  local owner_login
+  local owner_type
+  local project_nodes
+  local match_count
+  local resolved_project_id
+  local owner_type_output
+  local gh_exit_code
+
+  if [[ -n "$PROJECT_ID" ]]; then
+    return 0
+  fi
+
+  owner_login="${REPO%%/*}"
+
+  set +e
+  owner_type_output="$(
+    gh api "/users/$owner_login" --jq '.type' 2>&1
+  )"
+  gh_exit_code=$?
+  set -e
+
+  if [[ $gh_exit_code -ne 0 ]]; then
+    print_verbose "project owner type lookup failed: $owner_type_output"
+    return 1
+  fi
+
+  owner_type="$owner_type_output"
+
+  case "$owner_type" in
+    User)
+      set +e
+      project_nodes="$(
+        gh api graphql \
+          -F owner="$owner_login" \
+          -f query='query($owner: String!) {
+            user(login: $owner) {
+              projectsV2(first: 100) {
+                nodes {
+                  id
+                  title
+                }
+              }
+            }
+          }' \
+          --jq '.data.user.projectsV2.nodes[]? | select(.title != null) | "\(.title)\t\(.id)"' 2>&1
+      )"
+      gh_exit_code=$?
+      set -e
+      ;;
+    Organization)
+      set +e
+      project_nodes="$(
+        gh api graphql \
+          -F owner="$owner_login" \
+          -f query='query($owner: String!) {
+            organization(login: $owner) {
+              projectsV2(first: 100) {
+                nodes {
+                  id
+                  title
+                }
+              }
+            }
+          }' \
+          --jq '.data.organization.projectsV2.nodes[]? | select(.title != null) | "\(.title)\t\(.id)"' 2>&1
+      )"
+      gh_exit_code=$?
+      set -e
+      ;;
+    *)
+      print_verbose "Unsupported project owner type '$owner_type' for '$owner_login'"
+      return 1
+      ;;
+  esac
+
+  if [[ $gh_exit_code -ne 0 ]]; then
+    print_verbose "project lookup by title failed: $project_nodes"
+    return 1
+  fi
+
+  match_count=0
+  resolved_project_id=""
+  while IFS=$'\t' read -r project_title project_id || [[ -n "$project_title" ]]; do
+    [[ -n "$project_title" && -n "$project_id" ]] || continue
+    if [[ "$project_title" == "$PROJECT_TITLE" ]]; then
+      match_count=$((match_count + 1))
+      resolved_project_id="$project_id"
+    fi
+  done <<< "$project_nodes"
+
+  if (( match_count == 1 )); then
+    PROJECT_ID="$resolved_project_id"
+    return 0
+  fi
+
+  if (( match_count > 1 )); then
+    print_verbose "Multiple projects matched title '$PROJECT_TITLE' for owner '$owner_login'"
+    return 1
+  fi
+
+  print_verbose "No project matched title '$PROJECT_TITLE' for owner '$owner_login'"
+  return 1
+}
+
+load_project_status_options() {
+  local field_id
+  local status_options_output
+  local gh_exit_code
+  local status_name
+  local option_id
+
+  set +e
+  field_id="$(
+    gh api graphql \
+      -F id="$PROJECT_ID" \
+      -f query='query($id: ID!) { node(id: $id) { ... on ProjectV2 { fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name } } } } } }' \
+      --jq '.data.node.fields.nodes[] | select(.name=="Status") | .id' 2>&1
+  )"
+  gh_exit_code=$?
+  set -e
+
+  if [[ $gh_exit_code -ne 0 || -z "$field_id" ]]; then
+    print_verbose "project status field lookup failed: $field_id"
+    return 1
+  fi
+
+  PROJECT_STATUS_FIELD_ID="$field_id"
+
+  set +e
+  status_options_output="$(
+    gh api graphql \
+      -F id="$PROJECT_ID" \
+      -f query='query($id: ID!) { node(id: $id) { ... on ProjectV2 { fields(first: 50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } }' \
+      --jq '.data.node.fields.nodes[] | select(.name=="Status") | .options[] | "\(.name)\t\(.id)"' 2>&1
+  )"
+  gh_exit_code=$?
+  set -e
+
+  if [[ $gh_exit_code -ne 0 ]]; then
+    print_verbose "project status option lookup failed: $status_options_output"
+    return 1
+  fi
+
+  while IFS=$'\t' read -r status_name option_id || [[ -n "$status_name" ]]; do
+    [[ -n "$status_name" && -n "$option_id" ]] || continue
+    PROJECT_STATUS_OPTIONS["$status_name"]="$option_id"
+  done <<< "$status_options_output"
+
+  [[ -n "${PROJECT_STATUS_OPTIONS[$DEFAULT_STATUS]:-}" ]]
+}
+
+resolve_effective_status() {
+  local requested_status="$1"
+
+  if [[ -z "$requested_status" ]]; then
+    EFFECTIVE_STATUS="$DEFAULT_STATUS"
+    STATUS_FALLBACK_REASON=""
+    return 0
+  fi
+
+  if [[ -n "${PROJECT_STATUS_OPTIONS[$requested_status]:-}" ]]; then
+    EFFECTIVE_STATUS="$requested_status"
+    STATUS_FALLBACK_REASON=""
+    return 0
+  fi
+
+  EFFECTIVE_STATUS="$DEFAULT_STATUS"
+  STATUS_FALLBACK_REASON="invalid"
+}
+
+lookup_project_item_id() {
+  local issue_number="$1"
+  local item_id
+  local gh_exit_code
+
+  set +e
+  item_id="$(
+    gh api graphql \
+      -F owner="${REPO%%/*}" \
+      -F repo="${REPO##*/}" \
+      -F number="$issue_number" \
+      -f query='query($owner: String!, $repo: String!, $number: Int!) { repository(owner: $owner, name: $repo) { issue(number: $number) { projectItems(first: 20) { nodes { id project { id } } } } } }' \
+      --jq ".data.repository.issue.projectItems.nodes[] | select(.project.id==\"$PROJECT_ID\") | .id" 2>&1
+  )"
+  gh_exit_code=$?
+  set -e
+
+  if [[ $gh_exit_code -ne 0 || -z "$item_id" ]]; then
+    return 1
+  fi
+
+  LOOKED_UP_PROJECT_ITEM_ID="$item_id"
+}
+
+lookup_project_item_id_with_retry() {
+  local issue_number="$1"
+  local max_attempts="${2:-5}"
+  local sleep_seconds="${3:-1}"
+  local attempt=1
+
+  while (( attempt <= max_attempts )); do
+    if lookup_project_item_id "$issue_number"; then
+      return 0
+    fi
+
+    if (( attempt == max_attempts )); then
+      return 1
+    fi
+
+    sleep "$sleep_seconds"
+    attempt=$((attempt + 1))
+  done
+
+  return 1
+}
+
+apply_project_status() {
+  local issue_number="$1"
+  local status_name="$2"
+  local option_id
+
+  option_id="${PROJECT_STATUS_OPTIONS[$status_name]}"
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    print_info "  [DRY RUN] Status: $status_name"
+    return 0
+  fi
+
+  if ! lookup_project_item_id_with_retry "$issue_number"; then
+    return 1
+  fi
+
+  print_verbose "Executing: gh api graphql updateProjectV2ItemFieldValue for issue #$issue_number status '$status_name'"
+
+  set +e
+  gh api graphql \
+    -f query='mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) { updateProjectV2ItemFieldValue(input: { projectId: $project, itemId: $item, fieldId: $field, value: { singleSelectOptionId: $option } }) { projectV2Item { id } } }' \
+    -F project="$PROJECT_ID" \
+    -F item="$LOOKED_UP_PROJECT_ITEM_ID" \
+    -F field="$PROJECT_STATUS_FIELD_ID" \
+    -F option="$option_id" >/dev/null 2>&1
+  local gh_exit_code=$?
+  set -e
+
+  if [[ $gh_exit_code -ne 0 ]]; then
+    return 1
+  fi
+
+  print_success "  Status"
+  printf '    %s\n' "$status_name"
 }
 
 parse_label_list() {
@@ -286,6 +596,17 @@ if ! load_repo_labels; then
   exit 1
 fi
 
+if ! resolve_project_id; then
+  print_error "✗ Unable to resolve project '$PROJECT_TITLE'"
+  print_info "  Set PROJECT_ID explicitly or update PROJECT_TITLE"
+  exit 1
+fi
+
+if ! load_project_status_options; then
+  print_error "✗ Unable to load project status options"
+  exit 1
+fi
+
 if [[ "$ASSIGN_TO_SELF" == "true" ]]; then
   if ! lookup_authenticated_user; then
     print_error "✗ Unable to determine authenticated GitHub user"
@@ -304,6 +625,12 @@ print_verbose "ASSIGN_TO_SELF=$ASSIGN_TO_SELF"
 if [[ -n "$AUTHENTICATED_USER" ]]; then
   print_verbose "AUTHENTICATED_USER=$AUTHENTICATED_USER"
 fi
+print_verbose "IMPORT_CONFIG_FILE=$IMPORT_CONFIG_FILE"
+print_verbose "IMPORT_LOCAL_CONFIG_FILE=$IMPORT_LOCAL_CONFIG_FILE"
+print_verbose "PROJECT_TITLE=$PROJECT_TITLE"
+print_verbose "PROJECT_ID=$PROJECT_ID"
+print_verbose "DEFAULT_STATUS=$DEFAULT_STATUS"
+print_verbose "PROJECT_STATUS_FIELD_ID=$PROJECT_STATUS_FIELD_ID"
 
 append_footer() {
   local body_file="$1"
@@ -822,9 +1149,22 @@ for file in "${files[@]}"; do
   else
     print_verbose "Parsed labels: <none>"
   fi
+  if [[ -n "$PARSED_STATUS" ]]; then
+    print_verbose "Parsed status: $PARSED_STATUS"
+  else
+    print_verbose "Parsed status: <default>"
+  fi
 
   FILE_PARENT["$file"]="$PARSED_PARENT"
   FILE_LABELS["$file"]="$PARSED_LABELS"
+  FILE_STATUS["$file"]="$PARSED_STATUS"
+
+  resolve_effective_status "$PARSED_STATUS"
+  FILE_EFFECTIVE_STATUS["$file"]="$EFFECTIVE_STATUS"
+
+  if [[ -n "$STATUS_FALLBACK_REASON" ]]; then
+    emit_warning "  Warning: invalid status '$PARSED_STATUS'; defaulting to '$DEFAULT_STATUS'"
+  fi
 
   parse_label_list "$PARSED_LABELS"
   add_inferred_type_label "$PARSED_TITLE"
@@ -843,6 +1183,13 @@ for file in "${files[@]}"; do
     for invalid_label in "${FILTERED_INVALID_LABELS[@]}"; do
       emit_warning "  Warning: ignoring unknown label '$invalid_label'"
     done
+  fi
+
+  printf '  Status\n'
+  if [[ "$DRY_RUN" == "true" ]]; then
+    printf '    [DRY RUN] %s\n' "${FILE_EFFECTIVE_STATUS[$file]}"
+  else
+    printf '    %s\n' "${FILE_EFFECTIVE_STATUS[$file]}"
   fi
 
   parse_existing_issue_metadata "$file"
@@ -902,6 +1249,7 @@ for file in "${files[@]}"; do
   num="${FILE_ISSUE_NUMBER[$file]}"
   id="${FILE_ISSUE_ID[$file]}"
   url="${FILE_ISSUE_URL[$file]}"
+  effective_status="${FILE_EFFECTIVE_STATUS[$file]}"
 
   parse_metadata "$file"
   rewrite_dependencies_in_body_file "$PARSED_BODY_FILE"
@@ -934,6 +1282,13 @@ for file in "${files[@]}"; do
   fi
 
   rm -f "$PARSED_BODY_FILE" "$REWRITTEN_BODY_FILE"
+
+  if ! apply_project_status "$num" "$effective_status"; then
+    move_to_failed "$file" "Project status update failed" "true" "$num" "$url"
+    print_warning "  Issue #$num was created but project status update failed"
+    printf '\n'
+    continue
+  fi
 
   if [[ -n "$parent" ]]; then
     if resolve_parent_issue_number "$parent"; then
