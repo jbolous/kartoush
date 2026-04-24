@@ -1,13 +1,13 @@
 package com.kartoush.customer.internal.validation;
 
-import com.kartoush.customer.facade.model.UpdateCustomerCommand;
+import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import com.kartoush.platform.validation.RequestValidationException;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class UpdateCustomerCommandValidatorTest {
+class UpdateCustomerInputValidatorTest {
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
     private static final String VALID_PHONE = "+16305551234";
@@ -15,40 +15,40 @@ class UpdateCustomerCommandValidatorTest {
     private static final String TOO_SHORT_PHONE = "123456";
     private static final String TOO_LONG_PHONE = "+1234567890123456";
 
-    private final UpdateCustomerCommandValidator validator = new UpdateCustomerCommandValidator();
+    private final UpdateCustomerInputValidator validator = new UpdateCustomerInputValidator();
 
     @Test
-    void shouldAllowValidCommand() {
-        final UpdateCustomerCommand command = new UpdateCustomerCommand(
+    void shouldAllowValidInput() {
+        final UpdateCustomerInput input = new UpdateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             VALID_PHONE);
 
-        assertThatCode(() -> validator.validate(command)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(input)).doesNotThrowAnyException();
     }
 
     @Test
-    void shouldAllowValidCommandWithNullPhoneNumber() {
-        final UpdateCustomerCommand command = new UpdateCustomerCommand(
+    void shouldAllowValidInputWithNullPhoneNumber() {
+        final UpdateCustomerInput input = new UpdateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             null);
 
-        assertThatCode(() -> validator.validate(command)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(input)).doesNotThrowAnyException();
     }
 
     @Test
-    void shouldAllowValidCommandWithBlankPhoneNumber() {
-        final UpdateCustomerCommand command = new UpdateCustomerCommand(
+    void shouldAllowValidInputWithBlankPhoneNumber() {
+        final UpdateCustomerInput input = new UpdateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             " ");
 
-        assertThatCode(() -> validator.validate(command)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(input)).doesNotThrowAnyException();
     }
 
     @Test
-    void shouldThrowWhenCommandIsNull() {
+    void shouldThrowWhenInputIsNull() {
         assertThatThrownBy(() -> validator.validate(null))
             .isInstanceOf(RequestValidationException.class)
             .hasMessage("Request validation failed");
@@ -56,7 +56,7 @@ class UpdateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenFirstNameIsNull() {
-        assertThatThrownBy(() -> validator.validate(new UpdateCustomerCommand(
+        assertThatThrownBy(() -> validator.validate(new UpdateCustomerInput(
             null,
             LAST_NAME,
             VALID_PHONE)))
@@ -65,7 +65,7 @@ class UpdateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenFirstNameIsBlank() {
-        assertThatThrownBy(() -> validator.validate(new UpdateCustomerCommand(
+        assertThatThrownBy(() -> validator.validate(new UpdateCustomerInput(
             " ",
             LAST_NAME,
             VALID_PHONE)))
@@ -74,7 +74,7 @@ class UpdateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenLastNameIsNull() {
-        assertThatThrownBy(() -> validator.validate(new UpdateCustomerCommand(
+        assertThatThrownBy(() -> validator.validate(new UpdateCustomerInput(
             FIRST_NAME,
             null,
             VALID_PHONE)))
@@ -83,7 +83,7 @@ class UpdateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenLastNameIsBlank() {
-        assertThatThrownBy(() -> validator.validate(new UpdateCustomerCommand(
+        assertThatThrownBy(() -> validator.validate(new UpdateCustomerInput(
             FIRST_NAME,
             " ",
             VALID_PHONE)))
@@ -92,7 +92,7 @@ class UpdateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenPhoneNumberIsInvalid() {
-        assertThatThrownBy(() -> validator.validate(new UpdateCustomerCommand(
+        assertThatThrownBy(() -> validator.validate(new UpdateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             INVALID_PHONE)))
@@ -101,7 +101,7 @@ class UpdateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenPhoneNumberIsTooShort() {
-        assertThatThrownBy(() -> validator.validate(new UpdateCustomerCommand(
+        assertThatThrownBy(() -> validator.validate(new UpdateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             TOO_SHORT_PHONE)))
@@ -110,7 +110,7 @@ class UpdateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenPhoneNumberIsTooLong() {
-        assertThatThrownBy(() -> validator.validate(new UpdateCustomerCommand(
+        assertThatThrownBy(() -> validator.validate(new UpdateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             TOO_LONG_PHONE)))

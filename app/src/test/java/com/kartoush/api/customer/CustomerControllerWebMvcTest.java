@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kartoush.api.error.ApiProblemFactory;
 import com.kartoush.api.error.ErrorCode;
 import com.kartoush.customer.facade.CustomerFacade;
+import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.facade.model.CustomerView;
+import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,7 +81,7 @@ class CustomerControllerWebMvcTest {
 
     @Test
     void shouldCreateCustomer() throws Exception {
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        final CreateCustomerInput request = new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             EMAIL,
@@ -106,7 +108,7 @@ class CustomerControllerWebMvcTest {
 
     @Test
     void shouldUpdateCustomer() throws Exception {
-        final UpdateCustomerRequest request = new UpdateCustomerRequest(
+        final UpdateCustomerInput request = new UpdateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             PHONE
@@ -114,7 +116,7 @@ class CustomerControllerWebMvcTest {
 
         when(customerFacade.updateCustomer(
             eq(CUSTOMER_ID),
-            any(com.kartoush.customer.facade.model.UpdateCustomerCommand.class)))
+            any(UpdateCustomerInput.class)))
             .thenReturn(mockCustomerView());
 
         mockMvc.perform(put(BASE_URL + "/{customerId}", CUSTOMER_ID)
@@ -124,7 +126,7 @@ class CustomerControllerWebMvcTest {
 
         verify(customerFacade).updateCustomer(
             eq(CUSTOMER_ID),
-            any(com.kartoush.customer.facade.model.UpdateCustomerCommand.class));
+            any(UpdateCustomerInput.class));
     }
 
     @Test

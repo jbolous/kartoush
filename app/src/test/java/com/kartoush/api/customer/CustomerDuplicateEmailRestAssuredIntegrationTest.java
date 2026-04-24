@@ -1,6 +1,7 @@
 package com.kartoush.api.customer;
 
 import com.kartoush.api.error.ErrorCode;
+import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.persistence.repository.TermsAcceptanceRepository;
 import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ class CustomerDuplicateEmailRestAssuredIntegrationTest extends AbstractCustomerR
     void shouldReturnConflictProblemForDuplicateEmailWhenCustomerIsActive() {
         // given
         final String email = uniqueEmail();
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        final CreateCustomerInput request = new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             email,

@@ -3,6 +3,7 @@ package com.kartoush.api.customer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kartoush.api.error.ErrorCode;
+import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.persistence.entity.ActivationTokenEntity;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.model.ActivationTokenIdEmbeddable;
@@ -214,7 +215,7 @@ class CustomerActivationIntegrationTest extends PostgresSpringIntegrationTest {
     private CreatedCustomer createPendingCustomer() throws Exception {
         // Use a ULID-based suffix so each test customer email remains unique.
         final String email = EMAIL_LOCAL_PART_PREFIX + ulidGenerator.next().toLowerCase() + EMAIL_DOMAIN;
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        final CreateCustomerInput request = new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             email,

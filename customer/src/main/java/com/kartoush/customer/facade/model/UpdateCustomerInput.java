@@ -1,17 +1,14 @@
-package com.kartoush.api.customer;
+package com.kartoush.customer.facade.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 
-@Schema(name = "UpdateCustomerRequest", description = "Request payload for updating customer profile fields")
-public record UpdateCustomerRequest(
-
+@Schema(name = "UpdateCustomerInput", description = "Request payload for updating customer profile fields")
+public record UpdateCustomerInput(
     @Schema(
         description = "Customer first name",
         example = "Jack",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
-    @NotBlank(message = "firstName is required")
     String firstName,
 
     @Schema(
@@ -19,7 +16,6 @@ public record UpdateCustomerRequest(
         example = "Kartoush",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
-    @NotBlank(message = "lastName is required")
     String lastName,
 
     @Schema(

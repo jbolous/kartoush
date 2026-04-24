@@ -1,8 +1,8 @@
 package com.kartoush.customer.facade;
 
-import com.kartoush.customer.facade.model.CreateCustomerCommand;
+import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.facade.model.CustomerView;
-import com.kartoush.customer.facade.model.UpdateCustomerCommand;
+import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.Email;
 
@@ -14,9 +14,9 @@ public interface CustomerFacade {
 
     CustomerView getCustomer(String customerId);
 
-    CustomerView createCustomer(CreateCustomerCommand command);
+    CustomerView createCustomer(CreateCustomerInput input);
 
-    CustomerView updateCustomer(String customerId, UpdateCustomerCommand command);
+    CustomerView updateCustomer(String customerId, UpdateCustomerInput input);
 
     CustomerView activateCustomer(String customerId, String rawToken);
 

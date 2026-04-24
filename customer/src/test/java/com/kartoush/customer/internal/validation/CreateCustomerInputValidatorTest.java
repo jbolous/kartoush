@@ -1,6 +1,6 @@
 package com.kartoush.customer.internal.validation;
 
-import com.kartoush.customer.facade.model.CreateCustomerCommand;
+import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.internal.registration.TermsOfServiceCatalog;
 import com.kartoush.platform.validation.RequestValidationException;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-class CreateCustomerCommandValidatorTest {
+class CreateCustomerInputValidatorTest {
 
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
@@ -23,16 +23,16 @@ class CreateCustomerCommandValidatorTest {
     private static final String INVALID_TERMS_VERSION = "2026-03";
 
     private final TermsOfServiceCatalog termsOfServiceCatalog = mock(TermsOfServiceCatalog.class);
-    private final CreateCustomerCommandValidator validator =
-        new CreateCustomerCommandValidator(termsOfServiceCatalog);
+    private final CreateCustomerInputValidator validator =
+        new CreateCustomerInputValidator(termsOfServiceCatalog);
 
-    CreateCustomerCommandValidatorTest() {
+    CreateCustomerInputValidatorTest() {
         given(termsOfServiceCatalog.currentVersion()).willReturn(CURRENT_TERMS_VERSION);
     }
 
     @Test
-    void shouldAllowValidCommand() {
-        final CreateCustomerCommand command = new CreateCustomerCommand(
+    void shouldAllowValidInput() {
+        final CreateCustomerInput input = new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -40,12 +40,12 @@ class CreateCustomerCommandValidatorTest {
             true,
             CURRENT_TERMS_VERSION);
 
-        assertThatCode(() -> validator.validate(command)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(input)).doesNotThrowAnyException();
     }
 
     @Test
-    void shouldAllowValidCommandWithNullPhoneNumber() {
-        final CreateCustomerCommand command = new CreateCustomerCommand(
+    void shouldAllowValidInputWithNullPhoneNumber() {
+        final CreateCustomerInput input = new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -53,12 +53,12 @@ class CreateCustomerCommandValidatorTest {
             true,
             CURRENT_TERMS_VERSION);
 
-        assertThatCode(() -> validator.validate(command)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(input)).doesNotThrowAnyException();
     }
 
     @Test
-    void shouldAllowValidCommandWithBlankPhoneNumber() {
-        final CreateCustomerCommand command = new CreateCustomerCommand(
+    void shouldAllowValidInputWithBlankPhoneNumber() {
+        final CreateCustomerInput input = new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -66,11 +66,11 @@ class CreateCustomerCommandValidatorTest {
             true,
             CURRENT_TERMS_VERSION);
 
-        assertThatCode(() -> validator.validate(command)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(input)).doesNotThrowAnyException();
     }
 
     @Test
-    void shouldThrowWhenCommandIsNull() {
+    void shouldThrowWhenInputIsNull() {
         assertThatThrownBy(() -> validator.validate(null))
             .isInstanceOf(RequestValidationException.class)
             .hasMessage("Request validation failed");
@@ -78,7 +78,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenFirstNameIsNull() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             null,
             LAST_NAME,
             VALID_EMAIL,
@@ -89,7 +89,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenFirstNameIsBlank() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             " ",
             LAST_NAME,
             VALID_EMAIL,
@@ -100,7 +100,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenLastNameIsNull() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             FIRST_NAME,
             null,
             VALID_EMAIL,
@@ -111,7 +111,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenLastNameIsBlank() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             FIRST_NAME,
             " ",
             VALID_EMAIL,
@@ -122,7 +122,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenEmailIsNull() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             null,
@@ -133,7 +133,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenEmailIsBlank() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             " ",
@@ -144,7 +144,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenEmailIsInvalid() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             INVALID_EMAIL,
@@ -155,7 +155,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenPhoneNumberIsInvalid() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -166,7 +166,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenTermsAcceptedIsMissing() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -177,7 +177,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenTermsAcceptedIsFalse() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -188,7 +188,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenTermsVersionIsMissing() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -199,7 +199,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenTermsVersionIsBlank() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -210,7 +210,7 @@ class CreateCustomerCommandValidatorTest {
 
     @Test
     void shouldThrowWhenTermsVersionDoesNotMatchCurrentVersion() {
-        assertValidationError(new CreateCustomerCommand(
+        assertValidationError(new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             VALID_EMAIL,
@@ -219,8 +219,8 @@ class CreateCustomerCommandValidatorTest {
             INVALID_TERMS_VERSION), "termsVersion");
     }
 
-    private void assertValidationError(final CreateCustomerCommand command, final String field) {
-        assertThatThrownBy(() -> validator.validate(command))
+    private void assertValidationError(final CreateCustomerInput input, final String field) {
+        assertThatThrownBy(() -> validator.validate(input))
             .isInstanceOfSatisfying(RequestValidationException.class, exception -> {
                 assertThat(exception.getErrors())
                     .extracting(error -> error.field())
