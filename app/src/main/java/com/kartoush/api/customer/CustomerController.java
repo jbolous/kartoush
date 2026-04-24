@@ -126,5 +126,4 @@ public class CustomerController {
         customerFacade.deleteCustomer(customerId);
         return ResponseEntity.noContent().build();
     }
-
 }

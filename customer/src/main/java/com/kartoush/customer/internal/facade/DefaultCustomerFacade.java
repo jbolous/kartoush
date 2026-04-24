@@ -4,11 +4,11 @@ import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
 import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.facade.CustomerFacade;
-import com.kartoush.customer.facade.model.CreateCustomerCommand;
+import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.facade.model.CustomerView;
-import com.kartoush.customer.facade.model.UpdateCustomerCommand;
-import com.kartoush.customer.internal.validation.CreateCustomerCommandValidator;
-import com.kartoush.customer.internal.validation.UpdateCustomerCommandValidator;
+import com.kartoush.customer.facade.model.UpdateCustomerInput;
+import com.kartoush.customer.internal.validation.CreateCustomerInputValidator;
+import com.kartoush.customer.internal.validation.UpdateCustomerInputValidator;
 import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationEmailService;
 import com.kartoush.customer.service.ActivationTokenService;
@@ -33,22 +33,22 @@ public class DefaultCustomerFacade implements CustomerFacade {
     private final ActivationEmailService activationEmailService;
     private final ActivationTokenService activationTokenService;
     private final UlidGenerator ulidGenerator;
-    private final CreateCustomerCommandValidator createCustomerCommandValidator;
-    private final UpdateCustomerCommandValidator updateCustomerCommandValidator;
+    private final CreateCustomerInputValidator createCustomerInputValidator;
+    private final UpdateCustomerInputValidator updateCustomerInputValidator;
 
     public DefaultCustomerFacade(
             final CustomerService customerService,
             final ActivationEmailService activationEmailService,
             final ActivationTokenService activationTokenService,
             final UlidGenerator ulidGenerator,
-            final CreateCustomerCommandValidator createCustomerCommandValidator,
-            final UpdateCustomerCommandValidator updateCustomerCommandValidator) {
+            final CreateCustomerInputValidator createCustomerInputValidator,
+            final UpdateCustomerInputValidator updateCustomerInputValidator) {
         this.customerService = customerService;
         this.activationEmailService = activationEmailService;
         this.activationTokenService = activationTokenService;
         this.ulidGenerator = ulidGenerator;
-        this.createCustomerCommandValidator = createCustomerCommandValidator;
-        this.updateCustomerCommandValidator = updateCustomerCommandValidator;
+        this.createCustomerInputValidator = createCustomerInputValidator;
+        this.updateCustomerInputValidator = updateCustomerInputValidator;
     }
 
     @Override
@@ -61,18 +61,18 @@ public class DefaultCustomerFacade implements CustomerFacade {
     }
 
     @Override
-    public CustomerView createCustomer(final CreateCustomerCommand command) {
-        createCustomerCommandValidator.validate(command);
+    public CustomerView createCustomer(final CreateCustomerInput input) {
+        createCustomerInputValidator.validate(input);
 
-        final CustomerProfile profile = buildCustomerProfile(command);
+        final CustomerProfile profile = buildCustomerProfile(input);
 
         final Customer customer = Customer.createNew(
                 CustomerId.newId(ulidGenerator),
                 profile,
-                new Email(command.email()),
+                new Email(input.email()),
                 TEMPORARY_PASSWORD_HASH);
 
-        final Customer savedCustomer = customerService.registerCustomer(customer, command.termsVersion());
+        final Customer savedCustomer = customerService.registerCustomer(customer, input.termsVersion());
         final IssuedActivationToken issuedActivationToken = activationTokenService.createFor(savedCustomer.getId());
 
         activationEmailService.sendActivationToken(savedCustomer.getEmail(), issuedActivationToken.rawToken());
@@ -88,11 +88,11 @@ public class DefaultCustomerFacade implements CustomerFacade {
     }
 
     @Override
-    public CustomerView updateCustomer(String customerId, UpdateCustomerCommand command) {
+    public CustomerView updateCustomer(String customerId, UpdateCustomerInput input) {
 
-        updateCustomerCommandValidator.validate(command);
+        updateCustomerInputValidator.validate(input);
 
-        CustomerProfile profile = buildCustomerProfile(command);
+        CustomerProfile profile = buildCustomerProfile(input);
         Customer savedCustomer = customerService.updateCustomer(customerId, profile);
 
         return toCustomerView(savedCustomer);
@@ -139,17 +139,17 @@ public class DefaultCustomerFacade implements CustomerFacade {
                 customer.getStatus());
     }
 
-    private CustomerProfile buildCustomerProfile(final UpdateCustomerCommand command) {
+    private CustomerProfile buildCustomerProfile(final UpdateCustomerInput input) {
         return CustomerProfile.of(
-                command.firstName(),
-                command.lastName(),
-                command.phoneNumber());
+                input.firstName(),
+                input.lastName(),
+                input.phoneNumber());
     }
 
-    private CustomerProfile buildCustomerProfile(final CreateCustomerCommand command) {
+    private CustomerProfile buildCustomerProfile(final CreateCustomerInput input) {
         return CustomerProfile.of(
-                command.firstName(),
-                command.lastName(),
-                command.phoneNumber());
+                input.firstName(),
+                input.lastName(),
+                input.phoneNumber());
     }
 }

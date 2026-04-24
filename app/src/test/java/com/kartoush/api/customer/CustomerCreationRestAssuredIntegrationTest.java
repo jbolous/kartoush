@@ -1,6 +1,7 @@
 package com.kartoush.api.customer;
 
 import com.kartoush.api.error.ErrorCode;
+import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.persistence.entity.TermsAcceptanceEntity;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
@@ -38,7 +39,7 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
     void shouldCreateCustomerThroughHttp() {
         // given
         final String email = uniqueEmail();
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        final CreateCustomerInput request = new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             email,
@@ -77,7 +78,7 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
         // given
         final long customerCountBeforeRequest = customerRepository.count();
         final long termsAcceptanceCountBeforeRequest = termsAcceptanceRepository.count();
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        final CreateCustomerInput request = new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             INVALID_EMAIL,
@@ -113,7 +114,7 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
         // given
         final long customerCountBeforeRequest = customerRepository.count();
         final long termsAcceptanceCountBeforeRequest = termsAcceptanceRepository.count();
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        final CreateCustomerInput request = new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             uniqueEmail(),
@@ -149,7 +150,7 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
         // given
         final long customerCountBeforeRequest = customerRepository.count();
         final long termsAcceptanceCountBeforeRequest = termsAcceptanceRepository.count();
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        final CreateCustomerInput request = new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             uniqueEmail(),
@@ -183,7 +184,7 @@ class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAss
         // given
         final long customerCountBeforeRequest = customerRepository.count();
         final long termsAcceptanceCountBeforeRequest = termsAcceptanceRepository.count();
-        final CreateCustomerRequest request = new CreateCustomerRequest(
+        final CreateCustomerInput request = new CreateCustomerInput(
             FIRST_NAME,
             LAST_NAME,
             uniqueEmail(),
