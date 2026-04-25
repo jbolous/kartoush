@@ -10,7 +10,12 @@ import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springdoc.core.configuration.SpringDocConfiguration;
+import org.springdoc.core.configuration.SpringDocSpecPropertiesConfiguration;
+import org.springdoc.webmvc.core.configuration.MultipleOpenApiSupportConfiguration;
+import org.springdoc.webmvc.core.configuration.SpringDocWebMvcConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -32,6 +37,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CustomerController.class)
+@ImportAutoConfiguration(exclude = {
+    SpringDocConfiguration.class,
+    SpringDocSpecPropertiesConfiguration.class,
+    SpringDocWebMvcConfiguration.class,
+    MultipleOpenApiSupportConfiguration.class
+})
 class CustomerControllerWebMvcTest {
     private static final String BASE_URL = "/api/customers";
 

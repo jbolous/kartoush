@@ -14,6 +14,7 @@ import com.kartoush.api.error.ApiProblemFactory;
 import com.kartoush.api.error.ErrorCode;
 import com.kartoush.customer.exception.InvalidTermsOfServiceScheduleException;
 import com.kartoush.customer.exception.TermsOfServiceNotFoundException;
+import com.kartoush.customer.facade.TermsOfServiceFacade;
 import com.kartoush.customer.exception.TermsOfServiceVersionAlreadyExistsException;
 import com.kartoush.customer.facade.TermsOfServiceManagementFacade;
 import com.kartoush.customer.facade.model.TermsOfServiceManagementView;
@@ -22,13 +23,24 @@ import com.kartoush.customer.termsofservice.TermsOfServiceStatus;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springdoc.core.configuration.SpringDocConfiguration;
+import org.springdoc.core.configuration.SpringDocSpecPropertiesConfiguration;
+import org.springdoc.webmvc.core.configuration.MultipleOpenApiSupportConfiguration;
+import org.springdoc.webmvc.core.configuration.SpringDocWebMvcConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(InternalTermsOfServiceManagementController.class)
+@ImportAutoConfiguration(exclude = {
+    SpringDocConfiguration.class,
+    SpringDocSpecPropertiesConfiguration.class,
+    SpringDocWebMvcConfiguration.class,
+    MultipleOpenApiSupportConfiguration.class
+})
 class InternalTermsOfServiceManagementControllerWebMvcTest {
 
     private static final String BASE_URL = "/internal/terms-of-service";
@@ -45,6 +57,9 @@ class InternalTermsOfServiceManagementControllerWebMvcTest {
 
     @MockitoBean
     private TermsOfServiceManagementFacade termsOfServiceManagementFacade;
+
+    @MockitoBean
+    private TermsOfServiceFacade termsOfServiceFacade;
 
     @Test
     void shouldCreateDraft() throws Exception {
