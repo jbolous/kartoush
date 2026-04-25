@@ -16,9 +16,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.springframework.http.MediaType.APPLICATION_PROBLEM_JSON_VALUE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -38,6 +40,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 class CustomerOpenApiWebMvcTest {
 
+    private static final String API_DOCS_PATH = "/v3/api-docs";
+
+    private static final String CUSTOMER_PATH = "/api/customers";
+
+    private static final String CUSTOMER_BY_ID_PATH = CUSTOMER_PATH + "/{customerId}";
+
+    private static final String CUSTOMER_BY_ID_PARAMETER_DESCRIPTION_PATH =
+        operationPath(CUSTOMER_BY_ID_PATH, "get", "parameters[0].description");
+
+    private static final String API_PROBLEM_RESPONSE_REF = "#/components/schemas/ApiProblemResponse";
+
+    private static final String VALIDATION_PROBLEM_RESPONSE_REF = "#/components/schemas/ValidationProblemResponse";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -49,18 +64,48 @@ class CustomerOpenApiWebMvcTest {
 
     @Test
     void shouldExposeCustomerOpenApiDocumentation() throws Exception {
-        mockMvc.perform(get("/v3/api-docs"))
+        mockMvc.perform(get(API_DOCS_PATH))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.info.title").value("Kartoush API"))
-            .andExpect(jsonPath("$.paths['/api/customers'].post.summary").value("Create a customer"))
-            .andExpect(jsonPath("$.paths['/api/customers'].post.responses['400'].content['application/problem+json'].schema['$ref']")
-                .value("#/components/schemas/ValidationProblemResponse"))
-            .andExpect(jsonPath("$.paths['/api/customers/{customerId}'].put.responses['409'].content['application/problem+json'].schema['$ref']")
-                .value("#/components/schemas/ApiProblemResponse"))
-            .andExpect(jsonPath("$.paths['/api/customers/{customerId}'].get.parameters[0].description")
+            .andExpect(jsonPath(operationPath(CUSTOMER_PATH, "post", "summary")).value("Create a customer"))
+            .andExpect(jsonPath(problemSchemaRefPath(
+                CUSTOMER_PATH,
+                "post",
+                HttpStatus.BAD_REQUEST.value()
+            ))
+                .value(VALIDATION_PROBLEM_RESPONSE_REF))
+            .andExpect(jsonPath(problemSchemaRefPath(
+                CUSTOMER_BY_ID_PATH,
+                "put",
+                HttpStatus.CONFLICT.value()
+            ))
+                .value(API_PROBLEM_RESPONSE_REF))
+            .andExpect(jsonPath(CUSTOMER_BY_ID_PARAMETER_DESCRIPTION_PATH)
                 .value("Customer ULID identifier"))
             .andExpect(jsonPath("$.components.schemas.ValidationProblemResponse.properties.errors.type").value("array"))
             .andExpect(jsonPath("$.components.schemas.CustomerView.properties.status.description")
                 .value("Customer lifecycle status"));
+    }
+
+    private static String problemSchemaRefPath(
+        final String endpoint,
+        final String method,
+        final int statusCode
+    ) {
+        return operationPath(
+            endpoint,
+            method,
+            "responses['" + statusCode + "']"
+                + ".content['" + APPLICATION_PROBLEM_JSON_VALUE + "']"
+                + ".schema['$ref']"
+        );
+    }
+
+    private static String operationPath(
+        final String endpoint,
+        final String method,
+        final String suffix
+    ) {
+        return "$.paths['" + endpoint + "']." + method + "." + suffix;
     }
 }
