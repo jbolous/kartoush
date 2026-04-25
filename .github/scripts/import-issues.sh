@@ -443,26 +443,50 @@ resolve_effective_status() {
 
 lookup_project_item_id() {
   local issue_number="$1"
+  local cursor=""
   local item_id
+  local response
+  local has_next_page
+  local end_cursor
   local gh_exit_code
 
-  set +e
-  item_id="$(
-    gh api graphql \
-      -F owner="${REPO%%/*}" \
-      -F repo="${REPO##*/}" \
-      -F number="$issue_number" \
-      -f query='query($owner: String!, $repo: String!, $number: Int!) { repository(owner: $owner, name: $repo) { issue(number: $number) { projectItems(first: 20) { nodes { id project { id } } } } } }' \
-      --jq ".data.repository.issue.projectItems.nodes[] | select(.project.id==\"$PROJECT_ID\") | .id" 2>&1
-  )"
-  gh_exit_code=$?
-  set -e
+  while true; do
+    set +e
+    response="$(
+      gh api graphql \
+        -F owner="${REPO%%/*}" \
+        -F repo="${REPO##*/}" \
+        -F number="$issue_number" \
+        -F cursor="$cursor" \
+        -f query='query($owner: String!, $repo: String!, $number: Int!, $cursor: String) { repository(owner: $owner, name: $repo) { issue(number: $number) { projectItems(first: 100, after: $cursor) { nodes { id project { id } } pageInfo { hasNextPage endCursor } } } } }' 2>&1
+    )"
+    gh_exit_code=$?
+    set -e
 
-  if [[ $gh_exit_code -ne 0 || -z "$item_id" ]]; then
-    return 1
-  fi
+    if [[ $gh_exit_code -ne 0 ]]; then
+      return 1
+    fi
 
-  LOOKED_UP_PROJECT_ITEM_ID="$item_id"
+    item_id="$(jq -r --arg project_id "$PROJECT_ID" '.data.repository.issue.projectItems.nodes[]? | select(.project.id == $project_id) | .id' <<<"$response")"
+    if [[ -n "$item_id" ]]; then
+      LOOKED_UP_PROJECT_ITEM_ID="$item_id"
+      return 0
+    fi
+
+    has_next_page="$(jq -r '.data.repository.issue.projectItems.pageInfo.hasNextPage // false' <<<"$response")"
+    if [[ "$has_next_page" != "true" ]]; then
+      return 1
+    fi
+
+    end_cursor="$(jq -r '.data.repository.issue.projectItems.pageInfo.endCursor // empty' <<<"$response")"
+    if [[ -z "$end_cursor" ]]; then
+      return 1
+    fi
+
+    cursor="$end_cursor"
+  done
+
+  return 1
 }
 
 lookup_project_item_id_with_retry() {
@@ -487,9 +511,48 @@ lookup_project_item_id_with_retry() {
   return 1
 }
 
+add_issue_to_project() {
+  local issue_id="$1"
+  local gh_exit_code
+
+  print_verbose "Executing: gh api graphql addProjectV2ItemById for issue id '$issue_id'"
+
+  set +e
+  gh api graphql \
+    -f query='mutation($project: ID!, $content: ID!) { addProjectV2ItemById(input: { projectId: $project, contentId: $content }) { item { id } } }' \
+    -F project="$PROJECT_ID" \
+    -F content="$issue_id" >/dev/null 2>&1
+  gh_exit_code=$?
+  set -e
+
+  if [[ $gh_exit_code -ne 0 ]]; then
+    return 1
+  fi
+}
+
+ensure_project_item_id() {
+  local issue_number="$1"
+  local issue_id="$2"
+
+  if lookup_project_item_id_with_retry "$issue_number"; then
+    return 0
+  fi
+
+  if [[ -z "$issue_id" ]]; then
+    return 1
+  fi
+
+  if ! add_issue_to_project "$issue_id"; then
+    return 1
+  fi
+
+  lookup_project_item_id_with_retry "$issue_number"
+}
+
 apply_project_status() {
   local issue_number="$1"
   local status_name="$2"
+  local issue_id="$3"
   local option_id
 
   option_id="${PROJECT_STATUS_OPTIONS[$status_name]}"
@@ -499,7 +562,7 @@ apply_project_status() {
     return 0
   fi
 
-  if ! lookup_project_item_id_with_retry "$issue_number"; then
+  if ! ensure_project_item_id "$issue_number" "$issue_id"; then
     return 1
   fi
 
@@ -1283,7 +1346,7 @@ for file in "${files[@]}"; do
 
   rm -f "$PARSED_BODY_FILE" "$REWRITTEN_BODY_FILE"
 
-  if ! apply_project_status "$num" "$effective_status"; then
+  if ! apply_project_status "$num" "$effective_status" "$id"; then
     move_to_failed "$file" "Project status update failed" "true" "$num" "$url"
     print_warning "  Issue #$num was created but project status update failed"
     printf '\n'
