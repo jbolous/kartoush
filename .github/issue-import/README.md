@@ -5,6 +5,24 @@ It is designed for importing pre-written issue definitions from markdown files,
 creating the issues in GitHub, linking sub-issues to parent issues, and keeping
 the file lifecycle visible in the repository.
 
+## Configuration
+
+Importer settings are loaded in this precedence order:
+
+- shell environment variables
+- `.github/issue-import/config.local.env`
+- `.github/issue-import/config.env`
+- script fallback defaults for supported settings
+
+Use this pattern:
+
+- keep shared repo defaults in `config.env`
+- copy `config.local.env.example` to `config.local.env` for machine-specific overrides
+- do not commit `config.local.env`
+- treat the default imported status as a fixed importer rule: `Backlog`
+
+This avoids editing tracked project settings locally and accidentally overwriting them in Git.
+
 ## Directory Layout
 
 - `pending/`
@@ -51,6 +69,7 @@ Optional metadata:
 
 - `Parent:`
 - `Labels:`
+- `Status:`
 
 Rules:
 
@@ -62,6 +81,7 @@ Rules:
 - `Title:` is required
 - `Parent:` is optional
 - `Labels:` is optional and accepts comma-separated label names
+- `Status:` is optional and defaults to `Backlog`
 - dependency references belong in a markdown `Dependencies` section in the body,
   not in the metadata header
 
@@ -89,6 +109,7 @@ Example child task:
 Title: Task: Validate sub-issue linking during import
 Parent: Epic: Issue Import and Workflow Tooling
 Labels: enhancement, application
+Status: Backlog
 
 ### Summary
 
@@ -132,6 +153,7 @@ The task template also shows:
 - how to use `Parent: #123` when the parent issue number is already known
 - where to list `Dependencies` using source file names or GitHub issue numbers that the importer can resolve
 - how to provide optional comma-separated `Labels:` metadata
+- how to provide optional `Status:` metadata, with `Backlog` used when omitted
 
 Recommended workflow:
 
@@ -156,6 +178,99 @@ You can also print a template directly from the importer:
 
 Template files must remain outside `pending/` so they are not imported
 accidentally.
+
+## AI Prompt Snippets
+
+If you want ChatGPT or Codex to generate import-ready markdown, give it one of
+these prompts and tell it to output raw markdown only.
+
+Prompt for a standalone task:
+
+```text
+Generate a GitHub issue import task file for the Kartoush importer.
+
+Requirements:
+- Output raw markdown only
+- Use this exact metadata header order:
+  Title:
+  Labels:
+  Status:
+- Leave a single blank line after metadata
+- Use these sections in this exact order:
+  ## Summary
+  ## Scope
+  ## Acceptance Criteria
+  ## Dependencies
+  ## Notes
+- Use flat bullet lists only
+- Do not include YAML front matter
+- Do not include commentary before or after the markdown
+- Do not wrap prose early unless needed for a list item
+- When status is unknown, use: Status: Backlog
+- When there are no dependencies, use:
+  ## Dependencies
+  - None
+
+Task details:
+[PASTE TASK DETAILS HERE]
+```
+
+Prompt for an epic-linked task:
+
+```text
+Generate a GitHub issue import task file for the Kartoush importer.
+
+Requirements:
+- Output raw markdown only
+- Use this exact metadata header order:
+  Title:
+  Parent:
+  Labels:
+  Status:
+- Leave a single blank line after metadata
+- Use these sections in this exact order:
+  ## Summary
+  ## Scope
+  ## Acceptance Criteria
+  ## Dependencies
+  ## Notes
+- Use flat bullet lists only
+- Do not include YAML front matter
+- Do not include commentary before or after the markdown
+- Do not wrap prose early unless needed for a list item
+- Use `Parent: #<issue-number>` when the epic number is known
+- When status is unknown, use: Status: Backlog
+- When there are no dependencies, use:
+  ## Dependencies
+  - None
+
+Task details:
+[PASTE TASK DETAILS HERE]
+```
+
+Prompt to review an existing task file for importer compatibility:
+
+```text
+Review this markdown file for compatibility with the Kartoush GitHub issue importer.
+
+Check:
+1. Metadata header contains only supported keys at the top of the file
+2. Metadata header is followed by exactly one blank line
+3. Required metadata is present
+4. `Labels:` is comma-separated if present
+5. `Status:` is a valid Kartoush project status if present
+6. Sections are present and ordered correctly
+7. `Dependencies` uses bullet list entries
+8. No YAML front matter or extra prose appears before metadata ends
+
+Output:
+- Valid
+- Problems
+- Corrected raw markdown
+
+Markdown to review:
+[PASTE MARKDOWN HERE]
+```
 
 ## Parent Resolution
 
@@ -200,6 +315,21 @@ existing GitHub labels.
 - ignored labels are reported as warnings in the importer output
 - when the title starts with `[Task]`, `Task:`, `[Epic]`, or `Epic:`, the importer automatically adds the corresponding `task` or `epic` label if it is not already present
 
+## Status Handling
+
+`Status:` can be defined as metadata, for example:
+
+```md
+Status: In Progress
+```
+
+During import, the script applies the effective status to the GitHub project item.
+
+- when `Status:` is omitted, the importer defaults to `Backlog`
+- when `Status:` is valid, that value is applied
+- when `Status:` is invalid, the importer warns and falls back to `Backlog`
+- dry-run output shows the effective status that would be applied
+
 ## Import Script
 
 The main import entrypoint is:
@@ -217,7 +347,11 @@ Optional flag:
 Environment variables supported by the script:
 
 - `REPO`
-  Defaults to `jbolous/kartoush`
+  Defaults to the resolved value from `config.local.env`, then `config.env`, then `jbolous/kartoush`
+- `PROJECT_ID`
+  Optional explicit GitHub ProjectV2 node id. When set, the importer uses this project directly.
+- `PROJECT_TITLE`
+  Defaults to the resolved value from `config.local.env`, then `config.env`, then `Kartoush - MVP`. When `PROJECT_ID` is not set, the importer resolves the target project by exact title match against the repository owner.
 - `IMPORT_ROOT`
   Defaults to `.github/issue-import`
 - `PENDING_DIR`
@@ -238,6 +372,8 @@ Pass 1: create issues
 - reads each `pending/*.md` file
 - parses `Title:` and optional `Parent:`
 - parses optional `Labels:`
+- parses optional `Status:` and resolves the effective project status
+- resolves the target project using `PROJECT_ID` when provided, otherwise by exact `PROJECT_TITLE` match
 - appends this footer to the GitHub issue body:
 
   ```html
@@ -255,6 +391,7 @@ Pass 1: create issues
 
 Pass 2: link sub-issues and move files
 
+- applies the effective project status to the GitHub project item
 - resolves each `Parent:` value
 - resolves dependency source-file references from any `Dependencies` section
 - updates issue bodies to replace resolved dependency references with GitHub
@@ -314,6 +451,24 @@ Import into a different repository:
 
 ```bash
 REPO=your-org/your-repo .github/scripts/import-issues.sh
+```
+
+Use a local override file for machine-specific settings:
+
+```bash
+cp .github/issue-import/config.local.env.example .github/issue-import/config.local.env
+```
+
+Import into a different project title owned by the repo owner:
+
+```bash
+PROJECT_TITLE="Kartoush - Roadmap" .github/scripts/import-issues.sh
+```
+
+Import into an explicit project id:
+
+```bash
+PROJECT_ID=PVT_xxxxxxxxxxxxxxxxxx .github/scripts/import-issues.sh
 ```
 
 ### Quick Start

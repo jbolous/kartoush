@@ -1,6 +1,7 @@
 Title: [Task]: Replace with task title
 Parent: [Epic]: Replace with epic title
 Labels: enhancement, application
+Status: Backlog
 
 <!--
 Alternative parent format when the GitHub issue number is already known:
@@ -8,6 +9,7 @@ Parent: #123
 
 Remove the Parent line when creating a standalone task.
 Remove the Labels line when no labels should be applied.
+Remove the Status line to use the importer default of Backlog.
 Labels that do not exist in GitHub are ignored during import.
 -->
 
