@@ -8,14 +8,14 @@ import com.kartoush.customer.facade.TermsOfServiceManagementFacade;
 import org.junit.jupiter.api.Test;
 import org.springdoc.core.configuration.SpringDocConfiguration;
 import org.springdoc.core.configuration.SpringDocSpecPropertiesConfiguration;
+import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.webmvc.core.configuration.MultipleOpenApiSupportConfiguration;
 import org.springdoc.webmvc.core.configuration.SpringDocWebMvcConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,11 +24,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(
-    classes = TermsOpenApiWebMvcTest.TestApplication.class,
-    webEnvironment = SpringBootTest.WebEnvironment.MOCK
-)
+@WebMvcTest({
+    TermsOfServiceController.class,
+    InternalTermsOfServiceManagementController.class
+})
 @AutoConfigureMockMvc
+@EnableConfigurationProperties(SpringDocConfigProperties.class)
+@Import({
+    ApiExceptionHandler.class,
+    OpenApiConfiguration.class
+})
+@ImportAutoConfiguration({
+    SpringDocConfiguration.class,
+    SpringDocSpecPropertiesConfiguration.class,
+    SpringDocWebMvcConfiguration.class,
+    MultipleOpenApiSupportConfiguration.class
+})
 class TermsOpenApiWebMvcTest {
 
     @Autowired
@@ -59,22 +70,5 @@ class TermsOpenApiWebMvcTest {
                 .value("#/components/schemas/ApiProblemResponse"))
             .andExpect(jsonPath("$.paths['/internal/terms-of-service/{termsOfServiceId}/activate'].post.parameters[0].description")
                 .value("Terms of Service ULID identifier"));
-    }
-
-    @SpringBootConfiguration
-    @EnableAutoConfiguration
-    @Import({
-        TermsOfServiceController.class,
-        InternalTermsOfServiceManagementController.class,
-        ApiExceptionHandler.class,
-        OpenApiConfiguration.class
-    })
-    @ImportAutoConfiguration({
-        SpringDocConfiguration.class,
-        SpringDocSpecPropertiesConfiguration.class,
-        SpringDocWebMvcConfiguration.class,
-        MultipleOpenApiSupportConfiguration.class
-    })
-    static class TestApplication {
     }
 }
