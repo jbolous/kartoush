@@ -6,6 +6,8 @@ import com.kartoush.api.error.ErrorCode;
 import com.kartoush.config.OpenApiConfiguration;
 import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.facade.CustomerFacade;
+import com.kartoush.customer.facade.model.CustomerView;
+import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
 import org.springdoc.core.configuration.SpringDocConfiguration;
 import org.springdoc.core.configuration.SpringDocSpecPropertiesConfiguration;
@@ -52,6 +54,14 @@ class CustomerApiContractWebMvcTest {
 
     private static final String CUSTOMER_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
+    private static final String FIRST_NAME = "Jack";
+
+    private static final String LAST_NAME = "Kartoush";
+
+    private static final String EMAIL = "jack@kartoush.test";
+
+    private static final String PHONE_NUMBER = "+13125551234";
+
     private static final String CUSTOMER_PATH = "/api/customers";
 
     private static final String CUSTOMER_BY_ID_PATH = CUSTOMER_PATH + "/{customerId}";
@@ -67,6 +77,9 @@ class CustomerApiContractWebMvcTest {
 
     private static final String API_PROBLEM_RESPONSE_REF =
         "#/components/schemas/ApiProblemResponse";
+
+    private static final String CUSTOMER_VIEW_REF =
+        "#/components/schemas/CustomerView";
 
     private static final String VALIDATION_PROBLEM_RESPONSE_REF =
         "#/components/schemas/ValidationProblemResponse";
@@ -90,6 +103,29 @@ class CustomerApiContractWebMvcTest {
 
     @MockitoBean
     private CustomerFacade customerFacade;
+
+    @Test
+    void shouldMatchDocumentedCustomerSuccessResponse() throws Exception {
+        when(customerFacade.getCustomer(CUSTOMER_ID)).thenReturn(customerView());
+
+        mockMvc.perform(get(API_DOCS_PATH))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath(schemaRefPath(
+                CUSTOMER_BY_ID_PATH,
+                "get",
+                HttpStatus.OK.value()
+            )).value(CUSTOMER_VIEW_REF));
+
+        mockMvc.perform(get(CUSTOMER_BY_ID_PATH, CUSTOMER_ID))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+            .andExpect(jsonPath("$.customerId").value(CUSTOMER_ID))
+            .andExpect(jsonPath("$.firstName").value(FIRST_NAME))
+            .andExpect(jsonPath("$.lastName").value(LAST_NAME))
+            .andExpect(jsonPath("$.email").value(EMAIL))
+            .andExpect(jsonPath("$.phoneNumber").value(PHONE_NUMBER))
+            .andExpect(jsonPath("$.status").value(CustomerStatus.ACTIVE.name()));
+    }
 
     @Test
     void shouldMatchDocumentedValidationProblemForCustomerActivation() throws Exception {
@@ -162,11 +198,36 @@ class CustomerApiContractWebMvcTest {
         );
     }
 
+    private static String schemaRefPath(
+        final String endpoint,
+        final String method,
+        final int statusCode
+    ) {
+        return operationPath(
+            endpoint,
+            method,
+            "responses['" + statusCode + "']"
+                + ".content['application/json']"
+                + ".schema['$ref']"
+        );
+    }
+
     private static String operationPath(
         final String endpoint,
         final String method,
         final String suffix
     ) {
         return "$.paths['" + endpoint + "']." + method + "." + suffix;
+    }
+
+    private static CustomerView customerView() {
+        return new CustomerView(
+            CUSTOMER_ID,
+            FIRST_NAME,
+            LAST_NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            CustomerStatus.ACTIVE
+        );
     }
 }
