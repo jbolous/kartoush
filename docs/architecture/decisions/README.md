@@ -132,6 +132,7 @@ Numbers indicate chronological order and do not imply priority.
 - [0026 - Registration and Terms Acceptance Approach](./0026-registration-and-terms-acceptance-approach.md)
 - [0027 - App-Layer vs Facade Request Model Boundary](./0027-app-layer-vs-facade-request-model-boundary.md)
 - [0028 - Authentication and authorization strategy](./0028-authentication-and-authorization-strategy.md)
+- [0029 - Customer credential ownership and registration handoff](./0029-customer-credential-ownership-and-registration-handoff.md)
 
 ---
 
