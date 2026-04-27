@@ -34,8 +34,6 @@ class ActivationTokenRepositoryTest extends PostgresDataJpaTest {
     private static final String PHONE_NUMBER = "555-555-1212";
     private static final String EMAIL_PREFIX = "jack";
     private static final String EMAIL_SUFFIX = "@kartoush.com";
-    private static final String PASSWORD_HASH = "ABCXYZ123789";
-
     private static final String TOKEN_HASH = "hashed-token-value";
     private static final String UNKNOWN_TOKEN_HASH = "unknown-token-value";
 
@@ -157,8 +155,7 @@ class ActivationTokenRepositoryTest extends PostgresDataJpaTest {
         final CustomerEntity customer = CustomerEntity.newCustomer(
             customerId,
             profile,
-            uniqueEmail(customerId),
-            PASSWORD_HASH,
+            uniqueEmail(customerId.getValue()),
             CustomerStatus.PENDING
         );
 
@@ -182,7 +179,7 @@ class ActivationTokenRepositoryTest extends PostgresDataJpaTest {
         return activationTokenRepository.saveAndFlush(activationToken);
     }
 
-    private String uniqueEmail(final CustomerIdEmbeddable customerId) {
-        return EMAIL_PREFIX + customerId.getValue() + EMAIL_SUFFIX;
+    private String uniqueEmail(final String customerId) {
+        return EMAIL_PREFIX + customerId + EMAIL_SUFFIX;
     }
 }

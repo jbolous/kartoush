@@ -3,11 +3,11 @@ package com.kartoush.customer.persistence.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
+import com.kartoush.platform.types.CustomerId;
 import java.time.Instant;
 import java.util.Locale;
 
-import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
-import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +18,6 @@ class CustomerEntityTest {
     private static final String LAST_NAME = "Kartoush";
     private static final String PHONE_NUMBER = "312-555-0100";
     private static final String EMAIL = "Jack@kartoush.test";
-    private static final String PASSWORD_HASH = "hash";
     private static final CustomerStatus ACTIVE_STATUS = CustomerStatus.ACTIVE;
 
     @Test
@@ -31,7 +30,6 @@ class CustomerEntityTest {
                 " " + LAST_NAME + " ",
                 " " + PHONE_NUMBER + " "),
             EMAIL,
-            PASSWORD_HASH,
             ACTIVE_STATUS
         );
 
@@ -65,7 +63,6 @@ class CustomerEntityTest {
                 PHONE_NUMBER
             ),
             EMAIL,
-            PASSWORD_HASH,
             ACTIVE_STATUS
         ))
             .isInstanceOf(NullPointerException.class)
@@ -83,7 +80,6 @@ class CustomerEntityTest {
                 PHONE_NUMBER
             ),
             EMAIL,
-            PASSWORD_HASH,
             ACTIVE_STATUS
         );
 

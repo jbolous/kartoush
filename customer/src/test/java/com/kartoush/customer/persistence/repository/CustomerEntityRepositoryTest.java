@@ -32,8 +32,6 @@ class CustomerEntityRepositoryTest extends PostgresDataJpaTest {
     private static final String LAST_NAME = "Kartoush";
     private static final String PHONE_NUMBER = "555-555-1212";
     private static final String EMAIL = "jack@kartoush.test";
-    private static final String PASSWORD_HASH = "ABCXYZ123789";
-
     private final UlidGenerator ulidGenerator = new DefaultUlidGenerator();
 
     @Autowired
@@ -48,7 +46,6 @@ class CustomerEntityRepositoryTest extends PostgresDataJpaTest {
             id,
             profile,
             EMAIL,
-            PASSWORD_HASH,
             CustomerStatus.ACTIVE);
 
         CustomerEntity saved = customerRepository.saveAndFlush(customer);
@@ -90,7 +87,6 @@ class CustomerEntityRepositoryTest extends PostgresDataJpaTest {
             id,
             profile,
             EMAIL,
-            PASSWORD_HASH,
             CustomerStatus.ACTIVE);
 
         // when
@@ -111,7 +107,6 @@ class CustomerEntityRepositoryTest extends PostgresDataJpaTest {
             customerId1,
             profile,
             originalEmail,
-            PASSWORD_HASH,
             CustomerStatus.PENDING);
 
         customerRepository.saveAndFlush(first);
@@ -129,7 +124,6 @@ class CustomerEntityRepositoryTest extends PostgresDataJpaTest {
             customerId2,
             profile2,
             originalEmail,
-            PASSWORD_HASH,
             CustomerStatus.PENDING);
 
         customerRepository.saveAndFlush(second);

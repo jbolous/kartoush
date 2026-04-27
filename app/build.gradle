@@ -19,6 +19,7 @@ repositories {
 }
 
 dependencies {
+    implementation project(':auth')
     implementation project(':customer')
     implementation project(':platform:platform-types')
     implementation project(':platform:platform-validation')

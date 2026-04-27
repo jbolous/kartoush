@@ -20,8 +20,6 @@ public final class Customer {
 
     private Email email;
 
-    private final String passwordHash;
-
     private CustomerStatus status;
 
     private final List<CustomerAddress> addresses = new ArrayList<>();
@@ -30,25 +28,21 @@ public final class Customer {
         CustomerId id,
         CustomerProfile profile,
         Email email,
-        String passwordHash,
         CustomerStatus status) {
         this.id = Objects.requireNonNull(id, "ID must not be null");
         this.profile = Objects.requireNonNull(profile, "Profile must not be null");
         this.email = Objects.requireNonNull(email, "Email must not be null");
-        this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash must not be null");
         this.status = Objects.requireNonNull(status, "Status must not be null");
     }
 
     public static Customer createNew(
         CustomerId id,
         CustomerProfile profile,
-        Email email,
-        String passwordHash) {
+        Email email) {
         return new Customer(
             id,
             profile,
             email,
-            passwordHash,
             CustomerStatus.PENDING);
     }
 
@@ -56,14 +50,12 @@ public final class Customer {
         CustomerId id,
         CustomerProfile profile,
         Email email,
-        String passwordHash,
         CustomerStatus status,
         List<CustomerAddress> addresses) {
         final Customer customer = new Customer(
             id,
             profile,
             email,
-            passwordHash,
             status);
         customer.addresses.addAll(Objects.requireNonNull(addresses, "Addresses must not be null"));
         return customer;
@@ -160,10 +152,6 @@ public final class Customer {
 
     public Email getEmail() {
         return email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
     }
 
     public CustomerStatus getStatus() {

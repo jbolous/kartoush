@@ -25,8 +25,7 @@ class ActivationTokenEntityTest {
         // given
         final ActivationTokenIdEmbeddable activationTokenId =
             ActivationTokenIdEmbeddable.from(ActivationTokenId.newId(ulidGenerator));
-        final CustomerIdEmbeddable customerId =
-            CustomerIdEmbeddable.from(CustomerId.newId(ulidGenerator));
+        final CustomerIdEmbeddable customerId = CustomerIdEmbeddable.from(CustomerId.newId(ulidGenerator));
 
         // when
         final ActivationTokenEntity activationTokenEntity = ActivationTokenEntity.of(
@@ -52,8 +51,7 @@ class ActivationTokenEntityTest {
         // given
         final ActivationTokenIdEmbeddable activationTokenId =
             ActivationTokenIdEmbeddable.from(ActivationTokenId.newId(ulidGenerator));
-        final CustomerIdEmbeddable customerId =
-            CustomerIdEmbeddable.from(CustomerId.newId(ulidGenerator));
+        final CustomerIdEmbeddable customerId = CustomerIdEmbeddable.from(CustomerId.newId(ulidGenerator));
 
         // when
         final ActivationTokenEntity activationTokenEntity = ActivationTokenEntity.of(

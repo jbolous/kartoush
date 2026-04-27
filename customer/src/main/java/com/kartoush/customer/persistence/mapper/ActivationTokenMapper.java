@@ -5,7 +5,6 @@ import com.kartoush.customer.persistence.entity.ActivationTokenEntity;
 import com.kartoush.customer.persistence.model.ActivationTokenIdEmbeddable;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.platform.types.ActivationTokenId;
-import com.kartoush.platform.types.CustomerId;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -33,7 +32,7 @@ public class ActivationTokenMapper {
 
         return ActivationTokenEntity.of(
             toEmbeddableActivationTokenId(domain.getId()),
-            toEmbeddableCustomerId(domain.getCustomerId()),
+            CustomerIdEmbeddable.from(domain.getCustomerId()),
             domain.getTokenHash(),
             domain.getExpiresAt(),
             domain.getConsumedAt(),
@@ -47,13 +46,5 @@ public class ActivationTokenMapper {
         }
 
         return ActivationTokenIdEmbeddable.from(activationTokenId);
-    }
-
-    CustomerIdEmbeddable toEmbeddableCustomerId(final CustomerId customerId) {
-        if (customerId == null) {
-            return null;
-        }
-
-        return CustomerIdEmbeddable.from(customerId);
     }
 }

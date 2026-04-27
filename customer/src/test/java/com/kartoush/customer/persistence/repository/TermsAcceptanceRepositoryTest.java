@@ -32,7 +32,6 @@ class TermsAcceptanceRepositoryTest extends PostgresDataJpaTest {
     private static final String PHONE_NUMBER = "555-555-1212";
     private static final String EMAIL_PREFIX = "jack";
     private static final String EMAIL_SUFFIX = "@kartoush.com";
-    private static final String PASSWORD_HASH = "ABCXYZ123789";
     private static final String TERMS_VERSION = "2026.04.01";
     private static final Instant ACCEPTED_AT = Instant.parse("2026-04-18T18:00:00Z");
 
@@ -81,7 +80,6 @@ class TermsAcceptanceRepositoryTest extends PostgresDataJpaTest {
             customerId,
             profile,
             EMAIL_PREFIX + customerId.getValue() + EMAIL_SUFFIX,
-            PASSWORD_HASH,
             CustomerStatus.PENDING
         );
 

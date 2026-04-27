@@ -31,7 +31,6 @@ class DefaultCustomerFacadeTest {
 
     private static final String CUSTOMER_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
     private static final String EMAIL = "jack@kartoush.com";
-    private static final String PASSWORD = "password";
     private static final String RAW_TOKEN = "raw-token";
     private static final String PHONE_NUMBER = "312-555-0100";
     private static final String FIRST_NAME = "Jack";
@@ -127,8 +126,7 @@ class DefaultCustomerFacadeTest {
         return Customer.createNew(
                 customerId,
                 profile,
-                new Email(EMAIL),
-                PASSWORD);
+                new Email(EMAIL));
     }
 
     private CustomerView buildCustomerView(){
@@ -147,8 +145,7 @@ class DefaultCustomerFacadeTest {
         final Customer customer = Customer.createNew(
             customerId,
             profile,
-            new Email(EMAIL),
-            PASSWORD);
+            new Email(EMAIL));
         customer.activate();
         return customer;
     }

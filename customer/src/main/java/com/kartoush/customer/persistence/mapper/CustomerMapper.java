@@ -28,10 +28,9 @@ public class CustomerMapper
         }
 
         final CustomerEntity customerEntity = CustomerEntity.newCustomer(
-                toEmbeddableCustomerId(domain.getId()),
+                CustomerIdEmbeddable.from(domain.getId()),
                 toProfileEntity(domain.getProfile()),
                 domain.getEmail().value(),
-                domain.getPasswordHash(),
                 domain.getStatus()
         );
 
@@ -51,10 +50,9 @@ public class CustomerMapper
         }
 
         return Customer.fromPersistence(
-                toDomainCustomerId(entity.getCustomerId()),
+                entity.getCustomerId().toCustomerId(),
                 toProfileDomain(entity.getProfile()),
                 new Email(entity.getEmail()),
-                entity.getPasswordHash(),
                 entity.getCustomerStatus(),
                 entity.getAddresses().stream()
                         .map(customerAddressMapper::toDomain)
@@ -65,7 +63,6 @@ public class CustomerMapper
     {
         entity.setProfile(toProfileEntity(domain.getProfile()));
         entity.setEmail(domain.getEmail().value());
-        entity.setPasswordHash(domain.getPasswordHash());
         entity.setCustomerStatus(domain.getStatus());
 
         final List<CustomerAddressEntity> addressEntities = domain.getAddresses().stream()
@@ -73,16 +70,6 @@ public class CustomerMapper
                 .toList();
 
         entity.replaceAddresses(addressEntities);
-    }
-
-    private CustomerIdEmbeddable toEmbeddableCustomerId(final CustomerId id)
-    {
-        return id == null ? null : CustomerIdEmbeddable.from(id);
-    }
-
-    private CustomerId toDomainCustomerId(final CustomerIdEmbeddable id)
-    {
-        return id == null ? null : id.toCustomerId();
     }
 
     private CustomerProfileEntity toProfileEntity(final CustomerProfile profile) {

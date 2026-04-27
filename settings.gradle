@@ -1,5 +1,6 @@
 rootProject.name = 'kartoush'
 include 'app'
+include 'auth'
 include 'customer'
 include ':platform:platform-types'
 include ':platform:platform-validation'
