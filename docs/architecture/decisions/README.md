@@ -131,6 +131,7 @@ Numbers indicate chronological order and do not imply priority.
 - [0025 - Terms of Service Lifecycle and Current Version Resolution](./0025-terms-of-service-lifecycle-and-current-version-resolution.md)
 - [0026 - Registration and Terms Acceptance Approach](./0026-registration-and-terms-acceptance-approach.md)
 - [0027 - App-Layer vs Facade Request Model Boundary](./0027-app-layer-vs-facade-request-model-boundary.md)
+- [0028 - Authentication and authorization strategy](./0028-authentication-and-authorization-strategy.md)
 
 ---
 
