@@ -49,7 +49,6 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Set<String> SENSITIVE_FIELDS = Set.of(
         "password",
-        "passwordHash",
         "currentPassword",
         "newPassword",
         "token",

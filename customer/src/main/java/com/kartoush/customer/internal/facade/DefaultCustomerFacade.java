@@ -24,11 +24,6 @@ import java.util.List;
 @Service
 public class DefaultCustomerFacade implements CustomerFacade {
 
-    /* TODO(#82): Move credential handling to a dedicated authentication module.
-     * Customer should not own passwordHash long-term as part of proper domain separation.
-     */
-    private static final String TEMPORARY_PASSWORD_HASH = "TEMPORARY_PASSWORD_HASH";
-
     private final CustomerService customerService;
     private final ActivationEmailService activationEmailService;
     private final ActivationTokenService activationTokenService;
@@ -69,8 +64,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
         final Customer customer = Customer.createNew(
                 CustomerId.newId(ulidGenerator),
                 profile,
-                new Email(input.email()),
-                TEMPORARY_PASSWORD_HASH);
+                new Email(input.email()));
 
         final Customer savedCustomer = customerService.registerCustomer(customer, input.termsVersion());
         final IssuedActivationToken issuedActivationToken = activationTokenService.createFor(savedCustomer.getId());

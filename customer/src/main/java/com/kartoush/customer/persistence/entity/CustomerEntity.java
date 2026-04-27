@@ -8,7 +8,6 @@ import java.util.Objects;
 
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.platform.types.CustomerStatus;
-import com.kartoush.platform.types.Email;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -41,9 +40,6 @@ public class CustomerEntity implements Persistable<String> {
     @Column(name = "email", nullable = false, length = 150)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private CustomerStatus customerStatus;
@@ -69,13 +65,11 @@ public class CustomerEntity implements Persistable<String> {
             CustomerIdEmbeddable id,
             CustomerProfileEntity profile,
             String email,
-            String passwordHash,
             CustomerStatus customerStatus
     ) {
         this.id = Objects.requireNonNull(id, "id is required");
         this.profile = Objects.requireNonNull(profile, "profile is required");
         this.email = email;
-        this.passwordHash = requireNonBlank(passwordHash, "passwordHash is required");
         this.customerStatus = Objects.requireNonNull(customerStatus, "status is required");
     }
 
@@ -83,10 +77,9 @@ public class CustomerEntity implements Persistable<String> {
             CustomerIdEmbeddable id,
             CustomerProfileEntity profile,
             String email,
-            String passwordHash,
             CustomerStatus status
     ) {
-        return new CustomerEntity(id, profile, email, passwordHash, status);
+        return new CustomerEntity(id, profile, email, status);
     }
 
     @Override
@@ -111,10 +104,6 @@ public class CustomerEntity implements Persistable<String> {
         return email;
     }
 
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
     public CustomerStatus getCustomerStatus() {
         return customerStatus;
     }
@@ -137,10 +126,6 @@ public class CustomerEntity implements Persistable<String> {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
     }
 
     public void setCustomerStatus(CustomerStatus status) {
@@ -170,7 +155,6 @@ public class CustomerEntity implements Persistable<String> {
 
         profile.normalize();
         email = normalizeEmail(email);
-        passwordHash = requireNonBlank(passwordHash, "passwordHash");
 
         if (createdAt == null) {
             createdAt = now;
@@ -186,7 +170,6 @@ public class CustomerEntity implements Persistable<String> {
 
         profile.normalize();
         email = normalizeEmail(email);
-        passwordHash = requireNonBlank(passwordHash, "passwordHash");
 
         updatedAt = Instant.now();
     }

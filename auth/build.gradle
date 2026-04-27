@@ -1,0 +1,53 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':platform:platform-types')
+    testImplementation project(":test-support")
+
+    implementation(libs.springBootStarterDataJpa)
+    implementation(libs.springBootStarterFlyway)
+    implementation(libs.flywayPostgresql)
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
+
+    testImplementation(platform(libs.testcontainersBom))
+    testImplementation(platform(libs.testcontainers))
+    testImplementation(platform(libs.testcontainersJunitJupiter))
+    testImplementation(platform(libs.postgresql))
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly(libs.postgresql)
+}
+
+tasks.register("verifyAll") {
+    group = "verification"
+    description = "Runs unit + integration tests."
+    dependsOn tasks.test
+    dependsOn tasks.integrationTest
+}
+
+tasks.test {
+    useJUnitPlatform {
+        excludeTags "integration"
+    }
+}
+
+tasks.register("integrationTest", Test) {
+    group = "verification"
+    description = "Runs integration tests (Docker/Testcontainers)."
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    environment "TESTCONTAINERS_RYUK_DISABLED", "true"
+    useJUnitPlatform {
+        includeTags "integration"
+    }
+    shouldRunAfter tasks.test
+}
+
+tasks.check {
+    dependsOn tasks.named("test")
+}

@@ -72,8 +72,7 @@ public class DefaultCustomerService implements CustomerService
     @Override
     @Transactional(readOnly = true)
     public Optional<Customer> getCustomerById(final String customerId) {
-        return customerRepository.findById(
-                CustomerIdEmbeddable.from(customerId))
+        return customerRepository.findById(CustomerIdEmbeddable.from(customerId))
                 .map(customerMapper::toDomain);
     }
 
@@ -135,11 +134,9 @@ public class DefaultCustomerService implements CustomerService
     @Transactional
     public void deleteCustomer(final CustomerId customerId) {
         final CustomerEntity customerEntity = customerRepository
-                .findById(
-                        CustomerIdEmbeddable
-                                .from(customerId))
+                .findById(CustomerIdEmbeddable.from(customerId))
                 .orElseThrow(() -> new CustomerNotFoundException(customerId.value()));
-
+        
         final Customer customer = customerMapper.toDomain(customerEntity);
 
         customer.softDelete();

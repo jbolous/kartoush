@@ -40,8 +40,6 @@ class CustomerTest {
 
     private static final String BLANK_EMAIL = "   ";
 
-    private static final String PASSWORD_HASH = "hashed-password";
-
     private static final String FIRST_NAME = "Jack";
 
     private static final String LAST_NAME = "Kartoush";
@@ -61,8 +59,6 @@ class CustomerTest {
     private static final String EMAIL_NULL_MESSAGE = "Email must not be null";
 
     private static final String PROFILE_NULL_MESSAGE = "Profile must not be null";
-
-    private static final String PASSWORD_HASH_NULL_MESSAGE = "passwordHash must not be null";
 
     private static final String ADDRESSES_NULL_MESSAGE = "Addresses must not be null";
 
@@ -115,7 +111,6 @@ class CustomerTest {
         assertThat(customer.getId()).isEqualTo(CUSTOMER_ID);
         assertThat(customer.getProfile()).isEqualTo(PROFILE);
         assertThat(customer.getEmail()).isEqualTo(EMAIL);
-        assertThat(customer.getPasswordHash()).isEqualTo(PASSWORD_HASH);
         assertThat(customer.getStatus()).isEqualTo(CustomerStatus.PENDING);
         assertThat(customer.getAddresses()).isEmpty();
     }
@@ -126,8 +121,7 @@ class CustomerTest {
         final Customer customer = Customer.createNew(
             CUSTOMER_ID,
             PROFILE,
-            new Email(EMAIL_WITH_MIXED_CASE_AND_SPACES),
-            PASSWORD_HASH);
+            new Email(EMAIL_WITH_MIXED_CASE_AND_SPACES));
 
         // then
         assertThat(customer.getEmail()).isEqualTo(NORMALIZED_EMAIL);
@@ -138,21 +132,9 @@ class CustomerTest {
         assertThatThrownBy(() -> Customer.createNew(
             CUSTOMER_ID,
             PROFILE,
-            new Email(BLANK_EMAIL),
-            PASSWORD_HASH))
+            new Email(BLANK_EMAIL)))
             .isInstanceOf(InvalidEmailException.class)
             .hasMessage(EMAIL_BLANK_MESSAGE);
-    }
-
-    @Test
-    void shouldThrowWhenCreatingCustomerWithNullPasswordHash() {
-        assertThatThrownBy(() -> Customer.createNew(
-            CUSTOMER_ID,
-            PROFILE,
-            EMAIL,
-            null))
-            .isInstanceOf(NullPointerException.class)
-            .hasMessage(PASSWORD_HASH_NULL_MESSAGE);
     }
 
     @Test
@@ -196,8 +178,7 @@ class CustomerTest {
         assertThatThrownBy(() -> Customer.createNew(
             CUSTOMER_ID,
             PROFILE,
-            null,
-            PASSWORD_HASH))
+            null))
             .isInstanceOf(NullPointerException.class)
             .hasMessage(EMAIL_NULL_MESSAGE);
     }
@@ -405,7 +386,6 @@ class CustomerTest {
             CustomerId.of(CUSTOMER_ID_VALUE),
             PROFILE,
             EMAIL,
-            PASSWORD_HASH,
             CustomerStatus.PENDING,
             List.of(address));
 
@@ -413,7 +393,6 @@ class CustomerTest {
         assertThat(customer.getId()).isEqualTo(CUSTOMER_ID);
         assertThat(customer.getProfile()).isEqualTo(PROFILE);
         assertThat(customer.getEmail()).isEqualTo(EMAIL);
-        assertThat(customer.getPasswordHash()).isEqualTo(PASSWORD_HASH);
         assertThat(customer.getStatus()).isEqualTo(CustomerStatus.PENDING);
         assertThat(customer.getAddresses()).containsExactly(address);
     }
@@ -424,7 +403,6 @@ class CustomerTest {
             CUSTOMER_ID,
             PROFILE,
             EMAIL,
-            PASSWORD_HASH,
             CustomerStatus.ACTIVE,
             null))
             .isInstanceOf(NullPointerException.class)
@@ -585,7 +563,6 @@ class CustomerTest {
             CustomerId.of(CUSTOMER_ID_VALUE),
             PROFILE,
             EMAIL,
-            PASSWORD_HASH,
             status,
             List.of());
     }
@@ -594,8 +571,7 @@ class CustomerTest {
         return Customer.createNew(
             CUSTOMER_ID,
             PROFILE,
-            EMAIL,
-            PASSWORD_HASH);
+            EMAIL);
     }
 
     private Customer createActiveCustomerWithAddresses(List<CustomerAddress> addresses) {
