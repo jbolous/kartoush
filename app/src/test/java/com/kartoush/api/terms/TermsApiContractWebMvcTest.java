@@ -8,6 +8,9 @@ import com.kartoush.customer.exception.InvalidTermsOfServiceScheduleException;
 import com.kartoush.customer.exception.TermsOfServiceVersionNotFoundException;
 import com.kartoush.customer.facade.TermsOfServiceFacade;
 import com.kartoush.customer.facade.TermsOfServiceManagementFacade;
+import com.kartoush.customer.facade.model.TermsOfServiceView;
+import com.kartoush.customer.termsofservice.TermsOfServiceContentType;
+import com.kartoush.customer.termsofservice.TermsOfServiceStatus;
 import org.junit.jupiter.api.Test;
 import org.springdoc.core.configuration.SpringDocConfiguration;
 import org.springdoc.core.configuration.SpringDocSpecPropertiesConfiguration;
@@ -75,6 +78,9 @@ class TermsApiContractWebMvcTest {
     private static final String API_PROBLEM_RESPONSE_REF =
         "#/components/schemas/ApiProblemResponse";
 
+    private static final String TERMS_OF_SERVICE_VIEW_REF =
+        "#/components/schemas/TermsOfServiceView";
+
     private static final String VALIDATION_PROBLEM_RESPONSE_REF =
         "#/components/schemas/ValidationProblemResponse";
 
@@ -118,6 +124,29 @@ class TermsApiContractWebMvcTest {
 
     @MockitoBean
     private TermsOfServiceManagementFacade termsOfServiceManagementFacade;
+
+    @Test
+    void shouldMatchDocumentedTermsSuccessResponse() throws Exception {
+        when(termsOfServiceFacade.getTermsOfServiceByVersion(VERSION))
+            .thenReturn(termsOfServiceView());
+
+        mockMvc.perform(get(API_DOCS_PATH))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath(schemaRefPath(
+                TERMS_BY_VERSION_PATH,
+                "get",
+                HttpStatus.OK.value()
+            )).value(TERMS_OF_SERVICE_VIEW_REF));
+
+        mockMvc.perform(get(TERMS_BY_VERSION_PATH, VERSION))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+            .andExpect(jsonPath("$.version").value(VERSION))
+            .andExpect(jsonPath("$.content").value("Terms content"))
+            .andExpect(jsonPath("$.contentType").value(TermsOfServiceContentType.PLAIN_TEXT.name()))
+            .andExpect(jsonPath("$.status").value(TermsOfServiceStatus.ACTIVE.name()))
+            .andExpect(jsonPath("$.effectiveAt").value("2026-04-01T00:00:00Z"));
+    }
 
     @Test
     void shouldMatchDocumentedApiProblemForMissingTermsVersion() throws Exception {
@@ -204,6 +233,20 @@ class TermsApiContractWebMvcTest {
         return problemSchemaPath(endpoint, method, statusCode) + "['$ref']";
     }
 
+    private static String schemaRefPath(
+        final String endpoint,
+        final String method,
+        final int statusCode
+    ) {
+        return operationPath(
+            endpoint,
+            method,
+            "responses['" + statusCode + "']"
+                + ".content['application/json']"
+                + ".schema['$ref']"
+        );
+    }
+
     private static String problemSchemaPath(
         final String endpoint,
         final String method,
@@ -224,5 +267,16 @@ class TermsApiContractWebMvcTest {
         final String suffix
     ) {
         return "$.paths['" + endpoint + "']." + method + "." + suffix;
+    }
+
+    private static TermsOfServiceView termsOfServiceView() {
+        return new TermsOfServiceView(
+            VERSION,
+            "Terms content",
+            TermsOfServiceContentType.PLAIN_TEXT,
+            TermsOfServiceStatus.ACTIVE,
+            Instant.parse("2026-04-01T00:00:00Z"),
+            null
+        );
     }
 }
