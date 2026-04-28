@@ -10,13 +10,11 @@
 
 > A modular monolith e-commerce backend built to demonstrate production-grade architecture, domain modeling, and system design at scale.
 
-Kartoush is designed to showcase how a real-world backend system can be intentionally architected, evolved, and documented over time.
+Kartoush is a modular monolith backend platform for managing transactional workflows such as customer lifecycle, inventory, and order processing.
 
-It reflects the system design, tradeoffs, and engineering discipline expected from a senior engineer building production systems.
+It is designed to demonstrate production-grade system design, with a focus on data integrity, clear domain boundaries, and predictable behavior under real-world conditions.
 
-This is not a tutorial project.  
-This is a design-first system built the way real systems evolve.  
-It is intentionally structured as a portfolio project to demonstrate real-world backend engineering practices, not just feature delivery.
+This project reflects how backend systems are intentionally designed, evolved, and documented over time.
 
 ---
 
@@ -44,43 +42,23 @@ Kartoush prioritizes engineering depth over surface-level features.
 
 It demonstrates:
 
-- **Architecture Ownership**  
-  A modular monolith with strict boundaries and documented decisions (ADRs)
-
-- **Real Domain Complexity**  
-  Inventory modeling that accounts for reservations, expiration, and concurrency
-
-- **Production-Oriented Design**  
-  Lifecycle rules, validation, idempotency, and observability designed from the start (e.g., explicit customer lifecycle state transitions and failure handling)
-
-- **Decision Transparency**  
-  Tradeoffs are documented and revisited as the system evolves
-
-- **Evolution Over Time**  
-  The system is intentionally built to reflect how real platforms grow, adapt, and change
+- **Architecture Ownership** – modular monolith with strict boundaries and documented decisions (ADRs)  
+- **Real Domain Complexity** – inventory modeling with reservations, expiration, and concurrency  
+- **Production-Oriented Design** – lifecycle rules, validation, idempotency, and failure handling  
+- **Decision Transparency** – tradeoffs are documented and revisited over time  
 
 ---
 
 ## Why Kartoush Exists
 
-Most public GitHub projects fail to demonstrate:
+Most public projects fail to demonstrate:
 
 - architectural ownership  
 - system-level tradeoffs  
 - non-functional requirements  
 - long-term maintainability  
 
-Kartoush was created to close that gap.
-
-It showcases how I approach:
-
-- system decomposition  
-- domain boundaries  
-- scalability and performance  
-- observability and operability  
-- evolution over time  
-
-Everything in this repository exists to make engineering decisions explicit.
+Kartoush was created to showcase how backend systems are designed with these concerns in mind.
 
 ---
 
@@ -317,24 +295,6 @@ If you are reviewing this project:
 
 ---
 
-### A Deliberate Learning Project
-
-Kartoush is also a deliberate learning investment.
-
-While it reflects patterns and practices I use professionally, it is intentionally designed to push into areas that are difficult to explore safely inside a large, existing production system.
-
-This includes:
-
-- Stress-testing architectural decisions at scale  
-- Revisiting tradeoffs with the benefit of hindsight  
-- Experimenting with alternative designs and documenting why they do or do not work  
-
-Where learning drives a decision, that context is documented explicitly. The goal is not to present a perfect system, but an honest one.
-
-Some decisions intentionally revisit problems I have encountered in production systems, particularly areas where earlier tradeoffs revealed shortcomings as systems scaled and evolved.
-
----
-
 ## Project Name
 
 The name **Kartoush** is a play on the word *cartouche*.
@@ -493,20 +453,6 @@ Kartoush is intentionally not:
 - A tutorial codebase  
 
 This is a thinking artifact that also happens to compile.
-
----
-
-## Project Status
-
-Kartoush is an evolving system.
-
-Some components are:
-
-- Fully implemented
-- Partially implemented
-- Documented but intentionally deferred
-
-This reflects how real systems are built and prioritized.
 
 ---
 
