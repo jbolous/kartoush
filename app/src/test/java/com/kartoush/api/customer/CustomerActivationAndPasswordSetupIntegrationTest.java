@@ -338,6 +338,29 @@ class CustomerActivationAndPasswordSetupIntegrationTest extends PostgresSpringIn
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.PASSWORD_SETUP_TOKEN_CONSUMED.name()));
     }
 
+    @Test
+    void shouldRejectInitialPasswordThatDoesNotMeetConfiguredPolicy() throws Exception {
+        final CreatedCustomer createdCustomer = createPendingCustomer();
+
+        final String activationResponseBody = activateCustomer(createdCustomer.customerId(), createdCustomer.rawToken())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        final String passwordSetupToken = objectMapper.readTree(activationResponseBody)
+            .get("passwordSetupToken")
+            .asText();
+
+        mockMvc.perform(post(BASE_URL + INITIAL_PASSWORD_PATH, createdCustomer.customerId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new InitialCustomerPasswordInput(passwordSetupToken, "short1!", "short1!"))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value(ErrorCode.VALIDATION_FAILED.name()))
+            .andExpect(jsonPath("$.errors[0].field").value("password"));
+    }
+
     private CreatedCustomer createPendingCustomer() throws Exception {
         // Use a ULID-based suffix so each test customer email remains unique.
         final String email = EMAIL_LOCAL_PART_PREFIX + ulidGenerator.next().toLowerCase() + EMAIL_DOMAIN;
