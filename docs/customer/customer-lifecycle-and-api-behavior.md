@@ -202,7 +202,7 @@ Error scenarios:
 `POST /api/customers/{customerId}/activation`
 
 Activates a pending customer using a valid activation token and returns the
-updated customer plus a one-time credential setup token.
+updated customer plus a one-time password setup token.
 
 Activation behavior:
 
@@ -212,8 +212,8 @@ Activation behavior:
 - the activation token must exist, be unexpired, and not already be consumed
 - a successful activation moves the customer to `ACTIVE`
 - a successful activation consumes the activation token so it cannot be reused
-- a successful activation also returns a one-time credential setup token for
-  establishing the first sign-in credential
+- a successful activation also returns a one-time password setup token for
+  establishing the first usable sign-in password
 
 Error scenarios:
 
@@ -238,15 +238,20 @@ Password setup behavior:
 - the setup token must belong to the target customer
 - the setup token must exist, be unexpired, and not already be consumed
 - password confirmation must match
+- the password must satisfy the configured password policy
+- the default password policy requires at least 12 characters, one uppercase
+  letter, one lowercase letter, one digit, and one special character
+- password policy is supplied through application configuration under
+  `kartoush.auth.password-policy`
 - a successful setup consumes the setup token so it cannot be reused
 
 Error scenarios:
 
 - 400 Bad Request for validation failures, such as blank token or password
   mismatch
-- 404 Not Found if the customer or credential setup token does not exist
-- 409 Conflict if the token is expired, already consumed, the credential
-  already exists, or the customer is not eligible for setup
+- 404 Not Found if the customer or password setup token does not exist
+- 409 Conflict if the token is expired, already consumed, the password already
+  exists, or the customer is not eligible for setup
 
 ---
 

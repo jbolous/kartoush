@@ -33,3 +33,13 @@ logging:
     org.springframework.transaction: TRACE
     org.springframework.orm.jpa: DEBUG
     root: info
+
+kartoush:
+  auth:
+    password-policy:
+      min-length: 12
+      max-length: 255
+      require-uppercase: true
+      require-lowercase: true
+      require-digit: true
+      require-special-character: true
