@@ -1,4 +1,4 @@
-CREATE TABLE customer_password
+CREATE TABLE customer_credential
 (
     customer_id   VARCHAR(26) PRIMARY KEY,
     password_hash VARCHAR(255) NOT NULL,
@@ -6,5 +6,5 @@ CREATE TABLE customer_password
     updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_customer_password_created_at
-    ON customer_password (created_at);
+CREATE INDEX idx_customer_credential_created_at
+    ON customer_credential (created_at);

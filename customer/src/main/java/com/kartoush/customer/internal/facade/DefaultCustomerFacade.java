@@ -25,6 +25,7 @@ import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
 import com.kartoush.platform.ulid.UlidGenerator;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -106,6 +107,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
     }
 
     @Override
+    @Transactional
     public CustomerActivationView activateCustomer(final String customerId, final String rawToken) {
         final Customer customer = customerService.activateCustomer(customerId, rawToken);
         final IssuedPasswordSetupToken issuedSetupToken =

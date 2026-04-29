@@ -47,7 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringIntegrationTest
 @AutoConfigureMockMvc
-class CustomerActivationIntegrationTest extends PostgresSpringIntegrationTest {
+class CustomerActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String BASE_URL = "/api/customers";
     private static final String ACTIVATION_PATH = "/{customerId}/activation";
