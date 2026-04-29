@@ -202,7 +202,7 @@ Error scenarios:
 `POST /api/customers/{customerId}/activation`
 
 Activates a pending customer using a valid activation token and returns the
-updated customer.
+updated customer plus a one-time credential setup token.
 
 Activation behavior:
 
@@ -212,6 +212,8 @@ Activation behavior:
 - the activation token must exist, be unexpired, and not already be consumed
 - a successful activation moves the customer to `ACTIVE`
 - a successful activation consumes the activation token so it cannot be reused
+- a successful activation also returns a one-time credential setup token for
+  establishing the first sign-in credential
 
 Error scenarios:
 
@@ -219,6 +221,32 @@ Error scenarios:
 - 404 Not Found if the customer or activation token does not exist
 - 409 Conflict if the token is expired, already consumed, or the customer
   cannot be activated from the current lifecycle state
+
+---
+
+#### Set up first customer password
+
+`POST /api/customers/{customerId}/initial-password`
+
+Consumes the one-time password setup token issued during activation and
+establishes the first usable sign-in credential for an active customer.
+
+Password setup behavior:
+
+- the customer must exist
+- the customer must currently be in `ACTIVE` status
+- the setup token must belong to the target customer
+- the setup token must exist, be unexpired, and not already be consumed
+- password confirmation must match
+- a successful setup consumes the setup token so it cannot be reused
+
+Error scenarios:
+
+- 400 Bad Request for validation failures, such as blank token or password
+  mismatch
+- 404 Not Found if the customer or credential setup token does not exist
+- 409 Conflict if the token is expired, already consumed, the credential
+  already exists, or the customer is not eligible for setup
 
 ---
 

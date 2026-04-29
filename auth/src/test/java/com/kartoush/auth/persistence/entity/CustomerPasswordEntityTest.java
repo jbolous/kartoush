@@ -7,14 +7,14 @@ import java.time.Instant;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class CustomerCredentialEntityTest {
+class CustomerPasswordEntityTest {
 
     private static final String CUSTOMER_ID = "01J2Z5Y6K4Z6D5H2X3JH8M9N0P";
     private static final String PASSWORD_HASH = "hash";
 
     @Test
     void shouldSetTimestampsWhenCreatingCredential() {
-        final CustomerCredentialEntity entity = CustomerCredentialEntity.create(CUSTOMER_ID, PASSWORD_HASH);
+        final CustomerPasswordEntity entity = CustomerPasswordEntity.create(CUSTOMER_ID, PASSWORD_HASH);
 
         entity.onCreate();
 
@@ -28,7 +28,7 @@ class CustomerCredentialEntityTest {
 
     @Test
     void shouldRejectBlankPasswordHash() {
-        assertThatThrownBy(() -> CustomerCredentialEntity.create(CUSTOMER_ID, "   "))
+        assertThatThrownBy(() -> CustomerPasswordEntity.create(CUSTOMER_ID, "   "))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("passwordHash is required");
     }

@@ -46,6 +46,10 @@ class CustomerOpenApiWebMvcTest {
 
     private static final String CUSTOMER_BY_ID_PATH = CUSTOMER_PATH + "/{customerId}";
 
+    private static final String CUSTOMER_ACTIVATION_PATH = CUSTOMER_BY_ID_PATH + "/activation";
+
+    private static final String CUSTOMER_INITIAL_PASSWORD_PATH = CUSTOMER_BY_ID_PATH + "/initial-password";
+
     private static final String CUSTOMER_BY_ID_PARAMETER_DESCRIPTION_PATH =
         operationPath(CUSTOMER_BY_ID_PATH, "get", "parameters[0].description");
 
@@ -80,8 +84,20 @@ class CustomerOpenApiWebMvcTest {
                 HttpStatus.CONFLICT.value()
             ))
                 .value(API_PROBLEM_RESPONSE_REF))
+            .andExpect(jsonPath(operationPath(CUSTOMER_ACTIVATION_PATH, "post", "summary"))
+                .value("Activate a customer"))
+            .andExpect(jsonPath(operationPath(CUSTOMER_INITIAL_PASSWORD_PATH, "post", "summary"))
+                .value("Set initial customer password"))
+            .andExpect(jsonPath(problemSchemaRefPath(
+                CUSTOMER_INITIAL_PASSWORD_PATH,
+                "post",
+                HttpStatus.NOT_FOUND.value()
+            ))
+                .value(API_PROBLEM_RESPONSE_REF))
             .andExpect(jsonPath(CUSTOMER_BY_ID_PARAMETER_DESCRIPTION_PATH)
                 .value("Customer ULID identifier"))
+            .andExpect(jsonPath("$.components.schemas.CustomerActivationView.properties.passwordSetupToken.type")
+                .value("string"))
             .andExpect(jsonPath("$.components.schemas.ValidationProblemResponse.properties.errors.type").value("array"))
             .andExpect(jsonPath("$.components.schemas.CustomerView.properties.status.description")
                 .value("Customer lifecycle status"));

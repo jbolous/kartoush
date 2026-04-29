@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kartoush.api.error.ApiProblemFactory;
 import com.kartoush.api.error.ErrorCode;
 import com.kartoush.customer.facade.CustomerFacade;
+import com.kartoush.customer.facade.model.CustomerActivationView;
 import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.facade.model.CustomerView;
+import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
 import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
@@ -57,6 +59,7 @@ class CustomerControllerWebMvcTest {
     private static final String PHONE = "+16305551234";
 
     private static final String TERMS_VERSION = "2026.04.01";
+    private static final String SETUP_TOKEN = "setup-token";
 
     @Autowired
     private MockMvc mockMvc;
@@ -153,13 +156,14 @@ class CustomerControllerWebMvcTest {
         final ActivateCustomerRequest request = new ActivateCustomerRequest("valid-activation-token");
 
         when(customerFacade.activateCustomer(eq(CUSTOMER_ID), eq(request.token())))
-            .thenReturn(mockCustomerView());
+            .thenReturn(mockCustomerActivationView());
 
         mockMvc.perform(post(BASE_URL + "/{customerId}/activation", CUSTOMER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.customerId").value(CUSTOMER_ID));
+            .andExpect(jsonPath("$.customerId").value(CUSTOMER_ID))
+            .andExpect(jsonPath("$.passwordSetupToken").value(SETUP_TOKEN));
 
         verify(customerFacade).activateCustomer(eq(CUSTOMER_ID), eq(request.token()));
     }
@@ -195,6 +199,19 @@ class CustomerControllerWebMvcTest {
         verify(customerFacade).resendActivationToken(eq(CUSTOMER_ID));
     }
 
+    @Test
+    void shouldSetupInitialPassword() throws Exception {
+        final InitialCustomerPasswordInput request =
+            new InitialCustomerPasswordInput(SETUP_TOKEN, "Password123!", "Password123!");
+
+        mockMvc.perform(post(BASE_URL + "/{customerId}/initial-password", CUSTOMER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isNoContent());
+
+        verify(customerFacade).setInitialPassword(eq(CUSTOMER_ID), any(InitialCustomerPasswordInput.class));
+    }
+
     private CustomerView mockCustomerView() {
         return new CustomerView(
             CUSTOMER_ID,
@@ -203,5 +220,17 @@ class CustomerControllerWebMvcTest {
             EMAIL,
             PHONE,
             CustomerStatus.ACTIVE);
+    }
+
+    private CustomerActivationView mockCustomerActivationView() {
+        return new CustomerActivationView(
+            CUSTOMER_ID,
+            FIRST_NAME,
+            LAST_NAME,
+            EMAIL,
+            PHONE,
+            CustomerStatus.ACTIVE,
+            SETUP_TOKEN
+        );
     }
 }
