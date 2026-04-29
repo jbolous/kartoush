@@ -1,13 +1,19 @@
 package com.kartoush.customer.internal.facade;
 
+import com.kartoush.auth.domain.IssuedPasswordSetupToken;
+import com.kartoush.auth.facade.CustomerPasswordFacade;
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
+import com.kartoush.customer.exception.InvalidPasswordSetupException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.model.CreateCustomerInput;
+import com.kartoush.customer.facade.model.CustomerActivationView;
 import com.kartoush.customer.facade.model.CustomerView;
+import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
 import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import com.kartoush.customer.internal.validation.CreateCustomerInputValidator;
+import com.kartoush.customer.internal.validation.SetInitialCustomerPasswordInputValidator;
 import com.kartoush.customer.internal.validation.UpdateCustomerInputValidator;
 import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationEmailService;
@@ -15,9 +21,11 @@ import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
 import com.kartoush.customer.service.IssuedActivationToken;
 import com.kartoush.platform.types.CustomerId;
+import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
 import com.kartoush.platform.ulid.UlidGenerator;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -27,22 +35,28 @@ public class DefaultCustomerFacade implements CustomerFacade {
     private final CustomerService customerService;
     private final ActivationEmailService activationEmailService;
     private final ActivationTokenService activationTokenService;
+    private final CustomerPasswordFacade customerPasswordFacade;
     private final UlidGenerator ulidGenerator;
     private final CreateCustomerInputValidator createCustomerInputValidator;
+    private final SetInitialCustomerPasswordInputValidator setInitialCustomerPasswordInputValidator;
     private final UpdateCustomerInputValidator updateCustomerInputValidator;
 
     public DefaultCustomerFacade(
             final CustomerService customerService,
             final ActivationEmailService activationEmailService,
             final ActivationTokenService activationTokenService,
+            final CustomerPasswordFacade customerPasswordFacade,
             final UlidGenerator ulidGenerator,
             final CreateCustomerInputValidator createCustomerInputValidator,
+            final SetInitialCustomerPasswordInputValidator setInitialCustomerPasswordInputValidator,
             final UpdateCustomerInputValidator updateCustomerInputValidator) {
         this.customerService = customerService;
         this.activationEmailService = activationEmailService;
         this.activationTokenService = activationTokenService;
+        this.customerPasswordFacade = customerPasswordFacade;
         this.ulidGenerator = ulidGenerator;
         this.createCustomerInputValidator = createCustomerInputValidator;
+        this.setInitialCustomerPasswordInputValidator = setInitialCustomerPasswordInputValidator;
         this.updateCustomerInputValidator = updateCustomerInputValidator;
     }
 
@@ -93,9 +107,31 @@ public class DefaultCustomerFacade implements CustomerFacade {
     }
 
     @Override
-    public CustomerView activateCustomer(final String customerId, final String rawToken) {
+    @Transactional
+    public CustomerActivationView activateCustomer(final String customerId, final String rawToken) {
         final Customer customer = customerService.activateCustomer(customerId, rawToken);
-        return toCustomerView(customer);
+        final IssuedPasswordSetupToken issuedSetupToken =
+            customerPasswordFacade.issuePasswordSetupToken(customer.getId());
+
+        return toCustomerActivationView(customer, issuedSetupToken.rawToken());
+    }
+
+    @Override
+    public void setInitialPassword(final String customerId, final InitialCustomerPasswordInput input) {
+        setInitialCustomerPasswordInputValidator.validate(input);
+
+        final Customer customer = customerService.getCustomerById(customerId)
+            .orElseThrow(() -> new CustomerNotFoundException(customerId));
+
+        if (customer.getStatus() != CustomerStatus.ACTIVE) {
+            throw new InvalidPasswordSetupException(customer.getStatus());
+        }
+
+        customerPasswordFacade.setInitialPassword(
+            customer.getId(),
+            input.setupToken(),
+            input.password()
+        );
     }
 
     @Override
@@ -131,6 +167,18 @@ public class DefaultCustomerFacade implements CustomerFacade {
                 customer.getEmail().value(),
                 customer.getProfile().phoneNumber(),
                 customer.getStatus());
+    }
+
+    private CustomerActivationView toCustomerActivationView(final Customer customer, final String passwordSetupToken) {
+        return new CustomerActivationView(
+            customer.getId().value(),
+            customer.getProfile().firstName(),
+            customer.getProfile().lastName(),
+            customer.getEmail().value(),
+            customer.getProfile().phoneNumber(),
+            customer.getStatus(),
+            passwordSetupToken
+        );
     }
 
     private CustomerProfile buildCustomerProfile(final UpdateCustomerInput input) {

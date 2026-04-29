@@ -1,7 +1,7 @@
 package com.kartoush.auth.persistence.repository;
 
 import com.kartoush.auth.AuthTestApplication;
-import com.kartoush.auth.persistence.entity.CustomerCredentialEntity;
+import com.kartoush.auth.persistence.entity.CustomerPasswordEntity;
 import com.kartoush.testsupport.IntegrationTest;
 import com.kartoush.testsupport.PostgresDataJpaTest;
 import org.junit.jupiter.api.Test;
@@ -18,20 +18,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ContextConfiguration(classes = AuthTestApplication.class)
-class CustomerCredentialRepositoryTest extends PostgresDataJpaTest {
+class CustomerPasswordRepositoryTest extends PostgresDataJpaTest {
 
     private static final String CUSTOMER_ID = "01J2Z5Y6K4Z6D5H2X3JH8M9N0P";
     private static final String PASSWORD_HASH = "hash";
 
     @Autowired
-    private CustomerCredentialRepository customerCredentialRepository;
+    private CustomerPasswordRepository customerPasswordRepository;
 
     @Test
     void shouldPersistAndLoadCredential() {
-        final CustomerCredentialEntity entity = CustomerCredentialEntity.create(CUSTOMER_ID, PASSWORD_HASH);
+        final CustomerPasswordEntity entity = CustomerPasswordEntity.create(CUSTOMER_ID, PASSWORD_HASH);
 
-        final CustomerCredentialEntity saved = customerCredentialRepository.saveAndFlush(entity);
-        final Optional<CustomerCredentialEntity> loaded = customerCredentialRepository.findById(CUSTOMER_ID);
+        final CustomerPasswordEntity saved = customerPasswordRepository.saveAndFlush(entity);
+        final Optional<CustomerPasswordEntity> loaded = customerPasswordRepository.findById(CUSTOMER_ID);
 
         assertThat(saved.getId()).isEqualTo(CUSTOMER_ID);
         assertThat(saved.getCreatedAt()).isNotNull();

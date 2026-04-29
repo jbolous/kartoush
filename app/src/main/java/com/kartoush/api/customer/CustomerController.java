@@ -7,7 +7,9 @@ import com.kartoush.api.docs.InternalServerErrorApiResponse;
 import com.kartoush.api.docs.ValidationFailedApiResponse;
 import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.model.CreateCustomerInput;
+import com.kartoush.customer.facade.model.CustomerActivationView;
 import com.kartoush.customer.facade.model.CustomerView;
+import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
 import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -185,7 +187,7 @@ public class CustomerController {
             description = "Customer activated successfully",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = CustomerView.class)
+                schema = @Schema(implementation = CustomerActivationView.class)
             )
         ),
         @ApiResponse(
@@ -208,7 +210,7 @@ public class CustomerController {
     @ValidationFailedApiResponse
     @InternalServerErrorApiResponse
     @PostMapping("/{customerId}/activation")
-    public ResponseEntity<CustomerView> activateCustomer(
+    public ResponseEntity<CustomerActivationView> activateCustomer(
         @CustomerIdParameter @PathVariable final String customerId,
         @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true,
@@ -221,6 +223,47 @@ public class CustomerController {
         @Valid @RequestBody final ActivateCustomerRequest request) {
 
         return ResponseEntity.ok(customerFacade.activateCustomer(customerId, request.token()));
+    }
+
+    @Operation(
+        summary = "Set initial customer password",
+        description = "Consumes a one-time password setup token to establish the first usable sign-in password for an active customer."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Customer password established successfully"),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Customer or password setup token not found",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ApiProblemResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Password setup token is expired, already consumed, already used, or the customer is not eligible for setup",
+            content = @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ApiProblemResponse.class)
+            )
+        )
+    })
+    @ValidationFailedApiResponse
+    @InternalServerErrorApiResponse
+    @PostMapping("/{customerId}/initial-password")
+    public ResponseEntity<Void> setupInitialPassword(
+        @CustomerIdParameter @PathVariable final String customerId,
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            description = "Initial password setup payload containing the one-time setup token and password confirmation",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = InitialCustomerPasswordInput.class)
+            )
+        )
+        @Valid @RequestBody final InitialCustomerPasswordInput request) {
+        customerFacade.setInitialPassword(customerId, request);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(

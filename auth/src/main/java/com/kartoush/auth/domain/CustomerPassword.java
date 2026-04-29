@@ -4,11 +4,10 @@ import com.kartoush.platform.types.CustomerId;
 
 import java.util.Objects;
 
-public record CustomerCredential(
+public record CustomerPassword(
     CustomerId customerId,
-    String passwordHash
-) {
-    public CustomerCredential {
+    String passwordHash) {
+    public CustomerPassword {
         Objects.requireNonNull(customerId, "customerId must not be null");
         Objects.requireNonNull(passwordHash, "passwordHash must not be null");
     }

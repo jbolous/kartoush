@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    implementation project(':auth')
     implementation project(':platform:platform-types')
     implementation project(':platform:platform-validation')
     testImplementation project(":test-support")

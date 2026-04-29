@@ -8,6 +8,7 @@ dependencies {
 
     implementation(libs.springBootStarterDataJpa)
     implementation(libs.springBootStarterFlyway)
+    implementation 'org.springframework.security:spring-security-crypto'
     implementation(libs.flywayPostgresql)
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

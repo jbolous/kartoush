@@ -1,5 +1,9 @@
 package com.kartoush.api.error;
 
+import com.kartoush.auth.exception.PasswordSetupTokenConsumedException;
+import com.kartoush.auth.exception.PasswordSetupTokenExpiredException;
+import com.kartoush.auth.exception.PasswordSetupTokenNotFoundException;
+import com.kartoush.auth.exception.CustomerPasswordAlreadyExistsException;
 import com.kartoush.customer.exception.CustomerAddressNotFoundException;
 import com.kartoush.customer.exception.CustomerAlreadyExistsException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
@@ -9,6 +13,7 @@ import com.kartoush.customer.exception.ActivationTokenExpiredException;
 import com.kartoush.customer.exception.ActivationTokenNotFoundException;
 import com.kartoush.customer.exception.InvalidActivationTokenResendException;
 import com.kartoush.customer.exception.InvalidCustomerActivationException;
+import com.kartoush.customer.exception.InvalidPasswordSetupException;
 import com.kartoush.customer.exception.InvalidCustomerReactivationException;
 import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.exception.InvalidCustomerStatusTransitionException;
@@ -49,6 +54,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Set<String> SENSITIVE_FIELDS = Set.of(
         "password",
+        "passwordHash",
         "currentPassword",
         "newPassword",
         "token",
@@ -242,6 +248,66 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             "Invalid Customer Activation",
             ex.getMessage(),
             ErrorCode.INVALID_CUSTOMER_ACTIVATION,
+            request);
+    }
+
+    @ExceptionHandler(InvalidPasswordSetupException.class)
+    public ProblemDetail handleInvalidCustomerPasswordSetupException(
+        final InvalidPasswordSetupException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Invalid Password Setup",
+            ex.getMessage(),
+            ErrorCode.INVALID_PASSWORD_SETUP,
+            request);
+    }
+
+    @ExceptionHandler(CustomerPasswordAlreadyExistsException.class)
+    public ProblemDetail handleCustomerPasswordAlreadyExistsException(
+        final CustomerPasswordAlreadyExistsException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Password Already Exists",
+            ex.getMessage(),
+            ErrorCode.CUSTOMER_PASSWORD_ALREADY_EXISTS,
+            request);
+    }
+
+    @ExceptionHandler(PasswordSetupTokenNotFoundException.class)
+    public ProblemDetail handlePasswordSetupTokenNotFoundException(
+        final PasswordSetupTokenNotFoundException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.NOT_FOUND,
+            "Password Setup Token Not Found",
+            ex.getMessage(),
+            ErrorCode.PASSWORD_SETUP_TOKEN_NOT_FOUND,
+            request);
+    }
+
+    @ExceptionHandler(PasswordSetupTokenExpiredException.class)
+    public ProblemDetail handlePasswordSetupTokenExpiredException(
+        final PasswordSetupTokenExpiredException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Password Setup Token Expired",
+            ex.getMessage(),
+            ErrorCode.PASSWORD_SETUP_TOKEN_EXPIRED,
+            request);
+    }
+
+    @ExceptionHandler(PasswordSetupTokenConsumedException.class)
+    public ProblemDetail handlePasswordSetupTokenConsumedException(
+        final PasswordSetupTokenConsumedException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Password Setup Token Already Consumed",
+            ex.getMessage(),
+            ErrorCode.PASSWORD_SETUP_TOKEN_CONSUMED,
             request);
     }
 

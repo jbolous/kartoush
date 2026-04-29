@@ -2,8 +2,11 @@ package com.kartoush.api.customer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kartoush.auth.facade.CustomerPasswordFacade;
+import com.kartoush.auth.persistence.repository.CustomerPasswordRepository;
 import com.kartoush.api.error.ErrorCode;
 import com.kartoush.customer.facade.model.CreateCustomerInput;
+import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
 import com.kartoush.customer.persistence.entity.ActivationTokenEntity;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.model.ActivationTokenIdEmbeddable;
@@ -13,6 +16,7 @@ import com.kartoush.customer.persistence.repository.CustomerRepository;
 import com.kartoush.customer.service.ActivationEmailService;
 import com.kartoush.customer.service.ActivationTokenHasher;
 import com.kartoush.platform.types.ActivationTokenId;
+import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
 import com.kartoush.platform.ulid.UlidGenerator;
@@ -43,11 +47,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringIntegrationTest
 @AutoConfigureMockMvc
-class CustomerActivationIntegrationTest extends PostgresSpringIntegrationTest {
+class CustomerActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String BASE_URL = "/api/customers";
     private static final String ACTIVATION_PATH = "/{customerId}/activation";
     private static final String RESEND_ACTIVATION_PATH = "/{customerId}/activation/resend";
+    private static final String INITIAL_PASSWORD_PATH = "/{customerId}/initial-password";
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
     private static final String PHONE_NUMBER = "+13125550100";
@@ -55,6 +60,7 @@ class CustomerActivationIntegrationTest extends PostgresSpringIntegrationTest {
     private static final String EMAIL_DOMAIN = "@kartoush.com";
     private static final String EXPIRED_RAW_TOKEN = "expired-activation-token";
     private static final String CURRENT_TERMS_VERSION = "2026.04.01";
+    private static final String PASSWORD = "Password123!";
 
     @Autowired
     private MockMvc mockMvc;
@@ -63,7 +69,13 @@ class CustomerActivationIntegrationTest extends PostgresSpringIntegrationTest {
     private CustomerRepository customerRepository;
 
     @Autowired
+    private CustomerPasswordFacade customerPasswordFacade;
+
+    @Autowired
     private ActivationTokenRepository activationTokenRepository;
+
+    @Autowired
+    private CustomerPasswordRepository customerPasswordRepository;
 
     @Autowired
     private ActivationTokenHasher activationTokenHasher;
@@ -105,7 +117,8 @@ class CustomerActivationIntegrationTest extends PostgresSpringIntegrationTest {
             // then
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.customerId").value(createdCustomer.customerId()))
-            .andExpect(jsonPath("$.status").value(CustomerStatus.ACTIVE.name()));
+            .andExpect(jsonPath("$.status").value(CustomerStatus.ACTIVE.name()))
+            .andExpect(jsonPath("$.passwordSetupToken").isNotEmpty());
 
         final CustomerEntity savedCustomer = customerRepository.findById(CustomerIdEmbeddable.from(createdCustomer.customerId()))
             .orElseThrow();
@@ -212,6 +225,119 @@ class CustomerActivationIntegrationTest extends PostgresSpringIntegrationTest {
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.INVALID_ACTIVATION_TOKEN_RESEND.name()));
     }
 
+    @Test
+    void shouldSetupInitialPasswordForActiveCustomerWithValidSetupToken() throws Exception {
+        final CreatedCustomer createdCustomer = createPendingCustomer();
+        final String activationResponseBody = activateCustomer(createdCustomer.customerId(), createdCustomer.rawToken())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+        final String setupToken = objectMapper.readTree(activationResponseBody)
+            .get("passwordSetupToken")
+            .asText();
+
+        mockMvc.perform(post(BASE_URL + INITIAL_PASSWORD_PATH, createdCustomer.customerId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new InitialCustomerPasswordInput(setupToken, PASSWORD, PASSWORD))))
+            .andExpect(status().isNoContent());
+
+        assertThat(customerPasswordRepository.findById(createdCustomer.customerId())).isPresent();
+        assertThat(customerPasswordRepository.findById(createdCustomer.customerId()).orElseThrow().getPasswordHash())
+            .isNotEqualTo(PASSWORD);
+    }
+
+    @Test
+    void shouldRejectInitialPasswordSetupForPendingCustomer() throws Exception {
+        final CreatedCustomer createdCustomer = createPendingCustomer();
+
+        mockMvc.perform(post(BASE_URL + INITIAL_PASSWORD_PATH, createdCustomer.customerId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new InitialCustomerPasswordInput("setup-token", PASSWORD, PASSWORD))))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.errorCode").value(ErrorCode.INVALID_PASSWORD_SETUP.name()));
+    }
+
+    @Test
+    void shouldReturnNotFoundForInvalidPasswordSetupToken() throws Exception {
+        final CreatedCustomer createdCustomer = createPendingCustomer();
+        activateCustomer(createdCustomer.customerId(), createdCustomer.rawToken())
+            .andExpect(status().isOk());
+
+        mockMvc.perform(post(BASE_URL + INITIAL_PASSWORD_PATH, createdCustomer.customerId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new InitialCustomerPasswordInput("invalid-setup-token", PASSWORD, PASSWORD))))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.errorCode").value(ErrorCode.PASSWORD_SETUP_TOKEN_NOT_FOUND.name()));
+    }
+
+    @Test
+    void shouldNotAllowInitialPasswordToBeSetTwice() throws Exception {
+        // given
+        final CreatedCustomer createdCustomer = createPendingCustomer();
+
+        final String firstActivationResponseBody = activateCustomer(createdCustomer.customerId(), createdCustomer.rawToken())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        final String firstPasswordSetupToken = objectMapper.readTree(firstActivationResponseBody)
+            .get("passwordSetupToken")
+            .asText();
+
+        mockMvc.perform(post(BASE_URL + INITIAL_PASSWORD_PATH, createdCustomer.customerId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new InitialCustomerPasswordInput(firstPasswordSetupToken, PASSWORD, PASSWORD))))
+            .andExpect(status().isNoContent());
+
+        // issue a second valid setup token by activating/resending/using whatever helper you now have
+        final String secondPasswordSetupToken = issuePasswordSetupTokenFor(createdCustomer.customerId());
+
+        // when / then
+        mockMvc.perform(post(BASE_URL + INITIAL_PASSWORD_PATH, createdCustomer.customerId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new InitialCustomerPasswordInput(secondPasswordSetupToken, "AnotherPassword123!", "AnotherPassword123!"))))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.errorCode").value(ErrorCode.CUSTOMER_PASSWORD_ALREADY_EXISTS.name()));
+
+        assertThat(customerPasswordRepository.findById(createdCustomer.customerId())).isPresent();
+    }
+
+    @Test
+    void shouldRejectReusedPasswordSetupTokenAfterSuccessfulInitialPasswordSetup() throws Exception {
+        final CreatedCustomer createdCustomer = createPendingCustomer();
+
+        final String activationResponseBody = activateCustomer(createdCustomer.customerId(), createdCustomer.rawToken())
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        final String passwordSetupToken = objectMapper.readTree(activationResponseBody)
+            .get("passwordSetupToken")
+            .asText();
+
+        final InitialCustomerPasswordInput request =
+            new InitialCustomerPasswordInput(passwordSetupToken, PASSWORD, PASSWORD);
+
+        mockMvc.perform(post(BASE_URL + INITIAL_PASSWORD_PATH, createdCustomer.customerId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(post(BASE_URL + INITIAL_PASSWORD_PATH, createdCustomer.customerId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.errorCode").value(ErrorCode.PASSWORD_SETUP_TOKEN_CONSUMED.name()));
+    }
+
     private CreatedCustomer createPendingCustomer() throws Exception {
         // Use a ULID-based suffix so each test customer email remains unique.
         final String email = EMAIL_LOCAL_PART_PREFIX + ulidGenerator.next().toLowerCase() + EMAIL_DOMAIN;
@@ -263,6 +389,10 @@ class CustomerActivationIntegrationTest extends PostgresSpringIntegrationTest {
     private CapturedActivationEmail latestCapturedToken() {
         assertThat(capturedActivationEmails).isNotEmpty();
         return capturedActivationEmails.getLast();
+    }
+
+    private String issuePasswordSetupTokenFor(final String customerId) {
+        return customerPasswordFacade.issuePasswordSetupToken(CustomerId.of(customerId)).rawToken();
     }
 
     private record CreatedCustomer(String customerId, String rawToken) {

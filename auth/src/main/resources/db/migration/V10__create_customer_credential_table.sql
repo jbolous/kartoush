@@ -6,4 +6,5 @@ CREATE TABLE customer_credential
     updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_customer_credential_created_at ON customer_credential (created_at);
+CREATE INDEX idx_customer_credential_created_at
+    ON customer_credential (created_at);

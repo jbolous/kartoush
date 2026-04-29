@@ -11,11 +11,10 @@ import jakarta.persistence.Table;
 import org.springframework.data.domain.Persistable;
 
 import java.time.Instant;
-import java.util.Objects;
 
 @Entity
-@Table(name = "customer_credential")
-public class CustomerCredentialEntity implements Persistable<String> {
+@Table(name = "customer_password")
+public class CustomerPasswordEntity implements Persistable<String> {
 
     @Id
     @Column(name = "customer_id", nullable = false, length = 26)
@@ -33,17 +32,17 @@ public class CustomerCredentialEntity implements Persistable<String> {
     @jakarta.persistence.Transient
     private boolean isNew = true;
 
-    public CustomerCredentialEntity() {
+    public CustomerPasswordEntity() {
         // for JPA only
     }
 
-    private CustomerCredentialEntity(final String customerId, final String passwordHash) {
+    private CustomerPasswordEntity(final String customerId, final String passwordHash) {
         this.customerId = requireNonBlank(customerId, "customerId is required");
         this.passwordHash = requireNonBlank(passwordHash, "passwordHash is required");
     }
 
-    public static CustomerCredentialEntity create(final String customerId, final String passwordHash) {
-        return new CustomerCredentialEntity(customerId, passwordHash);
+    public static CustomerPasswordEntity create(final String customerId, final String passwordHash) {
+        return new CustomerPasswordEntity(customerId, passwordHash);
     }
 
     @Override
@@ -85,7 +84,7 @@ public class CustomerCredentialEntity implements Persistable<String> {
     @PrePersist
     void onCreate() {
         if (customerId == null) {
-            throw new IllegalStateException("customerId must be set before persisting CustomerCredentialEntity");
+            throw new IllegalStateException("customerId must be set before persisting CustomerPasswordEntity");
         }
 
         final Instant now = Instant.now();
