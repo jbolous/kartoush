@@ -13,4 +13,9 @@ public class DefaultCustomerPasswordHasher implements CustomerPasswordHasher {
     public String hash(final String rawPassword) {
         return passwordEncoder.encode(rawPassword);
     }
+
+    @Override
+    public boolean matches(final String rawPassword, final String passwordHash) {
+        return passwordEncoder.matches(rawPassword, passwordHash);
+    }
 }

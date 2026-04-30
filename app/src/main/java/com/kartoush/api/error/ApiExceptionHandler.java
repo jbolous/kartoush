@@ -4,6 +4,7 @@ import com.kartoush.auth.exception.PasswordSetupTokenConsumedException;
 import com.kartoush.auth.exception.PasswordSetupTokenExpiredException;
 import com.kartoush.auth.exception.PasswordSetupTokenNotFoundException;
 import com.kartoush.auth.exception.CustomerPasswordAlreadyExistsException;
+import com.kartoush.auth.exception.InvalidCustomerCredentialsException;
 import com.kartoush.customer.exception.CustomerAddressNotFoundException;
 import com.kartoush.customer.exception.CustomerAlreadyExistsException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
@@ -308,6 +309,18 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             "Password Setup Token Already Consumed",
             ex.getMessage(),
             ErrorCode.PASSWORD_SETUP_TOKEN_CONSUMED,
+            request);
+    }
+
+    @ExceptionHandler(InvalidCustomerCredentialsException.class)
+    public ProblemDetail handleInvalidCustomerCredentialsException(
+        final InvalidCustomerCredentialsException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.UNAUTHORIZED,
+            "Invalid Customer Credentials",
+            ex.getMessage(),
+            ErrorCode.INVALID_CUSTOMER_CREDENTIALS,
             request);
     }
 

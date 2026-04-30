@@ -3,6 +3,7 @@ package com.kartoush.api.error;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.kartoush.auth.exception.InvalidCustomerCredentialsException;
 import com.kartoush.customer.exception.*;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.validation.RequestValidationException;
@@ -208,6 +209,18 @@ class ApiExceptionHandlerTest {
         assertThat(problem.getTitle()).isEqualTo("Request Validation Failed");
         assertThat(problem.getProperties()).isNotNull();
         assertThat(problem.getProperties().get("errorCode")).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+    }
+
+    @Test
+    void shouldHandleInvalidCustomerCredentialsException() {
+        final InvalidCustomerCredentialsException ex = new InvalidCustomerCredentialsException();
+
+        final ProblemDetail problem = handler.handleInvalidCustomerCredentialsException(ex, request);
+
+        assertThat(problem.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(problem.getTitle()).isEqualTo("Invalid Customer Credentials");
+        assertThat(problem.getProperties()).isNotNull();
+        assertThat(problem.getProperties().get("errorCode")).isEqualTo(ErrorCode.INVALID_CUSTOMER_CREDENTIALS.name());
     }
 
     @Test

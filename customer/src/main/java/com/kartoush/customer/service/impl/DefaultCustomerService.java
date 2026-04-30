@@ -77,6 +77,13 @@ public class DefaultCustomerService implements CustomerService
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Optional<Customer> findCustomerByEmail(final Email email) {
+        return customerRepository.findByEmail(email.value())
+            .map(customerMapper::toDomain);
+    }
+
+    @Override
     @Transactional
     public Customer registerCustomer(final Customer customer, final String termsVersion) {
 

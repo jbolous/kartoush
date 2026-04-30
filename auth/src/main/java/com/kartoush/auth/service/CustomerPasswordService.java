@@ -10,4 +10,6 @@ public interface CustomerPasswordService {
     Optional<CustomerPassword> findByCustomerId(CustomerId customerId);
 
     CustomerPassword setInitialPassword(CustomerId customerId, String rawPassword);
+
+    boolean verify(CustomerId customerId, String rawPassword);
 }

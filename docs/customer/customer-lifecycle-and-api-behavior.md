@@ -255,6 +255,31 @@ Error scenarios:
 
 ---
 
+#### Sign in customer
+
+`POST /api/auth/sign-in`
+
+Authenticates an active customer using email and password and returns an opaque
+bearer token for subsequent authenticated API requests.
+
+Sign-in behavior:
+
+- the customer must exist
+- the customer must currently be in `ACTIVE` status
+- the customer must already have completed initial password setup
+- the supplied password must match the stored password hash
+- a successful sign-in returns an opaque `Bearer` token backed by server-side
+  auth-session state
+
+Error scenarios:
+
+- 400 Bad Request for request validation failures, such as blank or malformed
+  email input
+- 401 Unauthorized if authentication fails because the customer does not exist,
+  is not eligible to sign in, or the password is invalid
+
+---
+
 #### Update customer
 
 `PUT /api/customers/{customerId}`

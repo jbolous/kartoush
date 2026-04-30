@@ -67,4 +67,29 @@ class DefaultCustomerPasswordServiceTest {
         assertThat(credential.orElseThrow().customerId()).isEqualTo(CUSTOMER_ID);
         assertThat(credential.orElseThrow().passwordHash()).isEqualTo(PASSWORD_HASH);
     }
+
+    @Test
+    void shouldVerifyPasswordWhenCredentialExists() {
+        final CustomerPasswordEntity entity =
+            CustomerPasswordEntity.create(CUSTOMER_ID.value(), PASSWORD_HASH);
+
+        when(customerPasswordRepository.findById(CUSTOMER_ID.value()))
+            .thenReturn(Optional.of(entity));
+        when(customerPasswordHasher.matches("Password123!", PASSWORD_HASH)).thenReturn(true);
+
+        final boolean verified = customerPasswordService.verify(CUSTOMER_ID, "Password123!");
+
+        assertThat(verified).isTrue();
+        verify(customerPasswordHasher).matches("Password123!", PASSWORD_HASH);
+    }
+
+    @Test
+    void shouldReturnFalseWhenCredentialDoesNotExistDuringVerification() {
+        when(customerPasswordRepository.findById(CUSTOMER_ID.value()))
+            .thenReturn(Optional.empty());
+
+        final boolean verified = customerPasswordService.verify(CUSTOMER_ID, "Password123!");
+
+        assertThat(verified).isFalse();
+    }
 }
