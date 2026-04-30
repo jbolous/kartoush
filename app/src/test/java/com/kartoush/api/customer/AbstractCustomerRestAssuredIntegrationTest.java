@@ -9,7 +9,7 @@ import com.kartoush.testsupport.HttpSpringIntegrationTest;
 import com.kartoush.testsupport.PostgresRestAssuredIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.net.URI;
 import java.net.URLDecoder;
@@ -38,7 +38,7 @@ abstract class AbstractCustomerRestAssuredIntegrationTest extends PostgresRestAs
     @Autowired
     protected UlidGenerator ulidGenerator;
 
-    @MockitoSpyBean
+    @MockitoBean
     private EmailDeliveryService emailDeliveryService;
 
     private final List<CapturedActivationEmail> capturedActivationEmails = new ArrayList<>();
