@@ -126,8 +126,8 @@ Representative tests include:
 - `CustomerAuthenticationControllerWebMvcTest`
 - `CustomerAuthenticationOpenApiWebMvcTest`
 - `CustomerActivationAndPasswordSetupIntegrationTest`
-- `CustomerPasswordResetIntegrationTest`
-- `CustomerSignInIntegrationTest`
+- `CustomerPasswordResetFlowIntegrationTest`
+- `CustomerSignInFlowIntegrationTest`
 - `DefaultCustomerSignInFacadeTest`
 - `DefaultCustomerPasswordFacadeResetTest`
 - `DefaultCustomerAuthSessionServiceTest`

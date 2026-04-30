@@ -11,8 +11,11 @@ import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
 import com.kartoush.platform.types.exception.InvalidEmailException;
+import com.kartoush.platform.validation.RequestValidationException;
+import com.kartoush.platform.validation.ValidationError;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -84,7 +87,10 @@ public class CustomerPasswordResetApplicationService {
         try {
             return new Email(emailAddress);
         } catch (final InvalidEmailException exception) {
-            throw exception;
+            throw new RequestValidationException(
+                "Request validation failed",
+                List.of(new ValidationError("email", exception.getMessage()))
+            );
         }
     }
 }

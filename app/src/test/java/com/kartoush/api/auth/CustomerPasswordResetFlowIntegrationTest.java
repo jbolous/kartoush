@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringIntegrationTest
 @AutoConfigureMockMvc
-class CustomerPasswordResetIntegrationTest extends PostgresSpringIntegrationTest {
+class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String CUSTOMERS_PATH = "/api/customers";
     private static final String ACTIVATION_PATH = "/{customerId}/activation";
@@ -131,6 +131,18 @@ class CustomerPasswordResetIntegrationTest extends PostgresSpringIntegrationTest
 
         assertThat(capturedPasswordResetEmails).isEmpty();
         assertThat(passwordResetTokenRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void shouldRejectPasswordResetRequestWhenEmailViolatesValueObjectRules() throws Exception {
+        final String tooLongEmail = "j".repeat(151) + "@kartoush.com";
+
+        mockMvc.perform(post(PASSWORD_RESET_PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new ForgotCustomerPasswordRequest(tooLongEmail))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value(ErrorCode.VALIDATION_FAILED.name()))
+            .andExpect(jsonPath("$.errors[0].field").value("email"));
     }
 
     @Test
@@ -254,6 +266,24 @@ class CustomerPasswordResetIntegrationTest extends PostgresSpringIntegrationTest
                     ))))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED.name()));
+    }
+
+    @Test
+    void shouldRejectPasswordResetConfirmationWhenEmailViolatesValueObjectRules() throws Exception {
+        final String tooLongEmail = "j".repeat(151) + "@kartoush.com";
+
+        mockMvc.perform(post(PASSWORD_RESET_CONFIRM_PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new ResetCustomerPasswordRequest(
+                        tooLongEmail,
+                        "reset-token",
+                        NEW_PASSWORD,
+                        NEW_PASSWORD
+                    ))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value(ErrorCode.VALIDATION_FAILED.name()))
+            .andExpect(jsonPath("$.errors[0].field").value("email"));
     }
 
     private String requestPasswordResetAndCaptureToken(final String email) throws Exception {
