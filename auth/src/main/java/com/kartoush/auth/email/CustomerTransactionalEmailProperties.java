@@ -6,6 +6,8 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.net.URI;
+
 @Component
 @ConfigurationProperties(prefix = "kartoush.email.customer")
 public class CustomerTransactionalEmailProperties {
@@ -50,8 +52,8 @@ public class CustomerTransactionalEmailProperties {
     @PostConstruct
     void validate() {
         validateRequiredText(senderName, "kartoush.email.customer.sender-name");
-        validateRequiredText(activationBaseUrl, "kartoush.email.customer.activation-base-url");
-        validateRequiredText(passwordResetBaseUrl, "kartoush.email.customer.password-reset-base-url");
+        validateHttpUrl(activationBaseUrl, "kartoush.email.customer.activation-base-url");
+        validateHttpUrl(passwordResetBaseUrl, "kartoush.email.customer.password-reset-base-url");
 
         try {
             new Email(senderAddress);
@@ -63,6 +65,23 @@ public class CustomerTransactionalEmailProperties {
     private void validateRequiredText(final String value, final String property) {
         if (value == null || value.isBlank()) {
             throw new IllegalStateException(property + " must not be blank");
+        }
+    }
+
+    private void validateHttpUrl(final String value, final String property) {
+        validateRequiredText(value, property);
+
+        final URI uri;
+        try {
+            uri = URI.create(value);
+        } catch (final IllegalArgumentException exception) {
+            throw new IllegalStateException(property + " must be a valid URI", exception);
+        }
+
+        final String scheme = uri.getScheme();
+        if (!uri.isAbsolute() || uri.getHost() == null || scheme == null
+            || (!scheme.equals("http") && !scheme.equals("https"))) {
+            throw new IllegalStateException(property + " must be an absolute http or https URI");
         }
     }
 }
