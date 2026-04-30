@@ -11,5 +11,7 @@ public interface CustomerPasswordService {
 
     CustomerPassword setInitialPassword(CustomerId customerId, String rawPassword);
 
+    CustomerPassword resetPassword(CustomerId customerId, String rawPassword);
+
     boolean verify(CustomerId customerId, String rawPassword);
 }

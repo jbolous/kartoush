@@ -46,6 +46,17 @@ public class DefaultCustomerPasswordService implements CustomerPasswordService {
     }
 
     @Override
+    @Transactional
+    public CustomerPassword resetPassword(final CustomerId customerId, final String rawPassword) {
+        final CustomerPasswordEntity existing = customerPasswordRepository.findById(customerId.value())
+            .orElseThrow(() -> new IllegalStateException("Customer password not found for customer id: " + customerId.value()));
+
+        existing.setPasswordHash(customerPasswordHasher.hash(rawPassword));
+
+        return toDomain(customerPasswordRepository.save(existing));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public boolean verify(final CustomerId customerId, final String rawPassword) {
         return customerPasswordRepository.findById(customerId.value())

@@ -84,6 +84,25 @@ class DefaultCustomerPasswordServiceTest {
     }
 
     @Test
+    void shouldResetExistingPassword() {
+        final CustomerPasswordEntity entity =
+            CustomerPasswordEntity.create(CUSTOMER_ID.value(), PASSWORD_HASH);
+
+        when(customerPasswordRepository.findById(CUSTOMER_ID.value()))
+            .thenReturn(Optional.of(entity));
+        when(customerPasswordHasher.hash("BetterPassword123!")).thenReturn("new-hash");
+        when(customerPasswordRepository.save(entity)).thenReturn(entity);
+
+        final CustomerPassword credential =
+            customerPasswordService.resetPassword(CUSTOMER_ID, "BetterPassword123!");
+
+        assertThat(credential.customerId()).isEqualTo(CUSTOMER_ID);
+        assertThat(entity.getPasswordHash()).isEqualTo("new-hash");
+        verify(customerPasswordRepository).save(entity);
+        verify(customerPasswordHasher).hash("BetterPassword123!");
+    }
+
+    @Test
     void shouldReturnFalseWhenCredentialDoesNotExistDuringVerification() {
         when(customerPasswordRepository.findById(CUSTOMER_ID.value()))
             .thenReturn(Optional.empty());

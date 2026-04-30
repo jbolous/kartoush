@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,5 +65,25 @@ class DefaultCustomerAuthSessionServiceTest {
         assertThat(issued.accessToken()).isEqualTo(RAW_TOKEN);
         assertThat(issued.tokenType()).isEqualTo("Bearer");
         verify(customerAuthSessionRepository).save(any(CustomerAuthSessionEntity.class));
+    }
+
+    @Test
+    void shouldRevokeAllActiveSessionsForCustomer() {
+        final CustomerAuthSessionEntity activeSession =
+            CustomerAuthSessionEntity.create(
+                SESSION_ID,
+                CUSTOMER_ID.value(),
+                TOKEN_HASH,
+                FIXED_INSTANT.minusSeconds(300),
+                null
+            );
+
+        when(clock.instant()).thenReturn(FIXED_INSTANT);
+        when(customerAuthSessionRepository.findAllActiveSessionsByCustomerId(CUSTOMER_ID.value()))
+            .thenReturn(List.of(activeSession));
+
+        customerAuthSessionService.revokeAllFor(CUSTOMER_ID);
+
+        assertThat(activeSession.getRevokedAt()).isEqualTo(FIXED_INSTANT);
     }
 }

@@ -31,19 +31,21 @@ jobs:
       - name: Run unit test suite
         run: ./gradlew --no-daemon test
 
-  app-integration-tests:
+  api-integration-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: customer-api-contracts
+          - name: auth-api-integration-tests
+            test-filter: com.kartoush.api.auth.*
+          - name: customer-api-integration-tests
             test-filter: com.kartoush.api.customer.*
-          - name: terms-of-service-api-contracts
+          - name: terms-api-integration-tests
             test-filter: com.kartoush.api.terms.*
 
-    name: App integration tests (${{ matrix.name }})
+    name: API integration tests (${{ matrix.name }})
 
     steps:
       - name: Check out repository
@@ -62,7 +64,7 @@ jobs:
       - name: Run app integration test group
         run: ./gradlew --no-daemon :app:integrationTest --tests '${{ matrix.test-filter }}'
 
-  customer-integration-tests:
+  customer-module-integration-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -83,7 +85,7 @@ jobs:
       - name: Run customer integration test suite
         run: ./gradlew --no-daemon :customer:integrationTest
 
-  auth-integration-tests:
+  auth-module-integration-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -108,19 +110,19 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - unit-tests
-      - app-integration-tests
-      - customer-integration-tests
-      - auth-integration-tests
+      - api-integration-tests
+      - customer-module-integration-tests
+      - auth-module-integration-tests
     if: ${{ always() }}
 
     steps:
       - name: Validate upstream job results
         run: |
-          if [ "${{ needs.unit-tests.result }}" != "success" ] || [ "${{ needs.app-integration-tests.result }}" != "success" ] || [ "${{ needs.customer-integration-tests.result }}" != "success" ] || [ "${{ needs.auth-integration-tests.result }}" != "success" ]; then
+          if [ "${{ needs.unit-tests.result }}" != "success" ] || [ "${{ needs.api-integration-tests.result }}" != "success" ] || [ "${{ needs.customer-module-integration-tests.result }}" != "success" ] || [ "${{ needs.auth-module-integration-tests.result }}" != "success" ]; then
             echo "One or more verification jobs failed."
             echo "unit-tests=${{ needs.unit-tests.result }}"
-            echo "app-integration-tests=${{ needs.app-integration-tests.result }}"
-            echo "customer-integration-tests=${{ needs.customer-integration-tests.result }}"
-            echo "auth-integration-tests=${{ needs.auth-integration-tests.result }}"
+            echo "api-integration-tests=${{ needs.api-integration-tests.result }}"
+            echo "customer-module-integration-tests=${{ needs.customer-module-integration-tests.result }}"
+            echo "auth-module-integration-tests=${{ needs.auth-module-integration-tests.result }}"
             exit 1
           fi

@@ -58,4 +58,13 @@ public class DefaultCustomerAuthSessionService implements CustomerAuthSessionSer
 
         return new IssuedCustomerAccessToken(rawToken, TOKEN_TYPE);
     }
+
+    @Override
+    @Transactional
+    public void revokeAllFor(final CustomerId customerId) {
+        final Instant revokedAt = Instant.now(clock);
+
+        customerAuthSessionRepository.findAllActiveSessionsByCustomerId(customerId.value())
+            .forEach(session -> session.setRevokedAt(revokedAt));
+    }
 }

@@ -3,7 +3,10 @@ package com.kartoush.api.error;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.kartoush.auth.exception.InvalidPasswordResetException;
 import com.kartoush.auth.exception.InvalidCustomerCredentialsException;
+import com.kartoush.auth.exception.PasswordResetTokenExpiredException;
+import com.kartoush.auth.exception.PasswordReuseNotAllowedException;
 import com.kartoush.customer.exception.*;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.validation.RequestValidationException;
@@ -221,6 +224,42 @@ class ApiExceptionHandlerTest {
         assertThat(problem.getTitle()).isEqualTo("Invalid Customer Credentials");
         assertThat(problem.getProperties()).isNotNull();
         assertThat(problem.getProperties().get("errorCode")).isEqualTo(ErrorCode.INVALID_CUSTOMER_CREDENTIALS.name());
+    }
+
+    @Test
+    void shouldHandlePasswordReuseNotAllowedException() {
+        final PasswordReuseNotAllowedException ex = new PasswordReuseNotAllowedException(CUSTOMER_ID);
+
+        final ProblemDetail problem = handler.handlePasswordReuseNotAllowedException(ex, request);
+
+        assertThat(problem.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(problem.getTitle()).isEqualTo("Password Reuse Not Allowed");
+        assertThat(problem.getProperties()).isNotNull();
+        assertThat(problem.getProperties().get("errorCode")).isEqualTo(ErrorCode.PASSWORD_REUSE_NOT_ALLOWED.name());
+    }
+
+    @Test
+    void shouldHandlePasswordResetTokenExpiredException() {
+        final PasswordResetTokenExpiredException ex = new PasswordResetTokenExpiredException(CUSTOMER_ID);
+
+        final ProblemDetail problem = handler.handlePasswordResetTokenExpiredException(ex, request);
+
+        assertThat(problem.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(problem.getTitle()).isEqualTo("Password Reset Token Expired");
+        assertThat(problem.getProperties()).isNotNull();
+        assertThat(problem.getProperties().get("errorCode")).isEqualTo(ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED.name());
+    }
+
+    @Test
+    void shouldHandleInvalidPasswordResetException() {
+        final InvalidPasswordResetException ex = new InvalidPasswordResetException(CustomerStatus.INACTIVE.name());
+
+        final ProblemDetail problem = handler.handleInvalidPasswordResetException(ex, request);
+
+        assertThat(problem.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(problem.getTitle()).isEqualTo("Invalid Password Reset");
+        assertThat(problem.getProperties()).isNotNull();
+        assertThat(problem.getProperties().get("errorCode")).isEqualTo(ErrorCode.INVALID_PASSWORD_RESET.name());
     }
 
     @Test

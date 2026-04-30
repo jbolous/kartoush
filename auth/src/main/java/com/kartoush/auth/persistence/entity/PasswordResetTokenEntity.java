@@ -8,8 +8,8 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 
 @Entity
-@Table(name = "customer_auth_session")
-public class CustomerAuthSessionEntity {
+@Table(name = "customer_password_reset_token")
+public class PasswordResetTokenEntity {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false, length = 26)
@@ -21,37 +21,43 @@ public class CustomerAuthSessionEntity {
     @Column(name = "token_hash", nullable = false, unique = true, length = 128)
     private String tokenHash;
 
-    @Column(name = "issued_at", nullable = false, updatable = false)
-    private Instant issuedAt;
+    @Column(name = "expires_at", nullable = false)
+    private Instant expiresAt;
 
-    @Column(name = "revoked_at")
-    private Instant revokedAt;
+    @Column(name = "consumed_at")
+    private Instant consumedAt;
 
-    protected CustomerAuthSessionEntity() {
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    protected PasswordResetTokenEntity() {
     }
 
-    private CustomerAuthSessionEntity(
+    private PasswordResetTokenEntity(
         final String id,
         final String customerId,
         final String tokenHash,
-        final Instant issuedAt,
-        final Instant revokedAt
+        final Instant expiresAt,
+        final Instant consumedAt,
+        final Instant createdAt
     ) {
         this.id = requireNonBlank(id, "id is required");
         this.customerId = requireNonBlank(customerId, "customerId is required");
         this.tokenHash = requireNonBlank(tokenHash, "tokenHash is required");
-        this.issuedAt = issuedAt;
-        this.revokedAt = revokedAt;
+        this.expiresAt = expiresAt;
+        this.consumedAt = consumedAt;
+        this.createdAt = createdAt;
     }
 
-    public static CustomerAuthSessionEntity create(
+    public static PasswordResetTokenEntity create(
         final String id,
         final String customerId,
         final String tokenHash,
-        final Instant issuedAt,
-        final Instant revokedAt
+        final Instant expiresAt,
+        final Instant consumedAt,
+        final Instant createdAt
     ) {
-        return new CustomerAuthSessionEntity(id, customerId, tokenHash, issuedAt, revokedAt);
+        return new PasswordResetTokenEntity(id, customerId, tokenHash, expiresAt, consumedAt, createdAt);
     }
 
     public String getId() {
@@ -66,16 +72,16 @@ public class CustomerAuthSessionEntity {
         return tokenHash;
     }
 
-    public Instant getIssuedAt() {
-        return issuedAt;
+    public Instant getExpiresAt() {
+        return expiresAt;
     }
 
-    public Instant getRevokedAt() {
-        return revokedAt;
+    public Instant getConsumedAt() {
+        return consumedAt;
     }
 
-    public void setRevokedAt(final Instant revokedAt) {
-        this.revokedAt = revokedAt;
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
     private static String requireNonBlank(final String value, final String message) {

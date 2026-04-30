@@ -1,10 +1,15 @@
 package com.kartoush.api.error;
 
 import com.kartoush.auth.exception.PasswordSetupTokenConsumedException;
+import com.kartoush.auth.exception.PasswordResetTokenConsumedException;
+import com.kartoush.auth.exception.PasswordResetTokenExpiredException;
+import com.kartoush.auth.exception.PasswordResetTokenNotFoundException;
 import com.kartoush.auth.exception.PasswordSetupTokenExpiredException;
 import com.kartoush.auth.exception.PasswordSetupTokenNotFoundException;
 import com.kartoush.auth.exception.CustomerPasswordAlreadyExistsException;
 import com.kartoush.auth.exception.InvalidCustomerCredentialsException;
+import com.kartoush.auth.exception.InvalidPasswordResetException;
+import com.kartoush.auth.exception.PasswordReuseNotAllowedException;
 import com.kartoush.customer.exception.CustomerAddressNotFoundException;
 import com.kartoush.customer.exception.CustomerAlreadyExistsException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
@@ -309,6 +314,66 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             "Password Setup Token Already Consumed",
             ex.getMessage(),
             ErrorCode.PASSWORD_SETUP_TOKEN_CONSUMED,
+            request);
+    }
+
+    @ExceptionHandler(PasswordResetTokenNotFoundException.class)
+    public ProblemDetail handlePasswordResetTokenNotFoundException(
+        final PasswordResetTokenNotFoundException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.NOT_FOUND,
+            "Password Reset Token Not Found",
+            ex.getMessage(),
+            ErrorCode.PASSWORD_RESET_TOKEN_NOT_FOUND,
+            request);
+    }
+
+    @ExceptionHandler(PasswordResetTokenExpiredException.class)
+    public ProblemDetail handlePasswordResetTokenExpiredException(
+        final PasswordResetTokenExpiredException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Password Reset Token Expired",
+            ex.getMessage(),
+            ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED,
+            request);
+    }
+
+    @ExceptionHandler(PasswordResetTokenConsumedException.class)
+    public ProblemDetail handlePasswordResetTokenConsumedException(
+        final PasswordResetTokenConsumedException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Password Reset Token Already Consumed",
+            ex.getMessage(),
+            ErrorCode.PASSWORD_RESET_TOKEN_CONSUMED,
+            request);
+    }
+
+    @ExceptionHandler(InvalidPasswordResetException.class)
+    public ProblemDetail handleInvalidPasswordResetException(
+        final InvalidPasswordResetException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Invalid Password Reset",
+            ex.getMessage(),
+            ErrorCode.INVALID_PASSWORD_RESET,
+            request);
+    }
+
+    @ExceptionHandler(PasswordReuseNotAllowedException.class)
+    public ProblemDetail handlePasswordReuseNotAllowedException(
+        final PasswordReuseNotAllowedException ex,
+        final HttpServletRequest request) {
+        return apiProblemFactory.create(
+            HttpStatus.CONFLICT,
+            "Password Reuse Not Allowed",
+            ex.getMessage(),
+            ErrorCode.PASSWORD_REUSE_NOT_ALLOWED,
             request);
     }
 

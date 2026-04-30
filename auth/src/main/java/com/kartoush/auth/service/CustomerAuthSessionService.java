@@ -6,4 +6,6 @@ import com.kartoush.platform.types.CustomerId;
 public interface CustomerAuthSessionService {
 
     IssuedCustomerAccessToken issueFor(CustomerId customerId);
+
+    void revokeAllFor(CustomerId customerId);
 }
