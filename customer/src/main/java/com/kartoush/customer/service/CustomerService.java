@@ -14,6 +14,8 @@ public interface CustomerService
 
     Optional<Customer> getCustomerById(String customerId);
 
+    Optional<Customer> findCustomerByEmail(Email email);
+
     Customer updateCustomer(final String customerId, final CustomerProfile profile);
 
     Customer registerCustomer(final Customer customer, final String termsVersion);

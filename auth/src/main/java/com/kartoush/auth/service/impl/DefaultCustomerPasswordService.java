@@ -45,6 +45,14 @@ public class DefaultCustomerPasswordService implements CustomerPasswordService {
         return toDomain(saved);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean verify(final CustomerId customerId, final String rawPassword) {
+        return customerPasswordRepository.findById(customerId.value())
+            .map(entity -> customerPasswordHasher.matches(rawPassword, entity.getPasswordHash()))
+            .orElse(false);
+    }
+
     private CustomerPassword toDomain(final CustomerPasswordEntity entity) {
         return new CustomerPassword(
             CustomerId.of(entity.getCustomerId()),

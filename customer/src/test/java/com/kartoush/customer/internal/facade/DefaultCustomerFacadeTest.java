@@ -21,6 +21,7 @@ import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
 import com.kartoush.platform.ulid.UlidGenerator;
 import java.time.Instant;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -129,7 +130,7 @@ class DefaultCustomerFacadeTest {
             new InitialCustomerPasswordInput(SETUP_TOKEN, "Password123!", "Password123!");
         final Customer activeCustomer = buildActivatedCustomer();
 
-        when(customerService.getCustomerById(CUSTOMER_ID)).thenReturn(java.util.Optional.of(activeCustomer));
+        when(customerService.getCustomerById(CUSTOMER_ID)).thenReturn(Optional.of(activeCustomer));
 
         facade.setInitialPassword(CUSTOMER_ID, input);
 
