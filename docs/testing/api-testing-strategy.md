@@ -246,6 +246,7 @@ The customer create endpoint is a good example of the intended workflow.
 
    Today that means:
 
+   - `com.kartoush.api.auth.*`
    - `com.kartoush.api.customer.*`
    - `com.kartoush.api.terms.*`
 

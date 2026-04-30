@@ -270,6 +270,7 @@ Sign-in behavior:
 - the supplied password must match the stored password hash
 - a successful sign-in returns an opaque `Bearer` token backed by server-side
   auth-session state
+- failed sign-in attempts do not create authenticated sessions
 
 Error scenarios:
 
@@ -277,6 +278,10 @@ Error scenarios:
   email input
 - 401 Unauthorized if authentication fails because the customer does not exist,
   is not eligible to sign in, or the password is invalid
+
+See also:
+
+- `docs/auth/authentication-contracts-and-security-behavior.md`
 
 ---
 

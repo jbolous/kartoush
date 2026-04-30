@@ -114,6 +114,8 @@ class CustomerSignInIntegrationTest extends PostgresSpringIntegrationTest {
                     new CustomerSignInRequest(createdCustomer.email(), "WrongPassword123!"))))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.INVALID_CUSTOMER_CREDENTIALS.name()));
+
+        assertThat(customerAuthSessionRepository.findAll()).isEmpty();
     }
 
     @Test
@@ -126,6 +128,21 @@ class CustomerSignInIntegrationTest extends PostgresSpringIntegrationTest {
                     new CustomerSignInRequest(createdCustomer.email(), PASSWORD))))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.INVALID_CUSTOMER_CREDENTIALS.name()));
+
+        assertThat(customerAuthSessionRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void shouldRejectSignInForMalformedEmailWithoutCreatingAuthSession() throws Exception {
+        mockMvc.perform(post(SIGN_IN_PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new CustomerSignInRequest("not-an-email", PASSWORD))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value(ErrorCode.VALIDATION_FAILED.name()))
+            .andExpect(jsonPath("$.errors[0].field").value("email"));
+
+        assertThat(customerAuthSessionRepository.findAll()).isEmpty();
     }
 
     private CreatedCustomer createActiveCustomerWithPassword() throws Exception {
