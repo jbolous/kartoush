@@ -38,6 +38,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: auth-api-integration-tests
+            test-filter: com.kartoush.api.auth.*
           - name: customer-api-integration-tests
             test-filter: com.kartoush.api.customer.*
           - name: terms-api-integration-tests
