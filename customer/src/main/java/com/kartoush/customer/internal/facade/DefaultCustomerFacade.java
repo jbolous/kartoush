@@ -1,6 +1,8 @@
 package com.kartoush.customer.internal.facade;
 
 import com.kartoush.auth.domain.IssuedPasswordSetupToken;
+import com.kartoush.auth.email.CustomerEmailFactory;
+import com.kartoush.auth.email.EmailDeliveryService;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
@@ -16,7 +18,6 @@ import com.kartoush.customer.internal.validation.CreateCustomerInputValidator;
 import com.kartoush.customer.internal.validation.SetInitialCustomerPasswordInputValidator;
 import com.kartoush.customer.internal.validation.UpdateCustomerInputValidator;
 import com.kartoush.customer.service.ActivationEmailDelivery;
-import com.kartoush.customer.service.ActivationEmailService;
 import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
 import com.kartoush.customer.service.IssuedActivationToken;
@@ -33,7 +34,8 @@ import java.util.List;
 public class DefaultCustomerFacade implements CustomerFacade {
 
     private final CustomerService customerService;
-    private final ActivationEmailService activationEmailService;
+    private final EmailDeliveryService emailDeliveryService;
+    private final CustomerEmailFactory customerEmailFactory;
     private final ActivationTokenService activationTokenService;
     private final CustomerPasswordFacade customerPasswordFacade;
     private final UlidGenerator ulidGenerator;
@@ -43,7 +45,8 @@ public class DefaultCustomerFacade implements CustomerFacade {
 
     public DefaultCustomerFacade(
             final CustomerService customerService,
-            final ActivationEmailService activationEmailService,
+            final EmailDeliveryService emailDeliveryService,
+            final CustomerEmailFactory customerEmailFactory,
             final ActivationTokenService activationTokenService,
             final CustomerPasswordFacade customerPasswordFacade,
             final UlidGenerator ulidGenerator,
@@ -51,7 +54,8 @@ public class DefaultCustomerFacade implements CustomerFacade {
             final SetInitialCustomerPasswordInputValidator setInitialCustomerPasswordInputValidator,
             final UpdateCustomerInputValidator updateCustomerInputValidator) {
         this.customerService = customerService;
-        this.activationEmailService = activationEmailService;
+        this.emailDeliveryService = emailDeliveryService;
+        this.customerEmailFactory = customerEmailFactory;
         this.activationTokenService = activationTokenService;
         this.customerPasswordFacade = customerPasswordFacade;
         this.ulidGenerator = ulidGenerator;
@@ -83,7 +87,13 @@ public class DefaultCustomerFacade implements CustomerFacade {
         final Customer savedCustomer = customerService.registerCustomer(customer, input.termsVersion());
         final IssuedActivationToken issuedActivationToken = activationTokenService.createFor(savedCustomer.getId());
 
-        activationEmailService.sendActivationToken(savedCustomer.getEmail(), issuedActivationToken.rawToken());
+        emailDeliveryService.send(
+            customerEmailFactory.newActivationEmail(
+                savedCustomer.getEmail(),
+                savedCustomer.getId(),
+                issuedActivationToken.rawToken()
+            )
+        );
 
         return toCustomerView(savedCustomer);
     }
@@ -137,7 +147,13 @@ public class DefaultCustomerFacade implements CustomerFacade {
     @Override
     public void resendActivationToken(final String customerId) {
         final ActivationEmailDelivery activationEmailDelivery = customerService.issueActivationTokenForResend(customerId);
-        activationEmailService.sendActivationToken(activationEmailDelivery.email(), activationEmailDelivery.rawToken());
+        emailDeliveryService.send(
+            customerEmailFactory.newActivationEmail(
+                activationEmailDelivery.email(),
+                activationEmailDelivery.customerId(),
+                activationEmailDelivery.rawToken()
+            )
+        );
     }
 
     @Override

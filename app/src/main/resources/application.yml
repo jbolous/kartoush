@@ -35,6 +35,12 @@ logging:
     root: info
 
 kartoush:
+  email:
+    customer:
+      sender-name: Kartoush
+      sender-address: no-reply@kartoush.dev
+      activation-base-url: https://kartoush.dev/activate
+      password-reset-base-url: https://kartoush.dev/reset-password
   auth:
     password-policy:
       min-length: 12

@@ -383,6 +383,7 @@ class DefaultCustomerServiceTest
         verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
         verify(customerMapper).toDomain(customerEntity);
         verify(activationTokenService).resendFor(CUSTOMER_ID);
+        assertThat(activationEmail.customerId()).isEqualTo(CUSTOMER_ID);
         assertThat(activationEmail.email()).isEqualTo(EMAIL);
         assertThat(activationEmail.rawToken()).isEqualTo(RAW_TOKEN);
     }

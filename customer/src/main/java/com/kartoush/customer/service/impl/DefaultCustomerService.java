@@ -228,7 +228,7 @@ public class DefaultCustomerService implements CustomerService
         }
 
         final IssuedActivationToken issuedActivationToken = activationTokenService.resendFor(customer.getId());
-        return new ActivationEmailDelivery(customer.getEmail(), issuedActivationToken.rawToken());
+        return new ActivationEmailDelivery(customer.getId(), customer.getEmail(), issuedActivationToken.rawToken());
     }
 
     private void validateCustomerCanBeUpdated(final CustomerEntity customer) {
