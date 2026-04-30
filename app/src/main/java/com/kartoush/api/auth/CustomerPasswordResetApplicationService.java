@@ -1,10 +1,11 @@
 package com.kartoush.api.auth;
 
 import com.kartoush.auth.domain.IssuedPasswordResetToken;
+import com.kartoush.auth.email.CustomerEmailFactory;
+import com.kartoush.auth.email.EmailDeliveryService;
 import com.kartoush.auth.exception.InvalidPasswordResetException;
 import com.kartoush.auth.exception.PasswordResetTokenNotFoundException;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
-import com.kartoush.auth.service.PasswordResetEmailService;
 import com.kartoush.customer.facade.CustomerAuthenticationFacade;
 import com.kartoush.customer.facade.model.CustomerAuthCandidateView;
 import com.kartoush.platform.types.CustomerId;
@@ -23,18 +24,21 @@ public class CustomerPasswordResetApplicationService {
 
     private final CustomerAuthenticationFacade customerAuthenticationFacade;
     private final CustomerPasswordFacade customerPasswordFacade;
-    private final PasswordResetEmailService passwordResetEmailService;
+    private final EmailDeliveryService emailDeliveryService;
+    private final CustomerEmailFactory customerEmailFactory;
     private final ResetCustomerPasswordRequestValidator resetCustomerPasswordRequestValidator;
 
     public CustomerPasswordResetApplicationService(
         final CustomerAuthenticationFacade customerAuthenticationFacade,
         final CustomerPasswordFacade customerPasswordFacade,
-        final PasswordResetEmailService passwordResetEmailService,
+        final EmailDeliveryService emailDeliveryService,
+        final CustomerEmailFactory customerEmailFactory,
         final ResetCustomerPasswordRequestValidator resetCustomerPasswordRequestValidator
     ) {
         this.customerAuthenticationFacade = customerAuthenticationFacade;
         this.customerPasswordFacade = customerPasswordFacade;
-        this.passwordResetEmailService = passwordResetEmailService;
+        this.emailDeliveryService = emailDeliveryService;
+        this.customerEmailFactory = customerEmailFactory;
         this.resetCustomerPasswordRequestValidator = resetCustomerPasswordRequestValidator;
     }
 
@@ -60,7 +64,9 @@ public class CustomerPasswordResetApplicationService {
         }
 
         final IssuedPasswordResetToken issuedResetToken = customerPasswordFacade.issuePasswordResetToken(customerId);
-        passwordResetEmailService.sendPasswordResetEmail(email, issuedResetToken.rawToken());
+        emailDeliveryService.send(
+            customerEmailFactory.newPasswordResetEmail(email, issuedResetToken.rawToken())
+        );
     }
 
     public void resetPassword(final ResetCustomerPasswordRequest request) {

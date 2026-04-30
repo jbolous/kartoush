@@ -2,6 +2,9 @@ package com.kartoush.api.customer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kartoush.auth.email.EmailDeliveryService;
+import com.kartoush.auth.email.EmailMessage;
+import com.kartoush.auth.email.EmailMessageType;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
 import com.kartoush.auth.persistence.repository.CustomerPasswordRepository;
 import com.kartoush.api.error.ErrorCode;
@@ -13,7 +16,6 @@ import com.kartoush.customer.persistence.model.ActivationTokenIdEmbeddable;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.ActivationTokenRepository;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
-import com.kartoush.customer.service.ActivationEmailService;
 import com.kartoush.customer.service.ActivationTokenHasher;
 import com.kartoush.platform.types.ActivationTokenId;
 import com.kartoush.platform.types.CustomerId;
@@ -26,19 +28,23 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.Instant;
+import java.net.URI;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -83,8 +89,8 @@ class CustomerActivationAndPasswordSetupIntegrationTest extends PostgresSpringIn
     @Autowired
     private UlidGenerator ulidGenerator;
 
-    @MockitoSpyBean
-    private ActivationEmailService activationEmailService;
+    @MockitoBean
+    private EmailDeliveryService emailDeliveryService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -96,13 +102,17 @@ class CustomerActivationAndPasswordSetupIntegrationTest extends PostgresSpringIn
         customerRepository.deleteAll();
 
         capturedActivationEmails.clear();
-        reset(activationEmailService);
+        reset(emailDeliveryService);
         doAnswer(invocation -> {
-            capturedActivationEmails.add(new CapturedActivationEmail(
-                invocation.getArgument(0, Email.class),
-                invocation.getArgument(1, String.class)));
+            final EmailMessage email = invocation.getArgument(0, EmailMessage.class);
+            if (email.type() == EmailMessageType.CUSTOMER_ACTIVATION) {
+                capturedActivationEmails.add(new CapturedActivationEmail(
+                    email.recipient(),
+                    queryParam(email.actionUrl(), "token")
+                ));
+            }
             return null;
-        }).when(activationEmailService).sendActivationToken(any(Email.class), anyString());
+        }).when(emailDeliveryService).send(any(EmailMessage.class));
     }
 
     @Test
@@ -422,5 +432,18 @@ class CustomerActivationAndPasswordSetupIntegrationTest extends PostgresSpringIn
     }
 
     private record CapturedActivationEmail(Email email, String rawToken) {
+    }
+
+    private String queryParam(final String url, final String name) {
+        return queryParams(url).get(name);
+    }
+
+    private Map<String, String> queryParams(final String url) {
+        return List.of(URI.create(url).getQuery().split("&")).stream()
+            .map(part -> part.split("=", 2))
+            .collect(Collectors.toMap(
+                pair -> URLDecoder.decode(pair[0], StandardCharsets.UTF_8),
+                pair -> pair.length > 1 ? URLDecoder.decode(pair[1], StandardCharsets.UTF_8) : ""
+            ));
     }
 }

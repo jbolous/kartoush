@@ -2,6 +2,9 @@ package com.kartoush.customer.internal.facade;
 
 import com.kartoush.auth.domain.PasswordSetupToken;
 import com.kartoush.auth.domain.IssuedPasswordSetupToken;
+import com.kartoush.auth.email.CustomerEmailFactory;
+import com.kartoush.auth.email.EmailDeliveryService;
+import com.kartoush.auth.email.EmailMessage;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
@@ -12,7 +15,6 @@ import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
 import com.kartoush.customer.internal.validation.CreateCustomerInputValidator;
 import com.kartoush.customer.internal.validation.SetInitialCustomerPasswordInputValidator;
 import com.kartoush.customer.service.ActivationEmailDelivery;
-import com.kartoush.customer.service.ActivationEmailService;
 import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
 import com.kartoush.customer.service.IssuedActivationToken;
@@ -59,7 +61,10 @@ class DefaultCustomerFacadeTest {
     private CustomerService customerService;
 
     @Mock
-    private ActivationEmailService activationEmailService;
+    private EmailDeliveryService emailDeliveryService;
+
+    @Mock
+    private CustomerEmailFactory customerEmailFactory;
 
     @Mock
     private ActivationTokenService activationTokenService;
@@ -77,11 +82,14 @@ class DefaultCustomerFacadeTest {
         final var saved = buildCustomer();
         final var view = buildCustomerView();
         final var issuedActivationToken = new IssuedActivationToken(mock(com.kartoush.customer.domain.ActivationToken.class), RAW_TOKEN);
+        final EmailMessage activationEmail = mock(EmailMessage.class);
 
         // when
         when(ulidGenerator.next()).thenReturn(CUSTOMER_ID);
         when(customerService.registerCustomer(any(), any())).thenReturn(saved);
         when(activationTokenService.createFor(CustomerId.of(CUSTOMER_ID))).thenReturn(issuedActivationToken);
+        when(customerEmailFactory.newActivationEmail(new Email(EMAIL), CustomerId.of(CUSTOMER_ID), RAW_TOKEN))
+            .thenReturn(activationEmail);
 
         final var result = facade.createCustomer(request);
 
@@ -90,7 +98,7 @@ class DefaultCustomerFacadeTest {
         verify(validator).validate(request);
         verify(customerService).registerCustomer(any(), org.mockito.ArgumentMatchers.eq(TERMS_VERSION));
         verify(activationTokenService).createFor(CustomerId.of(CUSTOMER_ID));
-        verify(activationEmailService).sendActivationToken(new Email(EMAIL), RAW_TOKEN);
+        verify(emailDeliveryService).send(activationEmail);
     }
 
     @Test
@@ -146,15 +154,18 @@ class DefaultCustomerFacadeTest {
     void shouldResendActivationToken() {
         // given
         final ActivationEmailDelivery activationEmail =
-            new ActivationEmailDelivery(new Email(EMAIL), RAW_TOKEN);
+            new ActivationEmailDelivery(CustomerId.of(CUSTOMER_ID), new Email(EMAIL), RAW_TOKEN);
+        final EmailMessage email = mock(EmailMessage.class);
         when(customerService.issueActivationTokenForResend(CUSTOMER_ID)).thenReturn(activationEmail);
+        when(customerEmailFactory.newActivationEmail(new Email(EMAIL), CustomerId.of(CUSTOMER_ID), RAW_TOKEN))
+            .thenReturn(email);
 
         // when
         facade.resendActivationToken(CUSTOMER_ID);
 
         // then
         verify(customerService).issueActivationTokenForResend(CUSTOMER_ID);
-        verify(activationEmailService).sendActivationToken(new Email(EMAIL), RAW_TOKEN);
+        verify(emailDeliveryService).send(email);
     }
 
     private CreateCustomerInput buildCustomerRequest(){
