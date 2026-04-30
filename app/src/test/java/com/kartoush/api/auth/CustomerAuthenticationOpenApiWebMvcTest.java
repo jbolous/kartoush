@@ -41,6 +41,8 @@ class CustomerAuthenticationOpenApiWebMvcTest {
 
     private static final String API_DOCS_PATH = "/v3/api-docs";
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
+    private static final String PASSWORD_RESET_PATH = "/api/auth/password-reset";
+    private static final String PASSWORD_RESET_CONFIRM_PATH = "/api/auth/password-reset/confirm";
     private static final String API_PROBLEM_RESPONSE_REF = "#/components/schemas/ApiProblemResponse";
     private static final String VALIDATION_PROBLEM_RESPONSE_REF = "#/components/schemas/ValidationProblemResponse";
 
@@ -49,6 +51,9 @@ class CustomerAuthenticationOpenApiWebMvcTest {
 
     @MockitoBean
     private CustomerAuthenticationApplicationService customerAuthenticationApplicationService;
+
+    @MockitoBean
+    private CustomerPasswordResetApplicationService customerPasswordResetApplicationService;
 
     @MockitoBean
     private ApiProblemFactory apiProblemFactory;
@@ -62,6 +67,16 @@ class CustomerAuthenticationOpenApiWebMvcTest {
             .andExpect(jsonPath(problemSchemaRefPath(SIGN_IN_PATH, "post", HttpStatus.BAD_REQUEST.value()))
                 .value(VALIDATION_PROBLEM_RESPONSE_REF))
             .andExpect(jsonPath(problemSchemaRefPath(SIGN_IN_PATH, "post", HttpStatus.UNAUTHORIZED.value()))
+                .value(API_PROBLEM_RESPONSE_REF))
+            .andExpect(jsonPath(operationPath(PASSWORD_RESET_PATH, "post", "summary"))
+                .value("Request a customer password reset"))
+            .andExpect(jsonPath(problemSchemaRefPath(PASSWORD_RESET_PATH, "post", HttpStatus.BAD_REQUEST.value()))
+                .value(VALIDATION_PROBLEM_RESPONSE_REF))
+            .andExpect(jsonPath(operationPath(PASSWORD_RESET_CONFIRM_PATH, "post", "summary"))
+                .value("Reset a customer password"))
+            .andExpect(jsonPath(problemSchemaRefPath(PASSWORD_RESET_CONFIRM_PATH, "post", HttpStatus.NOT_FOUND.value()))
+                .value(API_PROBLEM_RESPONSE_REF))
+            .andExpect(jsonPath(problemSchemaRefPath(PASSWORD_RESET_CONFIRM_PATH, "post", HttpStatus.CONFLICT.value()))
                 .value(API_PROBLEM_RESPONSE_REF))
             .andExpect(jsonPath("$.components.schemas.CustomerSignInView.properties.accessToken.type")
                 .value("string"))

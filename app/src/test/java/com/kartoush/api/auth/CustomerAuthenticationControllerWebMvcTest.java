@@ -31,6 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class CustomerAuthenticationControllerWebMvcTest {
 
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
+    private static final String PASSWORD_RESET_PATH = "/api/auth/password-reset";
+    private static final String PASSWORD_RESET_CONFIRM_PATH = "/api/auth/password-reset/confirm";
 
     @Autowired
     private MockMvc mockMvc;
@@ -42,6 +44,9 @@ class CustomerAuthenticationControllerWebMvcTest {
 
     @MockitoBean
     private CustomerAuthenticationApplicationService customerAuthenticationApplicationService;
+
+    @MockitoBean
+    private CustomerPasswordResetApplicationService customerPasswordResetApplicationService;
 
     @Test
     void shouldSignInCustomer() throws Exception {
@@ -59,5 +64,30 @@ class CustomerAuthenticationControllerWebMvcTest {
             .andExpect(jsonPath("$.tokenType").value("Bearer"));
 
         verify(customerAuthenticationApplicationService).signIn(request.email(), request.password());
+    }
+
+    @Test
+    void shouldRequestPasswordReset() throws Exception {
+        final ForgotCustomerPasswordRequest request = new ForgotCustomerPasswordRequest("jack@kartoush.com");
+
+        mockMvc.perform(post(PASSWORD_RESET_PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isNoContent());
+
+        verify(customerPasswordResetApplicationService).requestPasswordReset(request.email());
+    }
+
+    @Test
+    void shouldResetCustomerPassword() throws Exception {
+        final ResetCustomerPasswordRequest request =
+            new ResetCustomerPasswordRequest("jack@kartoush.com", "reset-token", "Password123!", "Password123!");
+
+        mockMvc.perform(post(PASSWORD_RESET_CONFIRM_PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isNoContent());
+
+        verify(customerPasswordResetApplicationService).resetPassword(request);
     }
 }

@@ -1,6 +1,7 @@
 package com.kartoush.auth.facade;
 
 import com.kartoush.auth.domain.CustomerPassword;
+import com.kartoush.auth.domain.IssuedPasswordResetToken;
 import com.kartoush.auth.domain.IssuedPasswordSetupToken;
 import com.kartoush.platform.types.CustomerId;
 
@@ -13,4 +14,8 @@ public interface CustomerPasswordFacade {
     IssuedPasswordSetupToken issuePasswordSetupToken(CustomerId customerId);
 
     CustomerPassword setInitialPassword(CustomerId customerId, String rawSetupToken, String rawPassword);
+
+    IssuedPasswordResetToken issuePasswordResetToken(CustomerId customerId);
+
+    CustomerPassword resetPassword(CustomerId customerId, String rawResetToken, String rawPassword);
 }
