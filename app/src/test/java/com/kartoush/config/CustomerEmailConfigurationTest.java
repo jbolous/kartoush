@@ -1,6 +1,7 @@
 package com.kartoush.config;
 
 import com.kartoush.auth.email.CustomerTransactionalEmailProperties;
+import com.kartoush.auth.email.EmailDeliveryConfiguration;
 import com.kartoush.auth.email.EmailDeliveryService;
 import com.kartoush.auth.email.EmailMessage;
 import com.kartoush.auth.email.NoOpEmailDeliveryService;
@@ -8,8 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +18,7 @@ class CustomerEmailConfigurationTest {
         .withConfiguration(AutoConfigurations.of(ConfigurationPropertiesAutoConfiguration.class))
         .withUserConfiguration(
             CustomerTransactionalEmailProperties.class,
-            NoOpEmailDeliveryService.class
+            EmailDeliveryConfiguration.class
         );
 
     @Test
@@ -36,7 +35,7 @@ class CustomerEmailConfigurationTest {
     @Test
     void shouldBackOffNoOpEmailDeliveryServiceWhenConcreteBeanExists() {
         contextRunner
-            .withUserConfiguration(StubEmailDeliveryConfiguration.class)
+            .withBean("stubEmailDeliveryService", EmailDeliveryService.class, StubEmailDeliveryService::new)
             .run(context -> {
                 assertThat(context).hasNotFailed();
                 assertThat(context).hasSingleBean(EmailDeliveryService.class);
@@ -45,13 +44,13 @@ class CustomerEmailConfigurationTest {
             });
     }
 
-    @Configuration
-    static class StubEmailDeliveryConfiguration {
-
-        @Bean
-        EmailDeliveryService emailDeliveryService() {
-            return new StubEmailDeliveryService();
-        }
+    @Test
+    void shouldProvideNoOpEmailDeliveryServiceWhenNoConcreteBeanExists() {
+        contextRunner.run(context -> {
+            assertThat(context).hasNotFailed();
+            assertThat(context).hasSingleBean(EmailDeliveryService.class);
+            assertThat(context.getBean(EmailDeliveryService.class)).isInstanceOf(NoOpEmailDeliveryService.class);
+        });
     }
 
     static class StubEmailDeliveryService implements EmailDeliveryService {
