@@ -1,0 +1,14 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+kartoush:
+  email:
+    delivery:
+      provider: ${KARTOUSH_EMAIL_DELIVERY_PROVIDER:mailtrap}
+      enabled: ${KARTOUSH_EMAIL_DELIVERY_ENABLED:false}
+      mailtrap:
+        api-base-url: ${KARTOUSH_EMAIL_MAILTRAP_API_BASE_URL:https://sandbox.api.mailtrap.io/api/send}
+        api-token: ${KARTOUSH_EMAIL_MAILTRAP_API_TOKEN:}
+        inbox-id: ${KARTOUSH_EMAIL_MAILTRAP_INBOX_ID:0}

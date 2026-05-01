@@ -313,7 +313,7 @@ Resend behavior:
 - issuing a new activation token consumes any existing active token for that
   customer before creating the replacement
 - the new token becomes the only valid activation token for that customer
-- token delivery is delegated to the configured activation email service
+- token delivery is delegated to the configured email delivery service
 
 Error scenarios:
 

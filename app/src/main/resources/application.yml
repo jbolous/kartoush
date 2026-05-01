@@ -37,10 +37,13 @@ logging:
 kartoush:
   email:
     customer:
-      sender-name: Kartoush
-      sender-address: no-reply@kartoush.dev
-      activation-base-url: https://kartoush.dev/activate
-      password-reset-base-url: https://kartoush.dev/reset-password
+      sender-name: ${KARTOUSH_EMAIL_SENDER_NAME:Kartoush}
+      sender-address: ${KARTOUSH_EMAIL_SENDER_ADDRESS:no-reply@notify.kartoush.com}
+      activation-base-url: ${KARTOUSH_EMAIL_ACTIVATION_BASE_URL:https://kartoush.dev/activate}
+      password-reset-base-url: ${KARTOUSH_EMAIL_PASSWORD_RESET_BASE_URL:https://kartoush.dev/reset-password}
+    delivery:
+      provider: ${KARTOUSH_EMAIL_DELIVERY_PROVIDER:noop}
+      enabled: ${KARTOUSH_EMAIL_DELIVERY_ENABLED:false}
   auth:
     password-policy:
       min-length: 12

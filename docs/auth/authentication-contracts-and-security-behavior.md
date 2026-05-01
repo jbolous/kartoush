@@ -14,7 +14,7 @@ Kartoush currently exposes the following customer-facing auth flow:
 
 1. `POST /api/customers`
    Creates a `PENDING` customer and issues an activation token through the
-   configured activation email service
+   configured email delivery service
 2. `POST /api/customers/{customerId}/activation`
    Activates the customer and returns a one-time password setup token
 3. `POST /api/customers/{customerId}/initial-password`

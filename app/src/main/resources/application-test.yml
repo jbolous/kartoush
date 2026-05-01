@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+kartoush:
+  email:
+    delivery:
+      provider: ${KARTOUSH_EMAIL_DELIVERY_PROVIDER:noop}
+      enabled: ${KARTOUSH_EMAIL_DELIVERY_ENABLED:false}
