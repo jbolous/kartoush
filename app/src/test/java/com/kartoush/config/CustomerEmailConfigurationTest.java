@@ -1,9 +1,11 @@
 package com.kartoush.config;
 
 import com.kartoush.auth.email.CustomerTransactionalEmailProperties;
+import com.kartoush.auth.email.BrevoEmailDeliveryService;
 import com.kartoush.auth.email.EmailDeliveryConfiguration;
+import com.kartoush.auth.email.EmailDeliveryProperties;
 import com.kartoush.auth.email.EmailDeliveryService;
-import com.kartoush.auth.email.EmailMessage;
+import com.kartoush.auth.email.MailtrapEmailDeliveryService;
 import com.kartoush.auth.email.NoOpEmailDeliveryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -18,6 +20,7 @@ class CustomerEmailConfigurationTest {
         .withConfiguration(AutoConfigurations.of(ConfigurationPropertiesAutoConfiguration.class))
         .withUserConfiguration(
             CustomerTransactionalEmailProperties.class,
+            EmailDeliveryProperties.class,
             EmailDeliveryConfiguration.class
         );
 
@@ -33,19 +36,40 @@ class CustomerEmailConfigurationTest {
     }
 
     @Test
-    void shouldBackOffNoOpEmailDeliveryServiceWhenConcreteBeanExists() {
+    void shouldProvideMailtrapEmailDeliveryServiceWhenMailtrapIsEnabled() {
         contextRunner
-            .withBean("stubEmailDeliveryService", EmailDeliveryService.class, StubEmailDeliveryService::new)
+            .withPropertyValues(
+                "kartoush.email.delivery.enabled=true",
+                "kartoush.email.delivery.provider=mailtrap",
+                "kartoush.email.delivery.mailtrap.api-base-url=https://sandbox.api.mailtrap.io/api/send",
+                "kartoush.email.delivery.mailtrap.api-token=mailtrap-api-token",
+                "kartoush.email.delivery.mailtrap.inbox-id=12345"
+            )
             .run(context -> {
                 assertThat(context).hasNotFailed();
                 assertThat(context).hasSingleBean(EmailDeliveryService.class);
-                assertThat(context.getBean(EmailDeliveryService.class)).isInstanceOf(StubEmailDeliveryService.class);
-                assertThat(context).doesNotHaveBean(NoOpEmailDeliveryService.class);
+                assertThat(context.getBean(EmailDeliveryService.class)).isInstanceOf(MailtrapEmailDeliveryService.class);
             });
     }
 
     @Test
-    void shouldProvideNoOpEmailDeliveryServiceWhenNoConcreteBeanExists() {
+    void shouldProvideBrevoEmailDeliveryServiceWhenBrevoIsEnabled() {
+        contextRunner
+            .withPropertyValues(
+                "kartoush.email.delivery.enabled=true",
+                "kartoush.email.delivery.provider=brevo",
+                "kartoush.email.delivery.brevo.api-base-url=https://api.brevo.com/v3",
+                "kartoush.email.delivery.brevo.api-key=test-brevo-key"
+            )
+            .run(context -> {
+                assertThat(context).hasNotFailed();
+                assertThat(context).hasSingleBean(EmailDeliveryService.class);
+                assertThat(context.getBean(EmailDeliveryService.class)).isInstanceOf(BrevoEmailDeliveryService.class);
+            });
+    }
+
+    @Test
+    void shouldProvideNoOpEmailDeliveryServiceWhenDeliveryIsDisabled() {
         contextRunner.run(context -> {
             assertThat(context).hasNotFailed();
             assertThat(context).hasSingleBean(EmailDeliveryService.class);
@@ -53,10 +77,66 @@ class CustomerEmailConfigurationTest {
         });
     }
 
-    static class StubEmailDeliveryService implements EmailDeliveryService {
+    @Test
+    void shouldFailContextStartupWhenMailtrapCredentialsAreMissing() {
+        contextRunner
+            .withPropertyValues(
+                "kartoush.email.delivery.enabled=true",
+                "kartoush.email.delivery.provider=mailtrap",
+                "kartoush.email.delivery.mailtrap.api-base-url=https://sandbox.api.mailtrap.io/api/send",
+                "kartoush.email.delivery.mailtrap.inbox-id=12345"
+            )
+            .run(context -> {
+                assertThat(context).hasFailed();
+                assertThat(context.getStartupFailure())
+                    .hasStackTraceContaining("kartoush.email.delivery.mailtrap.api-token must not be blank");
+            });
+    }
 
-        @Override
-        public void send(final EmailMessage email) {
-        }
+    @Test
+    void shouldFailContextStartupWhenMailtrapInboxIdIsMissing() {
+        contextRunner
+            .withPropertyValues(
+                "kartoush.email.delivery.enabled=true",
+                "kartoush.email.delivery.provider=mailtrap",
+                "kartoush.email.delivery.mailtrap.api-base-url=https://sandbox.api.mailtrap.io/api/send",
+                "kartoush.email.delivery.mailtrap.api-token=mailtrap-api-token"
+            )
+            .run(context -> {
+                assertThat(context).hasFailed();
+                assertThat(context.getStartupFailure())
+                    .hasStackTraceContaining("kartoush.email.delivery.mailtrap.inbox-id must be greater than zero");
+            });
+    }
+
+    @Test
+    void shouldFailContextStartupWhenBrevoApiKeyIsMissing() {
+        contextRunner
+            .withPropertyValues(
+                "kartoush.email.delivery.enabled=true",
+                "kartoush.email.delivery.provider=brevo",
+                "kartoush.email.delivery.brevo.api-base-url=https://api.brevo.com/v3"
+            )
+            .run(context -> {
+                assertThat(context).hasFailed();
+                assertThat(context.getStartupFailure())
+                    .hasStackTraceContaining("kartoush.email.delivery.brevo.api-key must not be blank");
+            });
+    }
+
+    @Test
+    void shouldFailContextStartupWhenBrevoApiBaseUrlIsMalformed() {
+        contextRunner
+            .withPropertyValues(
+                "kartoush.email.delivery.enabled=true",
+                "kartoush.email.delivery.provider=brevo",
+                "kartoush.email.delivery.brevo.api-base-url=not a uri",
+                "kartoush.email.delivery.brevo.api-key=test-brevo-key"
+            )
+            .run(context -> {
+                assertThat(context).hasFailed();
+                assertThat(context.getStartupFailure())
+                    .hasStackTraceContaining("kartoush.email.delivery.brevo.api-base-url must be a valid URI");
+            });
     }
 }

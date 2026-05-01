@@ -235,6 +235,11 @@ For detailed testing conventions and design decisions, see:
 - `docs/architecture/decisions/0023-testing-strategy-and-conventions.md`
 - `docs/testing/api-testing-strategy.md`
 
+For transactional email provider and environment configuration, including the
+local Mailtrap-backed quick start, see:
+
+- `docs/auth/transactional-email-provider-configuration.md`
+
 ---
 
 ## API Documentation
