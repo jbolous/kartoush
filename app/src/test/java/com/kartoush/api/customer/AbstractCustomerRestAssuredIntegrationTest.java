@@ -1,8 +1,8 @@
 package com.kartoush.api.customer;
 
-import com.kartoush.auth.email.EmailDeliveryService;
-import com.kartoush.auth.email.EmailMessage;
-import com.kartoush.auth.email.EmailMessageType;
+import com.kartoush.notification.email.delivery.EmailDeliveryService;
+import com.kartoush.notification.email.EmailMessage;
+import com.kartoush.notification.email.EmailMessageType;
 import com.kartoush.platform.types.Email;
 import com.kartoush.platform.ulid.UlidGenerator;
 import com.kartoush.testsupport.HttpSpringIntegrationTest;

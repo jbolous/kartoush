@@ -1,8 +1,8 @@
 package com.kartoush.api.auth;
 
 import com.kartoush.auth.domain.IssuedPasswordResetToken;
-import com.kartoush.auth.email.CustomerEmailFactory;
-import com.kartoush.auth.email.EmailDeliveryService;
+import com.kartoush.notification.email.customer.CustomerEmailFactory;
+import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.auth.exception.InvalidPasswordResetException;
 import com.kartoush.auth.exception.PasswordResetTokenNotFoundException;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
