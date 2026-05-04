@@ -21,12 +21,12 @@
 - Keep PRs small and focused
 - CI runs on pull requests and on pushes to `main`
 - Current required CI shape:
-  - unit tests
-  - auth API integration tests
-  - customer API integration tests
-  - terms API integration tests
-  - customer module integration tests
-  - auth module integration tests
+  - Unit tests
+  - Auth API integration tests
+  - Customer API integration tests
+  - Terms API integration tests
+  - Customer module integration tests
+  - Auth module integration tests
 
 ## Issue import workflow
 

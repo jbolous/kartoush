@@ -6,10 +6,10 @@ Before changing code:
 2. Inspect the owning module and its public facade first
 3. Check whether the behavior already has tests
 4. Find the boundary lines:
-   - controller vs app service
-   - facade vs internal service
-   - domain vs persistence
-   - module vs module
+   - Controller vs app service
+   - Facade vs internal service
+   - Domain vs persistence
+   - Module vs module
 5. Check current CI or task conventions if the change affects tests or workflows
 6. Look for overlapping open issues before creating new issue-import files
 

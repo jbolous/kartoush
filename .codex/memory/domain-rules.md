@@ -22,9 +22,9 @@
 - `POST /api/customers` is the registration entry point
 - Successful registration creates a `PENDING` customer
 - Registration requires:
-  - first name
-  - last name
-  - valid email
+  - First name
+  - Last name
+  - Valid email
   - Terms acceptance set to true
   - Terms version matching the current active Terms record
 - Registration persists Terms acceptance audit data
@@ -48,11 +48,11 @@
 - Setup token must exist, be unexpired, and not already be consumed
 - Password confirmation must match
 - Current default password policy requires:
-  - at least 12 characters
-  - one uppercase letter
-  - one lowercase letter
-  - one digit
-  - one special character
+  - At least 12 characters
+  - One uppercase letter
+  - One lowercase letter
+  - One digit
+  - One special character
 - Successful setup consumes the setup token
 
 ## Sign-in
@@ -84,8 +84,8 @@
 ## Notification and email
 
 - Current customer-facing email flows:
-  - activation
-  - password reset
+  - Activation
+  - Password reset
 - Provider direction:
   - `mailtrap` for local or dev inspection
   - `brevo` for production transactional sending

@@ -35,7 +35,7 @@ for target in "${TARGETS[@]}"; do
     fi
     printf '%s\n' "$match"
     failed=1
-  done < <(grep -R -n -E '^- [a-z]' "$target" 2>/dev/null || true)
+  done < <(grep -R -n -E '^[[:space:]]*-[[:space:]]+[a-z]' "$target" 2>/dev/null || true)
 done
 
 if [[ $failed -ne 0 ]]; then
@@ -69,7 +69,8 @@ def is_prose(line: str) -> bool:
     )
     if stripped.startswith(blocked_prefixes):
         return False
-    if stripped[0].isdigit() and len(stripped) > 1 and stripped[1] == ".":
+    digit_prefix = stripped.split(".", 1)[0]
+    if digit_prefix.isdigit() and stripped[len(digit_prefix):].startswith("."):
         return False
     return True
 

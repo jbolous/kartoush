@@ -17,20 +17,20 @@
 
 - `app`
   - HTTP entry point
-  - controllers, request and response models, OpenAPI docs, error mapping, app services
+  - Controllers, request and response models, OpenAPI docs, error mapping, and app services
 - `customer`
-  - customer lifecycle, activation, registration, Terms of Service, public customer facades
+  - Customer lifecycle, activation, registration, Terms of Service, and public customer facades
 - `auth`
-  - customer password ownership, sign-in, auth sessions, password setup, password reset
+  - Customer password ownership, sign-in, auth sessions, password setup, and password reset
 - `notification`
-  - shared email delivery boundary and provider adapters
-  - currently email only
+  - Shared email delivery boundary and provider adapters
+  - Currently email only
 - `platform-types`
-  - shared value types and ULID support
+  - Shared value types and ULID support
 - `platform-validation`
-  - shared request validation helpers and validation error model
+  - Shared request validation helpers and validation error model
 - `test-support`
-  - shared integration-test annotations and Postgres/Testcontainers support
+  - Shared integration-test annotations and Postgres/Testcontainers support
 
 ## Boundary expectations
 

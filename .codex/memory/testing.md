@@ -8,13 +8,13 @@
 ## Test layers
 
 - Unit tests
-  - default choice for isolated logic
-  - no Spring context unless there is a strong reason
+  - Default choice for isolated logic
+  - No Spring context unless there is a strong reason
 - Persistence tests
-  - use real PostgreSQL behavior
-  - commonly `@DataJpaTest`, Testcontainers, and `@ServiceConnection`
+  - Use real PostgreSQL behavior
+  - Commonly `@DataJpaTest`, Testcontainers, and `@ServiceConnection`
 - Web tests
-  - focused MVC slices for controllers and HTTP behavior
+  - Focused MVC slices for controllers and HTTP behavior
 - Integration tests
   - Spring context plus collaborating components and real infrastructure when needed
 
