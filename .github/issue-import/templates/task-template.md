@@ -19,13 +19,15 @@ Describe the specific change or capability this task should deliver.
 
 ## Scope
 
-- list the concrete implementation work included in this task
-- keep each bullet specific enough to guide execution
+- Use sentence case for bullets
+- List the concrete implementation work included in this task
+- Keep each bullet specific enough to guide execution
 
 ## Acceptance Criteria
 
-- describe the expected behavior or outcome that defines completion
-- include any important validation expectations
+- Use sentence case for bullets
+- Describe the expected behavior or outcome that defines completion
+- Include any important validation expectations
 
 ## Dependencies
 

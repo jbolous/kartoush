@@ -160,7 +160,8 @@ Recommended workflow:
 1. Copy the appropriate template into `pending/`
 2. Rename it with a numeric prefix such as `00-` or `01-`
 3. Replace the placeholder title and section content
-4. Run a dry run before importing for real
+4. Run `bash .github/scripts/validate-editorial-style.sh`
+5. Run a dry run before importing for real
 
 Example:
 
@@ -168,6 +169,17 @@ Example:
 cp .github/issue-import/templates/task-template.md \
   .github/issue-import/pending/00-task-example.md
 ```
+
+The editorial style script checks:
+
+- sentence-case bullets
+- suspicious early prose wrapping
+
+It is intended for:
+
+- `.github/issue-import/pending/`
+- `.github/issue-import/templates/`
+- `.codex/`
 
 You can also print a template directly from the importer:
 
