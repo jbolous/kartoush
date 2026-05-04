@@ -32,5 +32,6 @@ miss during implementation work.
 ## PR and summary text
 
 - Keep summaries direct and plain
+- Use sentence case for PR bullets and summary lists
 - List the real commands that someone else should run
 - Do not include local-only environment workarounds in shared PR testing notes unless they are required for other developers
