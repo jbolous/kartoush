@@ -12,14 +12,16 @@ Describe the broader problem or outcome this epic is intended to cover.
 
 ## Scope
 
-- list the major workstreams or deliverables included in this epic
-- keep scope high level and outcome-oriented
+- Use sentence case for bullets
+- List the major workstreams or deliverables included in this epic
+- Keep scope high level and outcome-oriented
 
 ## Acceptance Criteria
 
-- the epic defines a clear and coherent slice of work
-- the scope is broad enough to justify grouping multiple tasks beneath it
-- the expected outcome is understandable without additional context
+- Use sentence case for bullets
+- The epic defines a clear and coherent slice of work
+- The scope is broad enough to justify grouping multiple tasks beneath it
+- The expected outcome is understandable without additional context
 
 ## Dependencies
 
