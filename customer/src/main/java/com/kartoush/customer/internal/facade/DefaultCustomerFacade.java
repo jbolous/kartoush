@@ -1,8 +1,8 @@
 package com.kartoush.customer.internal.facade;
 
 import com.kartoush.auth.domain.IssuedPasswordSetupToken;
-import com.kartoush.auth.email.CustomerEmailFactory;
-import com.kartoush.auth.email.EmailDeliveryService;
+import com.kartoush.notification.email.customer.CustomerEmailFactory;
+import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;

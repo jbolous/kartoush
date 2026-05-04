@@ -2,9 +2,9 @@ package com.kartoush.api.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kartoush.auth.email.EmailDeliveryService;
-import com.kartoush.auth.email.EmailMessage;
-import com.kartoush.auth.email.EmailMessageType;
+import com.kartoush.notification.email.delivery.EmailDeliveryService;
+import com.kartoush.notification.email.EmailMessage;
+import com.kartoush.notification.email.EmailMessageType;
 import com.kartoush.auth.persistence.repository.CustomerAuthSessionRepository;
 import com.kartoush.api.error.ErrorCode;
 import com.kartoush.customer.facade.model.CreateCustomerInput;

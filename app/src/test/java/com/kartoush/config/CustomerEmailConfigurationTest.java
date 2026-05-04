@@ -1,12 +1,12 @@
 package com.kartoush.config;
 
-import com.kartoush.auth.email.CustomerTransactionalEmailProperties;
-import com.kartoush.auth.email.BrevoEmailDeliveryService;
-import com.kartoush.auth.email.EmailDeliveryConfiguration;
-import com.kartoush.auth.email.EmailDeliveryProperties;
-import com.kartoush.auth.email.EmailDeliveryService;
-import com.kartoush.auth.email.MailtrapEmailDeliveryService;
-import com.kartoush.auth.email.NoOpEmailDeliveryService;
+import com.kartoush.notification.email.config.CustomerEmailProperties;
+import com.kartoush.notification.email.provider.brevo.BrevoEmailDeliveryService;
+import com.kartoush.notification.email.config.EmailDeliveryConfiguration;
+import com.kartoush.notification.email.config.EmailDeliveryProperties;
+import com.kartoush.notification.email.delivery.EmailDeliveryService;
+import com.kartoush.notification.email.provider.mailtrap.MailtrapEmailDeliveryService;
+import com.kartoush.notification.email.delivery.NoOpEmailDeliveryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
@@ -19,7 +19,7 @@ class CustomerEmailConfigurationTest {
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
         .withConfiguration(AutoConfigurations.of(ConfigurationPropertiesAutoConfiguration.class))
         .withUserConfiguration(
-            CustomerTransactionalEmailProperties.class,
+            CustomerEmailProperties.class,
             EmailDeliveryProperties.class,
             EmailDeliveryConfiguration.class
         );

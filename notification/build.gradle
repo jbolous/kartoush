@@ -1,0 +1,19 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':platform:platform-types')
+    testImplementation project(":test-support")
+
+    implementation(libs.springBootStarterDataJpa)
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.test {
+    useJUnitPlatform {
+        excludeTags "integration"
+    }
+}
