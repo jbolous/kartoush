@@ -234,6 +234,7 @@ For detailed testing conventions and design decisions, see:
 
 - `docs/architecture/decisions/0023-testing-strategy-and-conventions.md`
 - `docs/testing/api-testing-strategy.md`
+- `.codex/README.md` for lightweight Codex workflow and repo memory guidance
 
 For transactional email provider and environment configuration, including the
 local Mailtrap-backed quick start, see:
