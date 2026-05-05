@@ -5,34 +5,32 @@ import com.kartoush.customer.internal.registration.TermsOfServiceCatalog;
 import com.kartoush.platform.validation.RequestValidationException;
 import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Component
-public class CreateCustomerInputValidator {
+public class CustomerRegistrationValidator {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CreateCustomerInputValidator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CustomerRegistrationValidator.class);
 
     private static final String VALIDATION_MESSAGE = "Request validation failed";
 
     private final TermsOfServiceCatalog termsOfServiceCatalog;
 
-    public CreateCustomerInputValidator(final TermsOfServiceCatalog termsOfServiceCatalog) {
+    public CustomerRegistrationValidator(final TermsOfServiceCatalog termsOfServiceCatalog) {
         this.termsOfServiceCatalog = termsOfServiceCatalog;
     }
 
     public void validate(final CreateCustomerInput input) {
-        LOG.debug("Validating create customer input");
+        LOG.debug("Validating customer registration input");
 
         final List<ValidationError> errors = new ArrayList<>();
 
-        validateInput(input, errors);
-
         if (input == null) {
+            errors.add(new ValidationError("input", "input must not be null"));
             throwIfErrors(errors);
             return;
         }
@@ -44,18 +42,6 @@ public class CreateCustomerInputValidator {
         validateTermsAcceptance(input, errors);
 
         throwIfErrors(errors);
-    }
-
-    private void validateInput(final CreateCustomerInput input, final List<ValidationError> errors) {
-        if (input == null) {
-            errors.add(new ValidationError("input", "input must not be null"));
-        }
-    }
-
-    private void throwIfErrors(final List<ValidationError> errors) {
-        if (!errors.isEmpty()) {
-            throw new RequestValidationException(VALIDATION_MESSAGE, errors);
-        }
     }
 
     private void validateTermsAcceptance(final CreateCustomerInput input, final List<ValidationError> errors) {
@@ -70,6 +56,12 @@ public class CreateCustomerInputValidator {
 
         if (!termsOfServiceCatalog.currentVersion().equals(input.termsVersion())) {
             errors.add(new ValidationError("termsVersion", "termsVersion must match the current supported Terms of Service version"));
+        }
+    }
+
+    private void throwIfErrors(final List<ValidationError> errors) {
+        if (!errors.isEmpty()) {
+            throw new RequestValidationException(VALIDATION_MESSAGE, errors);
         }
     }
 }
