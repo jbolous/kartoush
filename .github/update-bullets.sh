@@ -111,11 +111,11 @@ transform_body() {
         my $prefix = $1;
         my $text = $2;
 
-        my @segments = split /(`[^`]*`|https?:\/\/[^\s<>()]+)/, $text;
+        my @segments = split /(`[^`]*`|(?i:https?):\/\/[^\s<>()]+)/, $text;
 
         for my $segment (@segments) {
           next if $segment =~ /^`[^`]*`$/;
-          next if $segment =~ /^https?:\/\/[^\s<>()]+$/;
+          next if $segment =~ /^(?i:https?):\/\/[^\s<>()]+$/;
 
           $segment = lc($segment);
           $segment =~ s/\b([a-z0-9]+)\b/
