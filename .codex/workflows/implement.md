@@ -8,6 +8,7 @@ When changing code:
 4. Keep logs useful but never log raw auth or email tokens
 5. Add or update the narrowest tests that prove the behavior
 6. Update docs or ADRs when the change alters a documented rule or architecture decision
+7. Clean up stale names, duplicate classes, and dead code introduced by the change
 
 Implementation reminders for Kartoush:
 
@@ -16,6 +17,7 @@ Implementation reminders for Kartoush:
 - Email delivery stays in `notification`
 - Shared value objects belong in `platform-types`
 - Request-shape validation belongs near HTTP models, business validation belongs in facades or validators
+- Shared validation across multiple flows should move into a `Support` type, not a `Helper`
 
 Do not:
 

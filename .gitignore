@@ -39,3 +39,6 @@ nbdist/
 
 # OS files
 .DS_Store
+
+# Local Codex runtime config
+.codex/config.toml

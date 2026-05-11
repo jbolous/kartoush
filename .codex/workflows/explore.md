@@ -12,6 +12,7 @@ Before changing code:
    - Module vs module
 5. Check current CI or task conventions if the change affects tests or workflows
 6. Look for overlapping open issues before creating new issue-import files
+7. Check whether the inconsistency is a deliberate tradeoff before treating it as cleanup work
 
 Questions to answer before planning:
 
@@ -19,3 +20,4 @@ Questions to answer before planning:
 - Whether the rule is already documented in an ADR or behavior doc
 - Whether the change needs a new contract model, exception, migration, or config property
 - What the narrowest useful test slice is
+- Whether an existing class, issue, or ADR should be updated instead of creating a parallel one

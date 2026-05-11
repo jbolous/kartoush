@@ -14,6 +14,9 @@
 - Implementation classes commonly use `Default...`
 - Branch names follow `<type>/<scope>-<short-description>`
 - Use lowercase kebab-case in branch names
+- Prefer use-case-driven names for validators, handlers, and workflow classes
+- Avoid DTO-driven names when the class really represents a business action
+- Prefer updating or renaming an existing class over creating a parallel replacement when the behavior is the same
 
 ## Boundary and model usage
 
@@ -35,6 +38,13 @@
 - Customer persistence still uses MapStruct mappers in `customer.persistence.mapper`
 - Do not assume MapStruct is the default answer elsewhere
 - Prefer explicit mapping when it keeps boundaries clearer
+
+## Validation and support code
+
+- Use `Support` classes for validation logic that is shared across multiple flows
+- Do not add `Helper` classes for domain validation shortcuts
+- If shared validation is introduced, update the duplicate call sites instead of leaving both paths in place
+- Remove replaced validators, factories, or services in the same change unless a real migration needs both paths
 
 ## Notification code
 
