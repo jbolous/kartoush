@@ -20,6 +20,8 @@
 
 - Keep PRs small and focused
 - CI runs on pull requests and on pushes to `main`
+- Prefer `gh ... --body-file` for PR or issue bodies that contain backticks, multiline Markdown, or richer structured text
+- If Codex already reviewed a PR and the branch changed to address that feedback, add the comment `@codex review` to trigger another pass
 - Current required CI shape:
   - Unit tests
   - Auth API integration tests
@@ -63,5 +65,7 @@
 
 - Use one epic for a broader outcome and linked task issues for concrete work
 - Prefer updating overlapping issues rather than creating duplicates
+- Update an existing issue instead of creating a new task when the scope still fits cleanly
+- Do not create a new task if an existing one can be clarified or expanded without making it vague
 - Keep task scope narrow and implementation-ready
 - Make dependencies explicit in the issue body when sequencing matters
