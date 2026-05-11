@@ -1,43 +1,120 @@
 # Codex Agent Guidance
 
-Use this file as the short entry point for Codex work in Kartoush.
+You are working in the Kartoush repository.
 
-Read these first:
+Your primary objective is to complete tasks accurately with minimal:
+- token usage
+- repository scanning
+- shell commands
+- retries
+- unnecessary testing
 
-- `.codex/README.md`
+## Start Here
+
+Read only:
 - `.codex/memory/architecture.md`
 - `.codex/memory/conventions.md`
-- `.codex/memory/editorial-style.md`
-- `.codex/memory/github-workflow.md`
-- `.codex/workflows/explore.md`
-- `.codex/workflows/implement.md`
-- `.codex/workflows/review.md`
+- `.codex/workflows/execution.md`
 
-Kartoush-specific reminders:
+Read additional memory files only if directly relevant to the current task.
 
-- Keep changes narrow and boundary-aware
-- Remove stale names, duplicate classes, and dead code during refactors
-- Remove unnecessary imports introduced or left behind by the change
-- Prefer use-case-driven names over DTO-driven names
-- Use `Support` for shared validation logic when more than one call site needs it
-- Do not introduce `Helper` classes for domain validation shortcuts
-- Keep tests aligned with module boundaries
-- Prefer dry-run modes before running importer or bulk GitHub tooling
-- Do not run state-changing GitHub commands or custom importer scripts without explicit user approval
+Do NOT preload all documentation or workflow files.
 
-Efficiency rules:
+---
 
-- Read the smallest useful surface first
-- Use targeted `rg` searches instead of broad repo scans
-- Reuse `.codex/memory/` and ADR context before re-deriving project rules
-- Run the narrowest test slice that proves the change
-- Do not rerun broad suites without a concrete reason
-- Split unrelated local changes into separate branches or commits
-- Keep repo-owned guidance separate from local assistant config
-- Avoid repeated review passes unless new information changed the decision
-- Keep branch contents aligned with the current task scope
-- Batch GitHub body edits into one clean update when possible
+# Core Rules
 
-Local assistant config:
+## Repository Exploration
 
-- Keep editor- or machine-specific Codex config out of the repo unless the repo explicitly chooses to standardize it
+- Read the minimum number of files required
+- Prefer targeted searches over broad scans
+- Avoid repeatedly opening the same files
+- Avoid recursive repository exploration unless necessary
+- Do not inspect unrelated modules
+
+## Implementation Style
+
+- Keep changes narrow and focused
+- Preserve existing module boundaries
+- Prefer explicit and simple implementations
+- Avoid speculative refactors
+- Avoid introducing new architectural patterns unnecessarily
+- Match existing project conventions
+
+## Testing
+
+Testing priority:
+1. Single focused test
+2. Small related test class
+3. Module-level validation only if necessary
+
+Never run:
+- `./gradlew build`
+- `./gradlew test`
+- `./gradlew verifyAll`
+
+unless explicitly requested or clearly required.
+
+Prefer targeted commands such as:
+
+```bash
+./gradlew :customer:test --tests CustomerServiceTest
+```
+
+or
+
+```bash
+./gradlew :customer:integrationTest --tests ActivationTokenEntityRepositoryTest
+```
+
+Do not rerun large test suites after small fixes unless the failure indicates broader impact.
+
+## Shell Efficiency
+
+Before running commands:
+- Think through quoting and paths carefully
+- Prefer exact file paths
+- Avoid retry loops
+- Avoid expensive recursive commands
+
+If a command fails:
+1. Briefly identify the root cause
+2. Correct the issue
+3. Retry once with the corrected command
+
+Do not enter repeated retry cycles.
+
+## GitHub Workflow
+
+When updating GitHub issues or PRs:
+- Preserve existing formatting and structure
+- Prefer updating existing tasks over creating duplicates
+- Keep summaries concise and actionable
+
+Avoid excessive branch introspection or git status loops.
+
+## Response Style
+
+Provide:
+- concise summaries
+- exact files changed
+- focused reasoning
+- clear next steps only when necessary
+
+Avoid:
+- long essays
+- repeated explanations
+- generic best-practice commentary
+- unnecessary architectural analysis
+
+---
+
+# Goal
+
+Complete the requested work with the smallest reasonable:
+- context footprint
+- diff size
+- validation scope
+- execution cost
+
+while preserving correctness and Kartoush architectural boundaries.
