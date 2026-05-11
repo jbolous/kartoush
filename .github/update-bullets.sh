@@ -43,7 +43,7 @@ expand_args() {
 
 transform_title() {
   perl -pe '
-    my %ACRONYMS = map { $_ => 1 } qw(
+    my %ACRONYMS = map { uc($_) => $_ } qw(
       API APIs HTTP HTTPS URL URLs URI URIs UUID UUIDs ID IDs JSON XML SQL
       UI UX JWT OAuth REST GraphQL DNS TCP UDP IP HTML CSS JS CLI SDK DB
       JPA DTO DTOs ADR ADRs RFC RFCs ULID ULIDs JUnit Flyway Gradle GitHub
@@ -69,8 +69,8 @@ transform_title() {
       my $clean = $word;
       my $upper = uc($clean);
 
-      if ($ACRONYMS{$upper}) {
-        $word = $upper;
+      if (exists $ACRONYMS{$upper}) {
+        $word = $ACRONYMS{$upper};
       }
       elsif ($i != 0 && $i != $#words && $SMALL{lc($clean)}) {
         $word = lc($word);
@@ -89,7 +89,7 @@ transform_title() {
 
 transform_body() {
   perl -0777 -pe '
-    my %ACRONYMS = map { $_ => 1 } qw(
+    my %ACRONYMS = map { uc($_) => $_ } qw(
       API APIs HTTP HTTPS URL URLs URI URIs UUID UUIDs ID IDs JSON XML SQL
       UI UX JWT OAuth REST GraphQL DNS TCP UDP IP HTML CSS JS CLI SDK DB
       JPA DTO DTOs ADR ADRs RFC RFCs ULID ULIDs JUnit Flyway Gradle GitHub
@@ -111,13 +111,19 @@ transform_body() {
         my $prefix = $1;
         my $text = $2;
 
-        $text = lc($text);
+        my @segments = split /(`[^`]*`)/, $text;
 
-        $text =~ s/\b([a-z0-9]+)\b/
-          my $w = uc($1);
-          exists $ACRONYMS{$w} ? $w : $1
-        /ge;
+        for my $segment (@segments) {
+          next if $segment =~ /^`[^`]*`$/;
 
+          $segment = lc($segment);
+          $segment =~ s/\b([a-z0-9]+)\b/
+            my $w = uc($1);
+            exists $ACRONYMS{$w} ? $ACRONYMS{$w} : $1
+          /ge;
+        }
+
+        $text = join "", @segments;
         $text =~ s/^(\s*)(\S)/$1 . uc($2)/e;
 
         "$prefix$text";
