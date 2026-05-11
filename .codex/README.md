@@ -1,7 +1,7 @@
 # Codex Guidance for Kartoush
 
-This directory is lightweight working context for future Codex sessions in the
-Kartoush repository.
+This directory is lightweight working context for Codex and other AI-assisted
+sessions in the Kartoush repository.
 
 Use it as:
 
@@ -13,6 +13,7 @@ Use it as:
 Notable memory files:
 
 - `memory/editorial-style.md` for writing and formatting rules that are easy to miss in code-focused sessions
+- `AGENTS.md` for a short agent-facing entry point into the repo guidance
 
 Keep this directory:
 
@@ -28,6 +29,7 @@ When updating it:
 - Do not turn it into long-form project documentation
 - Update `memory/` when architecture or workflow rules become durable
 - Use `handoffs/latest.md` for per-task status, not `memory/`
+- Keep local assistant runtime config out of the repo unless the team decides to standardize it
 
 Validation:
 
