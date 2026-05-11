@@ -125,7 +125,10 @@ transform_body() {
         }
 
         $text = join "", @segments;
-        $text =~ s/^(\s*(?:\[[ xX]\]\s+)*)(\S)/$1 . uc($2)/e;
+
+        if ($text !~ /^\s*(?:\[[ xX]\]\s+)*(?i:https?):\/\//) {
+          $text =~ s/^(\s*(?:\[[ xX]\]\s+)*)(\S)/$1 . uc($2)/e;
+        }
 
         "$prefix$text";
       }
