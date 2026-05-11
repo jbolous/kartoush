@@ -20,6 +20,7 @@
 
 - Keep PRs small and focused
 - CI runs on pull requests and on pushes to `main`
+- Prefer `gh ... --body-file` for PR or issue bodies that contain backticks, multiline Markdown, or richer structured text
 - Current required CI shape:
   - Unit tests
   - Auth API integration tests
