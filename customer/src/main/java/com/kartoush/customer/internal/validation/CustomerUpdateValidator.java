@@ -5,16 +5,22 @@ import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import com.kartoush.platform.validation.RequestValidationException;
 import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 @Component
-public class UpdateCustomerInputValidator {
+public class CustomerUpdateValidator extends RequestValidator {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CustomerUpdateValidator.class);
+
     private static final String VALIDATION_MESSAGE = "Request validation failed";
 
     public void validate(final UpdateCustomerInput input) {
+        LOG.debug("Validating customer update input");
+
         final List<ValidationError> errors = new ArrayList<>();
 
         if (input == null) {
@@ -23,16 +29,22 @@ public class UpdateCustomerInputValidator {
             return;
         }
 
-        RequestValidationSupport.validateRequiredText("firstName", input.firstName(), CustomerConstraints.NAME_MAX_LENGTH, errors);
-        RequestValidationSupport.validateRequiredText("lastName", input.lastName(), CustomerConstraints.NAME_MAX_LENGTH, errors);
+        RequestValidationSupport.validateRequiredText(
+            "firstName",
+            input.firstName(),
+            CustomerConstraints.NAME_MAX_LENGTH,
+            errors
+        );
+
+        RequestValidationSupport.validateRequiredText(
+            "lastName",
+            input.lastName(),
+            CustomerConstraints.NAME_MAX_LENGTH,
+            errors
+        );
+
         RequestValidationSupport.validateOptionalPhoneNumber("phoneNumber", input.phoneNumber(), errors);
 
         throwIfErrors(errors);
-    }
-
-    private void throwIfErrors(final List<ValidationError> errors) {
-        if (!errors.isEmpty()) {
-            throw new RequestValidationException(VALIDATION_MESSAGE, errors);
-        }
     }
 }
