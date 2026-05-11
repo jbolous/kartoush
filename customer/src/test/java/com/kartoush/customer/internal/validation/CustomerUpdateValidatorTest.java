@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class UpdateCustomerInputValidatorTest {
+class CustomerUpdateValidatorTest {
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
     private static final String VALID_PHONE = "+16305551234";
@@ -15,7 +15,7 @@ class UpdateCustomerInputValidatorTest {
     private static final String TOO_SHORT_PHONE = "123456";
     private static final String TOO_LONG_PHONE = "+1234567890123456";
 
-    private final UpdateCustomerInputValidator validator = new UpdateCustomerInputValidator();
+    private final CustomerUpdateValidator validator = new CustomerUpdateValidator();
 
     @Test
     void shouldAllowValidInput() {

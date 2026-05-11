@@ -1,8 +1,9 @@
 package com.kartoush.config;
 
 import com.kartoush.auth.config.CustomerPasswordPolicyProperties;
+import com.kartoush.auth.validation.CustomerPasswordPolicyValidator;
 import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
-import com.kartoush.customer.internal.validation.SetInitialCustomerPasswordInputValidator;
+import com.kartoush.customer.internal.validation.CustomerPasswordSetupValidator;
 import com.kartoush.platform.validation.RequestValidationException;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
@@ -21,7 +22,8 @@ class CustomerPasswordPolicyConfigurationTest {
         .withConfiguration(AutoConfigurations.of(ConfigurationPropertiesAutoConfiguration.class))
         .withUserConfiguration(
             CustomerPasswordPolicyProperties.class,
-            SetInitialCustomerPasswordInputValidator.class
+            CustomerPasswordPolicyValidator.class,
+            CustomerPasswordSetupValidator.class
         );
 
     @Test
@@ -36,8 +38,8 @@ class CustomerPasswordPolicyConfigurationTest {
 
                 final CustomerPasswordPolicyProperties properties =
                     context.getBean(CustomerPasswordPolicyProperties.class);
-                final SetInitialCustomerPasswordInputValidator validator =
-                    context.getBean(SetInitialCustomerPasswordInputValidator.class);
+                final CustomerPasswordSetupValidator validator =
+                    context.getBean(CustomerPasswordSetupValidator.class);
 
                 assertThat(properties.getMinLength()).isEqualTo(8);
                 assertThat(properties.isRequireSpecialCharacter()).isFalse();
@@ -69,8 +71,8 @@ class CustomerPasswordPolicyConfigurationTest {
             .run(context -> {
                 assertThat(context).hasNotFailed();
 
-                final SetInitialCustomerPasswordInputValidator validator =
-                    context.getBean(SetInitialCustomerPasswordInputValidator.class);
+                final CustomerPasswordSetupValidator validator =
+                    context.getBean(CustomerPasswordSetupValidator.class);
 
                 assertThatThrownBy(() -> validator.validate(
                     new InitialCustomerPasswordInput(SETUP_TOKEN, "Password12", "Password12")))
