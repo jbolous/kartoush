@@ -111,10 +111,11 @@ transform_body() {
         my $prefix = $1;
         my $text = $2;
 
-        my @segments = split /(`[^`]*`)/, $text;
+        my @segments = split /(`[^`]*`|https?:\/\/[^\s<>()]+)/, $text;
 
         for my $segment (@segments) {
           next if $segment =~ /^`[^`]*`$/;
+          next if $segment =~ /^https?:\/\/[^\s<>()]+$/;
 
           $segment = lc($segment);
           $segment =~ s/\b([a-z0-9]+)\b/
@@ -124,7 +125,7 @@ transform_body() {
         }
 
         $text = join "", @segments;
-        $text =~ s/^(\s*)(\S)/$1 . uc($2)/e;
+        $text =~ s/^(\s*(?:\[[ xX]\]\s+)*)(\S)/$1 . uc($2)/e;
 
         "$prefix$text";
       }
