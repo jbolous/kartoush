@@ -2,6 +2,7 @@ package com.kartoush.customer.internal.facade;
 
 import com.kartoush.auth.domain.PasswordSetupToken;
 import com.kartoush.auth.domain.IssuedPasswordSetupToken;
+import com.kartoush.customer.internal.validation.CustomerRegistrationValidator;
 import com.kartoush.notification.email.customer.CustomerEmailFactory;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.notification.email.EmailMessage;
@@ -12,8 +13,7 @@ import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.facade.model.CustomerActivationView;
 import com.kartoush.customer.facade.model.CustomerView;
 import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
-import com.kartoush.customer.internal.validation.CreateCustomerInputValidator;
-import com.kartoush.customer.internal.validation.SetInitialCustomerPasswordInputValidator;
+import com.kartoush.customer.internal.validation.CustomerPasswordSetupValidator;
 import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
@@ -52,10 +52,10 @@ class DefaultCustomerFacadeTest {
     private UlidGenerator ulidGenerator;
 
     @Mock
-    private CreateCustomerInputValidator validator;
+    private CustomerRegistrationValidator validator;
 
     @Mock
-    private SetInitialCustomerPasswordInputValidator setInitialCustomerPasswordInputValidator;
+    private CustomerPasswordSetupValidator customerPasswordSetupValidator;
 
     @Mock
     private CustomerService customerService;
@@ -142,7 +142,7 @@ class DefaultCustomerFacadeTest {
 
         facade.setInitialPassword(CUSTOMER_ID, input);
 
-        verify(setInitialCustomerPasswordInputValidator).validate(input);
+        verify(customerPasswordSetupValidator).validate(input);
         verify(customerPasswordFacade).setInitialPassword(
             CustomerId.of(CUSTOMER_ID),
             SETUP_TOKEN,

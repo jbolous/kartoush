@@ -3,6 +3,7 @@ package com.kartoush.customer.internal.validation;
 import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.internal.registration.TermsOfServiceCatalog;
 import com.kartoush.platform.validation.RequestValidationException;
+import com.kartoush.platform.validation.ValidationError;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -11,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-class CreateCustomerInputValidatorTest {
+class CustomerRegistrationValidatorTest {
 
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
@@ -23,10 +24,10 @@ class CreateCustomerInputValidatorTest {
     private static final String INVALID_TERMS_VERSION = "2026-03";
 
     private final TermsOfServiceCatalog termsOfServiceCatalog = mock(TermsOfServiceCatalog.class);
-    private final CreateCustomerInputValidator validator =
-        new CreateCustomerInputValidator(termsOfServiceCatalog);
+    private final CustomerRegistrationValidator validator =
+        new CustomerRegistrationValidator(termsOfServiceCatalog);
 
-    CreateCustomerInputValidatorTest() {
+    CustomerRegistrationValidatorTest() {
         given(termsOfServiceCatalog.currentVersion()).willReturn(CURRENT_TERMS_VERSION);
     }
 
@@ -223,7 +224,7 @@ class CreateCustomerInputValidatorTest {
         assertThatThrownBy(() -> validator.validate(input))
             .isInstanceOfSatisfying(RequestValidationException.class, exception -> {
                 assertThat(exception.getErrors())
-                    .extracting(error -> error.field())
+                    .extracting(ValidationError::field)
                     .contains(field);
             });
     }
