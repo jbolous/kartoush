@@ -5,6 +5,7 @@ import com.kartoush.platform.types.PhoneNumber;
 import com.kartoush.platform.types.exception.InvalidEmailException;
 import com.kartoush.platform.types.exception.InvalidPhoneNumberException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class RequestValidationSupport {
@@ -64,4 +65,15 @@ public final class RequestValidationSupport {
             errors.add(new ValidationError(field, exception.getMessage()));
         }
     }
+
+    public static List<ValidationError> requireNonNullInput(final Object input) {
+        final List<ValidationError> errors = new ArrayList<>();
+
+        if (input == null) {
+            errors.add(new ValidationError("input", "input must not be null"));
+        }
+
+        return errors;
+    }
+
 }

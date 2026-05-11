@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CustomerUpdateValidator {
+public class CustomerUpdateValidator extends RequestValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomerUpdateValidator.class);
 
@@ -46,11 +46,5 @@ public class CustomerUpdateValidator {
         RequestValidationSupport.validateOptionalPhoneNumber("phoneNumber", input.phoneNumber(), errors);
 
         throwIfErrors(errors);
-    }
-
-    private void throwIfErrors(final List<ValidationError> errors) {
-        if (!errors.isEmpty()) {
-            throw new RequestValidationException(VALIDATION_MESSAGE, errors);
-        }
     }
 }

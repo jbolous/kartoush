@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-class CreateCustomerInputValidatorTest {
+class CustomerRegistrationValidatorTest {
 
     private static final String FIRST_NAME = "Jack";
     private static final String LAST_NAME = "Kartoush";
@@ -27,7 +27,7 @@ class CreateCustomerInputValidatorTest {
     private final CustomerRegistrationValidator validator =
         new CustomerRegistrationValidator(termsOfServiceCatalog);
 
-    CreateCustomerInputValidatorTest() {
+    CustomerRegistrationValidatorTest() {
         given(termsOfServiceCatalog.currentVersion()).willReturn(CURRENT_TERMS_VERSION);
     }
 

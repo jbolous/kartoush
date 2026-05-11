@@ -2,7 +2,6 @@ package com.kartoush.customer.internal.validation;
 
 import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.internal.registration.TermsOfServiceCatalog;
-import com.kartoush.platform.validation.RequestValidationException;
 import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
 import java.util.ArrayList;
@@ -12,11 +11,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CustomerRegistrationValidator {
+public class CustomerRegistrationValidator extends CustomerRequestValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomerRegistrationValidator.class);
-
-    private static final String VALIDATION_MESSAGE = "Request validation failed";
+    private static final String TERMS_ACCEPTED_FIELD = "termsAccepted";
+    private static final String TERMS_VERSION_FIELD = "termsVersion";
 
     private final TermsOfServiceCatalog termsOfServiceCatalog;
 
@@ -35,33 +34,32 @@ public class CustomerRegistrationValidator {
             return;
         }
 
-        RequestValidationSupport.validateRequiredEmail("email", input.email(), errors);
-        RequestValidationSupport.validateRequiredText("firstName", input.firstName(), 100, errors);
-        RequestValidationSupport.validateRequiredText("lastName", input.lastName(), 100, errors);
-        RequestValidationSupport.validateOptionalPhoneNumber("phoneNumber", input.phoneNumber(), errors);
-        validateTermsAcceptance(input, errors);
+        validateCustomer(input, errors);
+
+        validateTermsAcceptance(input.termsAccepted(), input.termsVersion(), errors);
 
         throwIfErrors(errors);
     }
 
-    private void validateTermsAcceptance(final CreateCustomerInput input, final List<ValidationError> errors) {
-        if (!Boolean.TRUE.equals(input.termsAccepted())) {
-            errors.add(new ValidationError("termsAccepted", "termsAccepted must be true"));
+    private void validateTermsAcceptance(
+        final Boolean termsAccepted,
+        final String termsVersion,
+        final List<ValidationError> errors
+    ) {
+        if (!Boolean.TRUE.equals(termsAccepted)) {
+            errors.add(new ValidationError(TERMS_ACCEPTED_FIELD, TERMS_ACCEPTED_FIELD + " must be true"));
         }
 
-        if (input.termsVersion() == null || input.termsVersion().isBlank()) {
-            errors.add(new ValidationError("termsVersion", "termsVersion must not be blank"));
+        if (termsVersion == null || termsVersion.isBlank()) {
+            errors.add(new ValidationError(TERMS_VERSION_FIELD, TERMS_VERSION_FIELD + " must not be blank"));
             return;
         }
 
-        if (!termsOfServiceCatalog.currentVersion().equals(input.termsVersion())) {
-            errors.add(new ValidationError("termsVersion", "termsVersion must match the current supported Terms of Service version"));
-        }
-    }
-
-    private void throwIfErrors(final List<ValidationError> errors) {
-        if (!errors.isEmpty()) {
-            throw new RequestValidationException(VALIDATION_MESSAGE, errors);
+        if (!termsOfServiceCatalog.currentVersion().equals(termsVersion)) {
+            errors.add(new ValidationError(
+                TERMS_VERSION_FIELD,
+                TERMS_VERSION_FIELD + " must match the current supported Terms of Service version"
+            ));
         }
     }
 }
