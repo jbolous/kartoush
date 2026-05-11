@@ -1,6 +1,7 @@
 package com.kartoush.customer.internal.facade;
 
 import com.kartoush.auth.domain.IssuedPasswordSetupToken;
+import com.kartoush.customer.internal.validation.CustomerRegistrationValidator;
 import com.kartoush.notification.email.customer.CustomerEmailFactory;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
@@ -14,9 +15,8 @@ import com.kartoush.customer.facade.model.CustomerActivationView;
 import com.kartoush.customer.facade.model.CustomerView;
 import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
 import com.kartoush.customer.facade.model.UpdateCustomerInput;
-import com.kartoush.customer.internal.validation.CreateCustomerInputValidator;
-import com.kartoush.customer.internal.validation.SetInitialCustomerPasswordInputValidator;
-import com.kartoush.customer.internal.validation.UpdateCustomerInputValidator;
+import com.kartoush.customer.internal.validation.CustomerPasswordSetupValidator;
+import com.kartoush.customer.internal.validation.CustomerUpdateValidator;
 import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
@@ -39,29 +39,28 @@ public class DefaultCustomerFacade implements CustomerFacade {
     private final ActivationTokenService activationTokenService;
     private final CustomerPasswordFacade customerPasswordFacade;
     private final UlidGenerator ulidGenerator;
-    private final CreateCustomerInputValidator createCustomerInputValidator;
-    private final SetInitialCustomerPasswordInputValidator setInitialCustomerPasswordInputValidator;
-    private final UpdateCustomerInputValidator updateCustomerInputValidator;
+    private final CustomerPasswordSetupValidator customerPasswordSetupValidator;
+    private final CustomerUpdateValidator customerUpdateValidator;
+    private final CustomerRegistrationValidator customerRegistrationValidator;
 
     public DefaultCustomerFacade(
-            final CustomerService customerService,
-            final EmailDeliveryService emailDeliveryService,
-            final CustomerEmailFactory customerEmailFactory,
-            final ActivationTokenService activationTokenService,
-            final CustomerPasswordFacade customerPasswordFacade,
-            final UlidGenerator ulidGenerator,
-            final CreateCustomerInputValidator createCustomerInputValidator,
-            final SetInitialCustomerPasswordInputValidator setInitialCustomerPasswordInputValidator,
-            final UpdateCustomerInputValidator updateCustomerInputValidator) {
+        final CustomerService customerService,
+        final EmailDeliveryService emailDeliveryService,
+        final CustomerEmailFactory customerEmailFactory,
+        final ActivationTokenService activationTokenService,
+        final CustomerPasswordFacade customerPasswordFacade,
+        final UlidGenerator ulidGenerator,
+        final CustomerPasswordSetupValidator customerPasswordSetupValidator,
+        final CustomerUpdateValidator customerUpdateValidator, CustomerRegistrationValidator customerRegistrationValidator) {
         this.customerService = customerService;
         this.emailDeliveryService = emailDeliveryService;
         this.customerEmailFactory = customerEmailFactory;
         this.activationTokenService = activationTokenService;
         this.customerPasswordFacade = customerPasswordFacade;
         this.ulidGenerator = ulidGenerator;
-        this.createCustomerInputValidator = createCustomerInputValidator;
-        this.setInitialCustomerPasswordInputValidator = setInitialCustomerPasswordInputValidator;
-        this.updateCustomerInputValidator = updateCustomerInputValidator;
+        this.customerPasswordSetupValidator = customerPasswordSetupValidator;
+        this.customerUpdateValidator = customerUpdateValidator;
+        this.customerRegistrationValidator = customerRegistrationValidator;
     }
 
     @Override
@@ -75,7 +74,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
 
     @Override
     public CustomerView createCustomer(final CreateCustomerInput input) {
-        createCustomerInputValidator.validate(input);
+        customerRegistrationValidator.validate(input);
 
         final CustomerProfile profile = buildCustomerProfile(input);
 
@@ -108,7 +107,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
     @Override
     public CustomerView updateCustomer(String customerId, UpdateCustomerInput input) {
 
-        updateCustomerInputValidator.validate(input);
+        customerUpdateValidator.validate(input);
 
         CustomerProfile profile = buildCustomerProfile(input);
         Customer savedCustomer = customerService.updateCustomer(customerId, profile);
@@ -128,7 +127,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
 
     @Override
     public void setInitialPassword(final String customerId, final InitialCustomerPasswordInput input) {
-        setInitialCustomerPasswordInputValidator.validate(input);
+        customerPasswordSetupValidator.validate(input);
 
         final Customer customer = customerService.getCustomerById(customerId)
             .orElseThrow(() -> new CustomerNotFoundException(customerId));
