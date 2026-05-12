@@ -28,7 +28,7 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
             "Welcome to Kartoush.%n%n"
                 + "Activate your account using the link below:%n"
                 + "%s",
-            actionUrl).trim();
+            actionUrl);
 
         return new EmailMessage(EmailMessageType.CUSTOMER_ACTIVATION, recipient, new Email(properties.getSenderAddress()),
             properties.getSenderName(), "Activate your Kartoush account", activationBody, actionUrl);
@@ -43,7 +43,7 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
             "We received a request to reset your Kartoush password.%n%n"
                 + "Use the link below to continue:%n"
                 + "%s",
-            actionUrl).trim();
+            actionUrl);
 
         return new EmailMessage(EmailMessageType.CUSTOMER_PASSWORD_RESET, recipient, new Email(properties.getSenderAddress()),
             properties.getSenderName(), "Reset your Kartoush password", passwordResetBody, actionUrl);
