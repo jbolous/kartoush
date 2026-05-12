@@ -6,7 +6,7 @@ import java.time.Instant;
  * Schedules durable background work without exposing infrastructure details to
  * application code.
  */
-public interface JobScheduler {
+public interface BackgroundJobScheduler {
 
     void enqueue(JobRequest request);
 

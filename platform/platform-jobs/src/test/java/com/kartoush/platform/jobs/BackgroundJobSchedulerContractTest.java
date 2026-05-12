@@ -6,11 +6,11 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class JobSchedulerContractTest {
+class BackgroundJobSchedulerContractTest {
 
     @Test
     void shouldAllowEnqueueingTypedJobRequests() {
-        final RecordingJobScheduler scheduler = new RecordingJobScheduler();
+        final RecordingBackgroundJobScheduler scheduler = new RecordingBackgroundJobScheduler();
         final ExampleJobRequest request = new ExampleJobRequest("01HXJOB0000000000000000001");
 
         scheduler.enqueue(request);
@@ -22,7 +22,7 @@ class JobSchedulerContractTest {
 
     @Test
     void shouldAllowSchedulingTypedJobRequestsForLaterExecution() {
-        final RecordingJobScheduler scheduler = new RecordingJobScheduler();
+        final RecordingBackgroundJobScheduler scheduler = new RecordingBackgroundJobScheduler();
         final ExampleJobRequest request = new ExampleJobRequest("01HXJOB0000000000000000001");
         final Instant scheduledAt = Instant.parse("2026-05-12T12:00:00Z");
 
@@ -36,7 +36,7 @@ class JobSchedulerContractTest {
     private record ExampleJobRequest(String customerId) implements JobRequest {
     }
 
-    private static final class RecordingJobScheduler implements JobScheduler {
+    private static final class RecordingBackgroundJobScheduler implements BackgroundJobScheduler {
 
         private JobRequest enqueuedRequest;
         private JobRequest scheduledRequest;

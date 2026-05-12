@@ -22,10 +22,12 @@ dependencies {
     implementation project(':auth')
     implementation project(':customer')
     implementation project(':notification')
+    implementation project(':platform:platform-jobs')
     implementation project(':platform:platform-types')
     implementation project(':platform:platform-validation')
     testImplementation project(":test-support")
 
+    implementation(libs.jobrunrSpringBoot4Starter)
     implementation(libs.springBootStarterWeb)
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'

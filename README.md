@@ -241,6 +241,11 @@ local Mailtrap-backed quick start, see:
 
 - `docs/auth/transactional-email-provider-configuration.md`
 
+For JobRunr background job runtime configuration and the local dashboard setup,
+see:
+
+- `docs/infrastructure/jobrunr-background-job-configuration.md`
+
 ---
 
 ## API Documentation
