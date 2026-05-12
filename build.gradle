@@ -1,5 +1,6 @@
 plugins {
     id 'base'
+    id 'jacoco'
 }
 
 ext {
@@ -41,6 +42,22 @@ subprojects {
 
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
+    }
+
+    apply plugin: 'jacoco'
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        finalizedBy(tasks.named('jacocoTestReport'))
+    }
+
+    tasks.named('jacocoTestReport', JacocoReport).configure {
+        dependsOn(tasks.withType(Test))
+
+        reports {
+            xml.required = true
+            html.required = true
+        }
     }
 }
 
