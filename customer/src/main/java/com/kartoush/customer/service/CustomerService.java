@@ -8,8 +8,7 @@ import com.kartoush.platform.types.Email;
 import java.util.List;
 import java.util.Optional;
 
-public interface CustomerService
-{
+public interface CustomerService {
     List<Customer> getActiveCustomers();
 
     Optional<Customer> getCustomerById(String customerId);

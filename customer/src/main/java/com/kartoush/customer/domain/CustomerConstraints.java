@@ -2,7 +2,7 @@ package com.kartoush.customer.domain;
 
 public class CustomerConstraints {
 
-    private CustomerConstraints(){
+    private CustomerConstraints() {
 
     }
 

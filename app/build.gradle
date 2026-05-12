@@ -26,27 +26,27 @@ dependencies {
     implementation project(':platform:platform-validation')
     testImplementation project(":test-support")
 
-    implementation (libs.springBootStarterWeb)
+    implementation(libs.springBootStarterWeb)
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation(libs.springdoc.openapi.webmvc.ui)
-    implementation (libs.springBootStarterDataJpa)
+    implementation(libs.springBootStarterDataJpa)
 
-    implementation (libs.springBootStarterFlyway)
-    implementation (libs.flywayPostgresql)
+    implementation(libs.springBootStarterFlyway)
+    implementation(libs.flywayPostgresql)
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     runtimeOnly(libs.postgresql)
 
-    testImplementation (platform(libs.testcontainersBom))
-    testImplementation (libs.testcontainers)
-    testImplementation (libs.testcontainersJunitJupiter)
-    testImplementation (libs.testcontainersPostgresql)
-    testImplementation (libs.springBootStarterWebmvcTest)
+    testImplementation(platform(libs.testcontainersBom))
+    testImplementation(libs.testcontainers)
+    testImplementation(libs.testcontainersJunitJupiter)
+    testImplementation(libs.testcontainersPostgresql)
+    testImplementation(libs.springBootStarterWebmvcTest)
 
     testImplementation project(":test-support")
-    testImplementation (libs.springBootStarterTest)
+    testImplementation(libs.springBootStarterTest)
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 

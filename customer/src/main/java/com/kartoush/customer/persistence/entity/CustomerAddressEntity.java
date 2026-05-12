@@ -10,15 +10,15 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import org.springframework.util.StringUtils;
+
 import java.time.Instant;
 import java.util.Locale;
 import java.util.Objects;
-import org.springframework.util.StringUtils;
 
 @Entity
 @Table(name = "customer_address")
-public class CustomerAddressEntity
-{
+public class CustomerAddressEntity {
     @EmbeddedId
     private AddressIdEmbeddable id;
 
@@ -59,24 +59,22 @@ public class CustomerAddressEntity
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    protected CustomerAddressEntity()
-    {
+    protected CustomerAddressEntity() {
         // for JPA
     }
 
     private CustomerAddressEntity(
-            final AddressIdEmbeddable id,
-            final CustomerEntity customer,
-            final String label,
-            final String line1,
-            final String line2,
-            final String city,
-            final String stateOrProvince,
-            final String postalCode,
-            final String countryCode,
-            final boolean defaultShipping,
-            final boolean defaultBilling)
-    {
+        final AddressIdEmbeddable id,
+        final CustomerEntity customer,
+        final String label,
+        final String line1,
+        final String line2,
+        final String city,
+        final String stateOrProvince,
+        final String postalCode,
+        final String countryCode,
+        final boolean defaultShipping,
+        final boolean defaultBilling) {
         this.id = Objects.requireNonNull(id, "id");
         this.customer = Objects.requireNonNull(customer, "customer");
         this.label = normalizeOptional(label);
@@ -91,43 +89,41 @@ public class CustomerAddressEntity
     }
 
     public static CustomerAddressEntity of(
-            final AddressIdEmbeddable id,
-            final CustomerEntity customer,
-            final String label,
-            final String line1,
-            final String line2,
-            final String city,
-            final String stateOrProvince,
-            final String postalCode,
-            final String countryCode,
-            final boolean defaultShipping,
-            final boolean defaultBilling)
-    {
+        final AddressIdEmbeddable id,
+        final CustomerEntity customer,
+        final String label,
+        final String line1,
+        final String line2,
+        final String city,
+        final String stateOrProvince,
+        final String postalCode,
+        final String countryCode,
+        final boolean defaultShipping,
+        final boolean defaultBilling) {
         return new CustomerAddressEntity(
-                id,
-                customer,
-                label,
-                line1,
-                line2,
-                city,
-                stateOrProvince,
-                postalCode,
-                countryCode,
-                defaultShipping,
-                defaultBilling);
+            id,
+            customer,
+            label,
+            line1,
+            line2,
+            city,
+            stateOrProvince,
+            postalCode,
+            countryCode,
+            defaultShipping,
+            defaultBilling);
     }
 
     public void update(
-            final String label,
-            final String line1,
-            final String line2,
-            final String city,
-            final String stateOrProvince,
-            final String postalCode,
-            final String countryCode,
-            final boolean defaultShipping,
-            final boolean defaultBilling)
-    {
+        final String label,
+        final String line1,
+        final String line2,
+        final String city,
+        final String stateOrProvince,
+        final String postalCode,
+        final String countryCode,
+        final boolean defaultShipping,
+        final boolean defaultBilling) {
         this.label = normalizeOptional(label);
         this.line1 = requireNonBlank(line1, "line1");
         this.line2 = normalizeOptional(line2);
@@ -139,79 +135,64 @@ public class CustomerAddressEntity
         this.defaultBilling = defaultBilling;
     }
 
-    void setCustomer(final CustomerEntity customer)
-    {
+    void setCustomer(final CustomerEntity customer) {
         this.customer = Objects.requireNonNull(customer, "customer");
     }
 
-    public AddressIdEmbeddable getId()
-    {
+    public AddressIdEmbeddable getId() {
         return id;
     }
 
-    public CustomerEntity getCustomer()
-    {
+    public CustomerEntity getCustomer() {
         return customer;
     }
 
-    public String getLabel()
-    {
+    public String getLabel() {
         return label;
     }
 
-    public String getLine1()
-    {
+    public String getLine1() {
         return line1;
     }
 
-    public String getLine2()
-    {
+    public String getLine2() {
         return line2;
     }
 
-    public String getCity()
-    {
+    public String getCity() {
         return city;
     }
 
-    public String getStateOrProvince()
-    {
+    public String getStateOrProvince() {
         return stateOrProvince;
     }
 
-    public String getPostalCode()
-    {
+    public String getPostalCode() {
         return postalCode;
     }
 
-    public String getCountryCode()
-    {
+    public String getCountryCode() {
         return countryCode;
     }
 
-    public boolean isDefaultShipping()
-    {
+    public boolean isDefaultShipping() {
         return defaultShipping;
     }
 
-    public boolean isDefaultBilling()
-    {
+    public boolean isDefaultBilling() {
         return defaultBilling;
     }
 
-    public Instant getCreatedAt()
-    {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public Instant getUpdatedAt()
-    {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 
     @PrePersist
-    protected void onCreate()
-    {
+    protected void onCreate() {
         validateState();
 
         final Instant now = Instant.now();
@@ -222,14 +203,12 @@ public class CustomerAddressEntity
     }
 
     @PreUpdate
-    protected void onUpdate()
-    {
+    protected void onUpdate() {
         validateState();
         updatedAt = Instant.now();
     }
 
-    private void validateState()
-    {
+    private void validateState() {
         Objects.requireNonNull(id, "ID cannot be null");
         Objects.requireNonNull(customer, "Customer cannot be null");
         label = normalizeOptional(label);
@@ -241,24 +220,21 @@ public class CustomerAddressEntity
         countryCode = normalizeCountryCode(countryCode);
     }
 
-    private static String requireNonBlank(final String value, final String fieldName)
-    {
+    private static String requireNonBlank(final String value, final String fieldName) {
         if (!StringUtils.hasText(value)) {
             throw new IllegalArgumentException(fieldName + " is required");
         }
         return value.trim();
     }
 
-    private static String normalizeOptional(final String value)
-    {
+    private static String normalizeOptional(final String value) {
         if (!StringUtils.hasText(value)) {
             return null;
         }
         return value.trim();
     }
 
-    private static String normalizeCountryCode(final String value)
-    {
+    private static String normalizeCountryCode(final String value) {
         return requireNonBlank(value, "countryCode").toUpperCase(Locale.ROOT);
     }
 }

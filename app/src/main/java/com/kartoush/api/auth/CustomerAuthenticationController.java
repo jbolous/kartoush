@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CustomerAuthenticationController {
 
     private final CustomerAuthenticationApplicationService customerAuthenticationApplicationService;
+
     private final CustomerPasswordResetApplicationService customerPasswordResetApplicationService;
 
     public CustomerAuthenticationController(

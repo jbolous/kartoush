@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 public class DefaultCustomerSignInFacade implements CustomerSignInFacade {
 
     private final CustomerPasswordService customerPasswordService;
+
     private final CustomerAuthSessionService customerAuthSessionService;
 
     public DefaultCustomerSignInFacade(

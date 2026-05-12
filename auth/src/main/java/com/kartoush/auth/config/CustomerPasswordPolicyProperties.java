@@ -9,10 +9,15 @@ import org.springframework.stereotype.Component;
 public class CustomerPasswordPolicyProperties {
 
     private int minLength = 12;
+
     private int maxLength = 255;
+
     private boolean requireUppercase = true;
+
     private boolean requireLowercase = true;
+
     private boolean requireDigit = true;
+
     private boolean requireSpecialCharacter = true;
 
     public int getMinLength() {

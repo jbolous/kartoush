@@ -6,68 +6,63 @@ import com.kartoush.customer.persistence.entity.CustomerAddressEntity;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.entity.CustomerProfileEntity;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
-import com.kartoush.platform.types.CustomerId;
-import java.util.List;
-
 import com.kartoush.platform.types.Email;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
-public class CustomerMapper
-{
+public class CustomerMapper {
     private final CustomerAddressMapper customerAddressMapper;
 
     public CustomerMapper(final CustomerAddressMapper customerAddressMapper) {
         this.customerAddressMapper = customerAddressMapper;
     }
 
-    public CustomerEntity toEntity(final Customer domain)
-    {
+    public CustomerEntity toEntity(final Customer domain) {
         if (domain == null) {
             return null;
         }
 
         final CustomerEntity customerEntity = CustomerEntity.newCustomer(
-                CustomerIdEmbeddable.from(domain.getId()),
-                toProfileEntity(domain.getProfile()),
-                domain.getEmail().value(),
-                domain.getStatus()
+            CustomerIdEmbeddable.from(domain.getId()),
+            toProfileEntity(domain.getProfile()),
+            domain.getEmail().value(),
+            domain.getStatus()
         );
 
         final List<CustomerAddressEntity> addressEntities = domain.getAddresses().stream()
-                .map(address -> customerAddressMapper.toEntity(address, customerEntity))
-                .toList();
+            .map(address -> customerAddressMapper.toEntity(address, customerEntity))
+            .toList();
 
         customerEntity.replaceAddresses(addressEntities);
 
         return customerEntity;
     }
 
-    public Customer toDomain(final CustomerEntity entity)
-    {
+    public Customer toDomain(final CustomerEntity entity) {
         if (entity == null) {
             return null;
         }
 
         return Customer.fromPersistence(
-                entity.getCustomerId().toCustomerId(),
-                toProfileDomain(entity.getProfile()),
-                new Email(entity.getEmail()),
-                entity.getCustomerStatus(),
-                entity.getAddresses().stream()
-                        .map(customerAddressMapper::toDomain)
-                        .toList());
+            entity.getCustomerId().toCustomerId(),
+            toProfileDomain(entity.getProfile()),
+            new Email(entity.getEmail()),
+            entity.getCustomerStatus(),
+            entity.getAddresses().stream()
+                .map(customerAddressMapper::toDomain)
+                .toList());
     }
 
-    public void updateEntity(final Customer domain, final CustomerEntity entity)
-    {
+    public void updateEntity(final Customer domain, final CustomerEntity entity) {
         entity.setProfile(toProfileEntity(domain.getProfile()));
         entity.setEmail(domain.getEmail().value());
         entity.setCustomerStatus(domain.getStatus());
 
         final List<CustomerAddressEntity> addressEntities = domain.getAddresses().stream()
-                .map(address -> customerAddressMapper.toEntity(address, entity))
-                .toList();
+            .map(address -> customerAddressMapper.toEntity(address, entity))
+            .toList();
 
         entity.replaceAddresses(addressEntities);
     }

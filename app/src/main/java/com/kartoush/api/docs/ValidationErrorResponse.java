@@ -24,8 +24,7 @@ public record ValidationErrorResponse(
 
     @Schema(
         description = "Rejected value when it is safe to expose",
-        nullable = true,
-        example = ""
+        nullable = true
     )
     Object rejectedValue
 ) {

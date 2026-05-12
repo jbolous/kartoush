@@ -10,9 +10,10 @@ import jakarta.persistence.PostLoad;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import org.springframework.data.domain.Persistable;
+
 import java.time.Instant;
 import java.util.Objects;
-import org.springframework.data.domain.Persistable;
 
 @Entity
 @Table(name = "terms_acceptance")

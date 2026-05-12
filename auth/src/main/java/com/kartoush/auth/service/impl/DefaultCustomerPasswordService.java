@@ -15,6 +15,7 @@ import java.util.Optional;
 public class DefaultCustomerPasswordService implements CustomerPasswordService {
 
     private final CustomerPasswordRepository customerPasswordRepository;
+
     private final CustomerPasswordHasher customerPasswordHasher;
 
     public DefaultCustomerPasswordService(

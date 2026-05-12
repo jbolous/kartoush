@@ -1,14 +1,11 @@
 package com.kartoush.customer.internal.facade;
 
 import com.kartoush.auth.domain.IssuedPasswordSetupToken;
-import com.kartoush.customer.internal.validation.CustomerRegistrationValidator;
-import com.kartoush.notification.email.customer.CustomerEmailFactory;
-import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
-import com.kartoush.customer.exception.InvalidPasswordSetupException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
+import com.kartoush.customer.exception.InvalidPasswordSetupException;
 import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.facade.model.CustomerActivationView;
@@ -16,11 +13,14 @@ import com.kartoush.customer.facade.model.CustomerView;
 import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
 import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import com.kartoush.customer.internal.validation.CustomerPasswordSetupValidator;
+import com.kartoush.customer.internal.validation.CustomerRegistrationValidator;
 import com.kartoush.customer.internal.validation.CustomerUpdateValidator;
 import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
 import com.kartoush.customer.service.IssuedActivationToken;
+import com.kartoush.notification.email.customer.CustomerEmailFactory;
+import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
@@ -34,13 +34,21 @@ import java.util.List;
 public class DefaultCustomerFacade implements CustomerFacade {
 
     private final CustomerService customerService;
+
     private final EmailDeliveryService emailDeliveryService;
+
     private final CustomerEmailFactory customerEmailFactory;
+
     private final ActivationTokenService activationTokenService;
+
     private final CustomerPasswordFacade customerPasswordFacade;
+
     private final UlidGenerator ulidGenerator;
+
     private final CustomerPasswordSetupValidator customerPasswordSetupValidator;
+
     private final CustomerUpdateValidator customerUpdateValidator;
+
     private final CustomerRegistrationValidator customerRegistrationValidator;
 
     public DefaultCustomerFacade(
@@ -66,10 +74,10 @@ public class DefaultCustomerFacade implements CustomerFacade {
     @Override
     public List<CustomerView> getCustomers() {
         return customerService
-                .getActiveCustomers()
-                .stream()
-                .map(this::toCustomerView)
-                .toList();
+            .getActiveCustomers()
+            .stream()
+            .map(this::toCustomerView)
+            .toList();
     }
 
     @Override
@@ -79,9 +87,9 @@ public class DefaultCustomerFacade implements CustomerFacade {
         final CustomerProfile profile = buildCustomerProfile(input);
 
         final Customer customer = Customer.createNew(
-                CustomerId.newId(ulidGenerator),
-                profile,
-                new Email(input.email()));
+            CustomerId.newId(ulidGenerator),
+            profile,
+            new Email(input.email()));
 
         final Customer savedCustomer = customerService.registerCustomer(customer, input.termsVersion());
         final IssuedActivationToken issuedActivationToken = activationTokenService.createFor(savedCustomer.getId());
@@ -100,8 +108,8 @@ public class DefaultCustomerFacade implements CustomerFacade {
     @Override
     public CustomerView getCustomer(final String customerId) {
         return customerService.getCustomerById(customerId)
-                .map(this::toCustomerView)
-                .orElseThrow( () -> new CustomerNotFoundException(customerId));
+            .map(this::toCustomerView)
+            .orElseThrow(() -> new CustomerNotFoundException(customerId));
     }
 
     @Override
@@ -176,12 +184,12 @@ public class DefaultCustomerFacade implements CustomerFacade {
 
     private CustomerView toCustomerView(final Customer customer) {
         return new CustomerView(
-                customer.getId().value(),
-                customer.getProfile().firstName(),
-                customer.getProfile().lastName(),
-                customer.getEmail().value(),
-                customer.getProfile().phoneNumber(),
-                customer.getStatus());
+            customer.getId().value(),
+            customer.getProfile().firstName(),
+            customer.getProfile().lastName(),
+            customer.getEmail().value(),
+            customer.getProfile().phoneNumber(),
+            customer.getStatus());
     }
 
     private CustomerActivationView toCustomerActivationView(final Customer customer, final String passwordSetupToken) {
@@ -198,15 +206,15 @@ public class DefaultCustomerFacade implements CustomerFacade {
 
     private CustomerProfile buildCustomerProfile(final UpdateCustomerInput input) {
         return CustomerProfile.of(
-                input.firstName(),
-                input.lastName(),
-                input.phoneNumber());
+            input.firstName(),
+            input.lastName(),
+            input.phoneNumber());
     }
 
     private CustomerProfile buildCustomerProfile(final CreateCustomerInput input) {
         return CustomerProfile.of(
-                input.firstName(),
-                input.lastName(),
-                input.phoneNumber());
+            input.firstName(),
+            input.lastName(),
+            input.phoneNumber());
     }
 }

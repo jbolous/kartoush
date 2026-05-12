@@ -2,16 +2,16 @@ package com.kartoush.auth.internal.facade;
 
 import com.kartoush.auth.domain.CustomerPassword;
 import com.kartoush.auth.domain.IssuedPasswordResetToken;
-import com.kartoush.auth.domain.PasswordSetupToken;
 import com.kartoush.auth.domain.IssuedPasswordSetupToken;
+import com.kartoush.auth.domain.PasswordResetToken;
+import com.kartoush.auth.domain.PasswordSetupToken;
 import com.kartoush.auth.exception.CustomerPasswordAlreadyExistsException;
 import com.kartoush.auth.exception.PasswordReuseNotAllowedException;
-import com.kartoush.auth.domain.PasswordResetToken;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
 import com.kartoush.auth.service.CustomerAuthSessionService;
+import com.kartoush.auth.service.CustomerPasswordService;
 import com.kartoush.auth.service.PasswordResetTokenService;
 import com.kartoush.auth.service.PasswordSetupTokenService;
-import com.kartoush.auth.service.CustomerPasswordService;
 import com.kartoush.platform.types.CustomerId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,8 +22,11 @@ import java.util.Optional;
 public class DefaultCustomerPasswordFacade implements CustomerPasswordFacade {
 
     private final CustomerPasswordService customerPasswordService;
+
     private final CustomerAuthSessionService customerAuthSessionService;
+
     private final PasswordSetupTokenService passwordSetupTokenService;
+
     private final PasswordResetTokenService passwordResetTokenService;
 
     public DefaultCustomerPasswordFacade(final CustomerPasswordService customerPasswordService,

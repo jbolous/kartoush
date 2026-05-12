@@ -11,5 +11,6 @@ import java.util.Optional;
 public interface CustomerRepository extends JpaRepository<CustomerEntity, CustomerIdEmbeddable> {
 
     List<CustomerEntity> findByCustomerStatus(CustomerStatus status);
+
     Optional<CustomerEntity> findByEmail(String email);
 }

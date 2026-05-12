@@ -2,9 +2,10 @@ package com.kartoush.auth.validation;
 
 import com.kartoush.auth.config.CustomerPasswordPolicyProperties;
 import com.kartoush.platform.validation.password.PasswordPolicyValidator;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.stereotype.Component;
 
 @Component
 public class CustomerPasswordPolicyValidator implements PasswordPolicyValidator {

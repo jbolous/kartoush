@@ -1,11 +1,12 @@
 package com.kartoush.auth.service.impl;
 
 import com.kartoush.auth.service.PasswordSetupTokenHasher;
+import org.springframework.stereotype.Component;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
-import org.springframework.stereotype.Component;
 
 @Component
 public class DefaultPasswordSetupTokenHasher implements PasswordSetupTokenHasher {

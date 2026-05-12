@@ -1,10 +1,11 @@
 package com.kartoush.notification.email.provider.mailtrap;
 
-import com.kartoush.notification.email.client.EmailApiClient;
-import com.kartoush.notification.email.delivery.EmailDeliveryException;
 import com.kartoush.notification.email.EmailMessage;
+import com.kartoush.notification.email.client.EmailApiClient;
 import com.kartoush.notification.email.config.EmailDeliveryProperties;
+import com.kartoush.notification.email.delivery.EmailDeliveryException;
 import com.kartoush.notification.email.http.NotificationHttpClient;
+
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -16,9 +17,11 @@ import java.util.regex.Pattern;
 public class DefaultMailtrapEmailApiClient implements EmailApiClient {
 
     private static final String PROVIDER = "mailtrap";
+
     private static final Pattern MESSAGE_IDS_PATTERN = Pattern.compile("\"message_ids\"\\s*:\\s*\\[\\s*\"([^\"]+)\"");
 
     private final NotificationHttpClient notificationHttpClient;
+
     private final EmailDeliveryProperties.Mailtrap properties;
 
     public DefaultMailtrapEmailApiClient(

@@ -19,7 +19,7 @@ springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starte
 swaggerAnnotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version = "2.2.28" }
 springBootStarterTest = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "springBootVersion" }
 springBootStarterDataJpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "springBootVersion" }
-springBootStarterWeb = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "springBootVersion"}
+springBootStarterWeb = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "springBootVersion" }
 springBootStarterWebmvcTest = { module = "org.springframework.boot:spring-boot-starter-webmvc-test", version.ref = "springBootVersion" }
 springBootStarterFlyway = { module = "org.springframework.boot:spring-boot-starter-flyway" }
 springBootTest = { module = "org.springframework.boot:spring-boot-test", version.ref = "springBootVersion" }

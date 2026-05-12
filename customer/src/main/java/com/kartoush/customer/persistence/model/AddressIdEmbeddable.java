@@ -13,7 +13,8 @@ public class AddressIdEmbeddable implements Serializable {
     @Column(name = "id", nullable = false, length = 26)
     private String value;
 
-    protected AddressIdEmbeddable() {}
+    protected AddressIdEmbeddable() {
+    }
 
     private AddressIdEmbeddable(String value) {
         this.value = Objects.requireNonNull(value, "value");

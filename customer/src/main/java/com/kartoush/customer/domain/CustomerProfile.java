@@ -1,15 +1,14 @@
 package com.kartoush.customer.domain;
 
 public record CustomerProfile(
-        String firstName,
-        String lastName,
-        String phoneNumber
-) {
+    String firstName,
+    String lastName,
+    String phoneNumber) {
     public CustomerProfile {
-        if (firstName == null || firstName.isBlank()){
+        if (firstName == null || firstName.isBlank()) {
             throw new IllegalArgumentException("firstName must not be blank");
         }
-        if (lastName == null || lastName.isBlank()){
+        if (lastName == null || lastName.isBlank()) {
             throw new IllegalArgumentException("lastName must not be blank");
         }
     }

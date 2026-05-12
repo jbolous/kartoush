@@ -2,6 +2,7 @@ package com.kartoush.customer.service;
 
 import com.kartoush.customer.persistence.entity.TermsOfServiceEntity;
 import com.kartoush.customer.termsofservice.TermsOfServiceContentType;
+
 import java.time.Instant;
 
 public interface TermsOfServiceManagementService {

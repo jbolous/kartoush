@@ -2,19 +2,21 @@ package com.kartoush.customer.internal.validation;
 
 import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.internal.registration.TermsOfServiceCatalog;
-import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
-import java.util.ArrayList;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class CustomerRegistrationValidator extends CustomerRequestValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomerRegistrationValidator.class);
+
     private static final String TERMS_ACCEPTED_FIELD = "termsAccepted";
+
     private static final String TERMS_VERSION_FIELD = "termsVersion";
 
     private final TermsOfServiceCatalog termsOfServiceCatalog;

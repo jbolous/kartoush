@@ -5,8 +5,9 @@ import com.kartoush.customer.facade.model.TermsOfServiceManagementView;
 import com.kartoush.customer.persistence.entity.TermsOfServiceEntity;
 import com.kartoush.customer.service.TermsOfServiceManagementService;
 import com.kartoush.customer.termsofservice.TermsOfServiceContentType;
-import java.time.Instant;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 
 @Service
 public class DefaultTermsOfServiceManagementFacade implements TermsOfServiceManagementFacade {

@@ -20,9 +20,13 @@ public class DefaultCustomerAuthSessionService implements CustomerAuthSessionSer
     private static final String TOKEN_TYPE = "Bearer";
 
     private final CustomerAuthSessionRepository customerAuthSessionRepository;
+
     private final CustomerAccessTokenGenerator customerAccessTokenGenerator;
+
     private final CustomerAccessTokenHasher customerAccessTokenHasher;
+
     private final UlidGenerator ulidGenerator;
+
     private final Clock clock;
 
     public DefaultCustomerAuthSessionService(

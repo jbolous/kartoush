@@ -1,9 +1,10 @@
 package com.kartoush.auth.service.impl;
 
 import com.kartoush.auth.service.PasswordSetupTokenGenerator;
+import org.springframework.stereotype.Component;
+
 import java.security.SecureRandom;
 import java.util.Base64;
-import org.springframework.stereotype.Component;
 
 @Component
 public class DefaultPasswordSetupTokenGenerator implements PasswordSetupTokenGenerator {

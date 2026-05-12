@@ -2,6 +2,7 @@ package com.kartoush.customer.facade;
 
 import com.kartoush.customer.facade.model.TermsOfServiceManagementView;
 import com.kartoush.customer.termsofservice.TermsOfServiceContentType;
+
 import java.time.Instant;
 
 public interface TermsOfServiceManagementFacade {

@@ -2,6 +2,7 @@ package com.kartoush.customer.facade.model;
 
 import com.kartoush.customer.termsofservice.TermsOfServiceContentType;
 import com.kartoush.customer.termsofservice.TermsOfServiceStatus;
+
 import java.time.Instant;
 
 public record TermsOfServiceManagementView(

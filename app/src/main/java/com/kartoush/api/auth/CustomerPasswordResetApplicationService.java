@@ -1,13 +1,13 @@
 package com.kartoush.api.auth;
 
 import com.kartoush.auth.domain.IssuedPasswordResetToken;
-import com.kartoush.notification.email.customer.CustomerEmailFactory;
-import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.auth.exception.InvalidPasswordResetException;
 import com.kartoush.auth.exception.PasswordResetTokenNotFoundException;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
 import com.kartoush.customer.facade.CustomerAuthenticationFacade;
 import com.kartoush.customer.facade.model.CustomerAuthCandidateView;
+import com.kartoush.notification.email.customer.CustomerEmailFactory;
+import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
@@ -23,9 +23,13 @@ import java.util.Optional;
 public class CustomerPasswordResetApplicationService {
 
     private final CustomerAuthenticationFacade customerAuthenticationFacade;
+
     private final CustomerPasswordFacade customerPasswordFacade;
+
     private final EmailDeliveryService emailDeliveryService;
+
     private final CustomerEmailFactory customerEmailFactory;
+
     private final ResetCustomerPasswordRequestValidator resetCustomerPasswordRequestValidator;
 
     public CustomerPasswordResetApplicationService(

@@ -2,11 +2,12 @@ package com.kartoush.customer.internal.validation;
 
 import com.kartoush.customer.domain.CustomerConstraints;
 import com.kartoush.customer.facade.model.UpdateCustomerInput;
-import com.kartoush.platform.validation.RequestValidationException;
 import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -15,8 +16,6 @@ import org.springframework.stereotype.Component;
 public class CustomerUpdateValidator extends RequestValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomerUpdateValidator.class);
-
-    private static final String VALIDATION_MESSAGE = "Request validation failed";
 
     public void validate(final UpdateCustomerInput input) {
         LOG.debug("Validating customer update input");
