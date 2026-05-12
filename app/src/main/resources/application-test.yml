@@ -3,6 +3,12 @@ spring:
     activate:
       on-profile: test
 
+jobrunr:
+  background-job-server:
+    enabled: false
+  dashboard:
+    enabled: false
+
 kartoush:
   email:
     delivery:

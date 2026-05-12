@@ -3,6 +3,12 @@ spring:
     activate:
       on-profile: prod
 
+jobrunr:
+  background-job-server:
+    enabled: ${KARTOUSH_JOBRUNR_BACKGROUND_JOB_SERVER_ENABLED:true}
+  dashboard:
+    enabled: ${KARTOUSH_JOBRUNR_DASHBOARD_ENABLED:false}
+
 kartoush:
   email:
     delivery:

@@ -3,6 +3,13 @@ spring:
     activate:
       on-profile: dev
 
+jobrunr:
+  background-job-server:
+    enabled: ${KARTOUSH_JOBRUNR_BACKGROUND_JOB_SERVER_ENABLED:true}
+  dashboard:
+    enabled: ${KARTOUSH_JOBRUNR_DASHBOARD_ENABLED:true}
+    port: ${KARTOUSH_JOBRUNR_DASHBOARD_PORT:8000}
+
 kartoush:
   email:
     delivery:

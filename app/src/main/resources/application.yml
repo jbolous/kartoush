@@ -26,6 +26,7 @@ spring:
 logging:
   level:
     org.flywaydb: info
+    org.jobrunr: info
     com.kartoush: TRACE
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
@@ -51,3 +52,7 @@ kartoush:
       require-lowercase: true
       require-digit: true
       require-special-character: true
+
+jobrunr:
+  database:
+    table-prefix: jobrunr.
