@@ -172,6 +172,7 @@ linked_count=0
 failed_count=0
 warning_count=0
 LOOKUP_ISSUE_ID_ATTEMPTS=0
+PARSE_METADATA_ERROR=""
 
 parse_metadata() {
   local file="$1"
@@ -182,6 +183,7 @@ parse_metadata() {
   local body_file
   local in_metadata="true"
 
+  PARSE_METADATA_ERROR=""
   body_file="$(mktemp)"
 
   while IFS= read -r line || [[ -n "$line" ]]; do
@@ -198,7 +200,8 @@ parse_metadata() {
       elif [[ "$line" == Status:* ]]; then
         status="$(trim "${line#Status:}")"
       else
-        print_verbose "Invalid metadata line in $(basename "$file"): $line"
+        PARSE_METADATA_ERROR="Invalid metadata line in $(basename "$file"): $line"
+        print_verbose "$PARSE_METADATA_ERROR"
         rm -f "$body_file"
         return 1
       fi
@@ -208,7 +211,8 @@ parse_metadata() {
   done < "$file"
 
   if [[ -z "$title" ]]; then
-    print_verbose "Missing required Title metadata in $(basename "$file")"
+    PARSE_METADATA_ERROR="Missing required Title metadata in $(basename "$file")"
+    print_verbose "$PARSE_METADATA_ERROR"
     rm -f "$body_file"
     return 1
   fi
@@ -652,6 +656,7 @@ emit_warning() {
   print_warning "$message"
 }
 
+if [[ "${IMPORT_ISSUES_SOURCE_ONLY:-false}" != "true" ]]; then
 preflight_import
 
 if ! load_repo_labels; then
@@ -687,6 +692,7 @@ print_verbose "DRY_RUN=$DRY_RUN"
 print_verbose "ASSIGN_TO_SELF=$ASSIGN_TO_SELF"
 if [[ -n "$AUTHENTICATED_USER" ]]; then
   print_verbose "AUTHENTICATED_USER=$AUTHENTICATED_USER"
+fi
 fi
 print_verbose "IMPORT_CONFIG_FILE=$IMPORT_CONFIG_FILE"
 print_verbose "IMPORT_LOCAL_CONFIG_FILE=$IMPORT_LOCAL_CONFIG_FILE"
@@ -763,9 +769,37 @@ lookup_issue_rest_id_with_retry() {
 lookup_issue_number_by_title_in_dir() {
   local dir="$1"
   local title="$2"
-  local matches file
+  local matches=()
+  local file
+  local line
+  local parsed_title
+  local restore_nullglob="false"
 
-  mapfile -t matches < <(grep -l "^Title: $title\$" "$dir"/*.md 2>/dev/null || true)
+  if ! shopt -q nullglob; then
+    shopt -s nullglob
+    restore_nullglob="true"
+  fi
+
+  for file in "$dir"/*.md; do
+    parsed_title=""
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      [[ -z "$line" ]] && break
+
+      if [[ "$line" == Title:* ]]; then
+        parsed_title="$(trim "${line#Title:}")"
+        break
+      fi
+    done < "$file"
+
+    if [[ "$parsed_title" == "$title" ]]; then
+      matches+=("$file")
+    fi
+  done
+
+  if [[ "$restore_nullglob" == "true" ]]; then
+    shopt -u nullglob
+  fi
 
   if [[ ${#matches[@]} -eq 0 ]]; then
     return 1
@@ -882,12 +916,18 @@ rewrite_dependencies_in_body_file() {
   local dependency_warnings=()
   local dependency_logs=()
   local in_dependencies="false"
+  local dependency_line_number=0
+  local line_number=0
 
   rewritten_file="$(mktemp)"
+  DEPENDENCY_PARSE_ERROR=""
 
   while IFS= read -r line || [[ -n "$line" ]]; do
+    line_number=$((line_number + 1))
+
     if [[ "$line" =~ ^#{1,6}[[:space:]]+Dependencies[[:space:]]*$ ]]; then
       in_dependencies="true"
+      dependency_line_number=0
       printf '%s\n' "$line" >> "$rewritten_file"
       continue
     fi
@@ -898,14 +938,28 @@ rewrite_dependencies_in_body_file() {
       continue
     fi
 
-    if [[ "$in_dependencies" == "true" && "$line" =~ ^([[:space:]]*[-*][[:space:]]+)(.+)$ ]]; then
+    if [[ "$in_dependencies" == "true" ]]; then
+      dependency_line_number=$((dependency_line_number + 1))
+
+      if [[ -z "$line" ]]; then
+        printf '%s\n' "$line" >> "$rewritten_file"
+        continue
+      fi
+
+      if [[ "$line" =~ ^([[:space:]]*[-*][[:space:]]+)(.*)$ ]]; then
       local dependency_prefix dependency_reference
       dependency_prefix="${BASH_REMATCH[1]}"
       dependency_reference="${BASH_REMATCH[2]}"
 
       normalize_dependency_reference "$dependency_reference"
 
-      if [[ -z "$NORMALIZED_DEPENDENCY_REFERENCE" || "$NORMALIZED_DEPENDENCY_REFERENCE" == "None" ]]; then
+      if [[ -z "$NORMALIZED_DEPENDENCY_REFERENCE" ]]; then
+        DEPENDENCY_PARSE_ERROR="Empty Dependencies entry at body line $line_number"
+        rm -f "$rewritten_file"
+        return 1
+      fi
+
+      if [[ "$NORMALIZED_DEPENDENCY_REFERENCE" == "None" ]]; then
         printf '%s\n' "$line" >> "$rewritten_file"
         continue
       fi
@@ -918,6 +972,11 @@ rewrite_dependencies_in_body_file() {
         printf '%s\n' "$line" >> "$rewritten_file"
       fi
       continue
+      fi
+
+      DEPENDENCY_PARSE_ERROR="Invalid Dependencies entry at body line $line_number: $line"
+      rm -f "$rewritten_file"
+      return 1
     fi
 
     printf '%s\n' "$line" >> "$rewritten_file"
@@ -1182,6 +1241,7 @@ link_sub_issue() {
   print_success "    Linked"
 }
 
+if [[ "${IMPORT_ISSUES_SOURCE_ONLY:-false}" != "true" ]]; then
 files=( "$PENDING_DIR"/*.md )
 [[ -e "${files[0]}" ]] || {
   print_warning "No pending markdown files found in $PENDING_DIR"
@@ -1196,7 +1256,7 @@ for file in "${files[@]}"; do
   printf '%s\n' "$base"
 
   if ! parse_metadata "$file"; then
-    move_to_failed "$file" "Metadata error"
+    move_to_failed "$file" "${PARSE_METADATA_ERROR:-Metadata error}"
     printf '\n'
     continue
   fi
@@ -1315,7 +1375,13 @@ for file in "${files[@]}"; do
   effective_status="${FILE_EFFECTIVE_STATUS[$file]}"
 
   parse_metadata "$file"
-  rewrite_dependencies_in_body_file "$PARSED_BODY_FILE"
+  if ! rewrite_dependencies_in_body_file "$PARSED_BODY_FILE"; then
+    rm -f "$PARSED_BODY_FILE"
+    move_to_failed "$file" "${DEPENDENCY_PARSE_ERROR:-Dependency parsing failed}" "true" "$num" "$url"
+    print_warning "  Issue #$num was created but dependency parsing failed"
+    printf '\n'
+    continue
+  fi
 
   if [[ ${#RESOLVED_DEPENDENCY_LOGS[@]} -gt 0 ]]; then
     printf '  Dependencies\n'
@@ -1386,4 +1452,5 @@ if (( failed_count > 0 )); then
   print_error "${COLOR_BOLD}Failed:${COLOR_RESET}  $failed_count"
 else
   printf '%s%sFailed:%s  %s%s\n' "$COLOR_RED" "$COLOR_BOLD" "$COLOR_RESET" "$failed_count" "$COLOR_RESET"
+fi
 fi
