@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kartoush.platform.jobs.JobHandler;
 import com.kartoush.platform.jobs.JobRequest;
+import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.core.ResolvableType;
 
 import java.util.List;
@@ -64,11 +65,12 @@ public class PlatformJobDispatcher {
     }
 
     private Class<?> resolveHandledRequestType(final JobHandler<?> jobHandler) {
-        final ResolvableType resolvableType = ResolvableType.forInstance(jobHandler).as(JobHandler.class);
+        final Class<?> targetClass = AopProxyUtils.ultimateTargetClass(jobHandler);
+        final ResolvableType resolvableType = ResolvableType.forClass(targetClass).as(JobHandler.class);
         final Class<?> resolvedRequestType = resolvableType.getGeneric(0).resolve();
 
         if (resolvedRequestType == null) {
-            throw new IllegalStateException("Could not resolve JobHandler request type for " + jobHandler.getClass().getName());
+            throw new IllegalStateException("Could not resolve JobHandler request type for " + targetClass.getName());
         }
 
         return resolvedRequestType;
