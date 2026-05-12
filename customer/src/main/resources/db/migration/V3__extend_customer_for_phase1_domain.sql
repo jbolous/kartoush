@@ -1,7 +1,7 @@
 ALTER TABLE customer
     ADD COLUMN password_hash VARCHAR(255) NOT NULL,
-    ADD COLUMN status VARCHAR(20) NOT NULL,
-    ADD COLUMN phone_number VARCHAR(30) NULL;
+    ADD COLUMN status        VARCHAR(20)  NOT NULL,
+    ADD COLUMN phone_number  VARCHAR(30)  NULL;
 
 CREATE TABLE customer_address
 (

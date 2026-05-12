@@ -20,51 +20,30 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
     }
 
     @Override
-    public EmailMessage newActivationEmail(
-        final Email recipient,
-        final CustomerId customerId,
-        final String rawActivationToken
-    ) {
-        final String actionUrl = properties.getActivationBaseUrl()
-            + "?customerId=" + encode(customerId.value())
-            + "&token=" + encode(rawActivationToken);
+    public EmailMessage newActivationEmail(final Email recipient, final CustomerId customerId, final String rawActivationToken) {
+        final String actionUrl = properties.getActivationBaseUrl() + "?customerId=" + encode(customerId.value()) + "&token=" + encode(
+            rawActivationToken);
 
-        return new EmailMessage(
-            EmailMessageType.CUSTOMER_ACTIVATION,
-            recipient,
-            new Email(properties.getSenderAddress()),
-            properties.getSenderName(),
-            "Activate your Kartoush account",
-            """
-                Welcome to Kartoush.
+        return new EmailMessage(EmailMessageType.CUSTOMER_ACTIVATION, recipient, new Email(properties.getSenderAddress()),
+            properties.getSenderName(), "Activate your Kartoush account", """
+            Welcome to Kartoush.
 
-                Activate your account using the link below:
-                %s
-                """.formatted(actionUrl).trim(),
-            actionUrl
-        );
+            Activate your account using the link below:
+            %s
+            """.formatted(actionUrl).trim(), actionUrl);
     }
 
     @Override
     public EmailMessage newPasswordResetEmail(final Email recipient, final String rawResetToken) {
-        final String actionUrl = properties.getPasswordResetBaseUrl()
-            + "?email=" + encode(recipient.value())
-            + "&token=" + encode(rawResetToken);
+        final String actionUrl = properties.getPasswordResetBaseUrl() + "?email=" + encode(recipient.value()) + "&token=" + encode(
+            rawResetToken);
 
-        return new EmailMessage(
-            EmailMessageType.CUSTOMER_PASSWORD_RESET,
-            recipient,
-            new Email(properties.getSenderAddress()),
-            properties.getSenderName(),
-            "Reset your Kartoush password",
-            """
-                We received a request to reset your Kartoush password.
-
-                Use the link below to continue:
-                %s
-                """.formatted(actionUrl).trim(),
-            actionUrl
-        );
+        return new EmailMessage(EmailMessageType.CUSTOMER_PASSWORD_RESET, recipient, new Email(properties.getSenderAddress()),
+            properties.getSenderName(), "Reset your Kartoush password", """
+            We received a request to reset your Kartoush password.
+            Use the link below to continue:
+            %s
+            """.formatted(actionUrl).trim(), actionUrl);
     }
 
     private String encode(final String value) {
