@@ -181,13 +181,14 @@ strip_trailing_metadata_comment() {
   local temp_file
 
   temp_file="$(mktemp)"
-  perl -0pe 's/(?:\n\s*)*<!--\n(?:.*?\n)*?-->[\r\n\s]*$//s' "$file" > "$temp_file"
+  perl -0pe 's{(?:\n\s*)*<!--\n(?:(?:(?:Imported|Timestamp|IssueCreated|Issue|URL|Error|RetryCount): .*?)\n)+-->[\r\n\s]*$}{}s' "$file" > "$temp_file"
   mv "$temp_file" "$file"
 }
 
 parse_trailing_metadata() {
   local file="$1"
   local line
+  local metadata_block=""
 
   META_IMPORTED=""
   META_TIMESTAMP=""
@@ -196,6 +197,16 @@ parse_trailing_metadata() {
   META_URL=""
   META_ERROR=""
   META_RETRY_COUNT=""
+
+  metadata_block="$(
+    perl -0ne '
+      if (/(?:\n\s*)*<!--\n((?:(?:(?:Imported|Timestamp|IssueCreated|Issue|URL|Error|RetryCount): .*?)\n)+)-->\s*$/s) {
+        print $1;
+      }
+    ' "$file"
+  )"
+
+  [[ -n "$metadata_block" ]] || return 0
 
   while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ "$line" =~ ^Imported:\ (.+)$ ]]; then
@@ -213,5 +224,5 @@ parse_trailing_metadata() {
     elif [[ "$line" =~ ^RetryCount:\ ([0-9]+)$ ]]; then
       META_RETRY_COUNT="${BASH_REMATCH[1]}"
     fi
-  done < "$file"
+  done <<< "$metadata_block"
 }
