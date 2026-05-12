@@ -6,7 +6,7 @@ import com.kartoush.customer.persistence.entity.CustomerAddressEntity;
 import com.kartoush.customer.persistence.entity.CustomerEntity;
 import com.kartoush.customer.persistence.entity.CustomerProfileEntity;
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
-import com.kartoush.platform.types.CustomerId;
+
 import java.util.List;
 
 import com.kartoush.platform.types.Email;

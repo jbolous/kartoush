@@ -10,8 +10,11 @@ import org.springframework.stereotype.Component;
 public class EmailDeliveryProperties {
 
     private boolean enabled = false;
+
     private EmailDeliveryProvider provider = EmailDeliveryProvider.NOOP;
+
     private final Mailtrap mailtrap = new Mailtrap();
+
     private final Brevo brevo = new Brevo();
 
     public boolean isEnabled() {
@@ -53,7 +56,9 @@ public class EmailDeliveryProperties {
     public static class Mailtrap {
 
         private String apiBaseUrl = "https://sandbox.api.mailtrap.io/api/send";
+
         private String apiToken = "";
+
         private long inboxId;
 
         public String getApiBaseUrl() {
@@ -92,6 +97,7 @@ public class EmailDeliveryProperties {
     public static class Brevo {
 
         private String apiBaseUrl = "https://api.brevo.com/v3";
+
         private String apiKey = "";
 
         public String getApiBaseUrl() {

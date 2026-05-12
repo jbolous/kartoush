@@ -15,7 +15,7 @@ public final class CustomerId {
 
     public static CustomerId of(String value) {
         return new CustomerId(
-                Ulids.requireValid(value, "CustomerId")
+            Ulids.requireValid(value, "CustomerId")
         );
     }
 

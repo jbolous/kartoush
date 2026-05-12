@@ -12,8 +12,8 @@ public class DockerRequiredCondition implements ExecutionCondition {
         try {
             boolean available = DockerClientFactory.instance().isDockerAvailable();
             return available
-                    ? ConditionEvaluationResult.enabled("Docker is available")
-                    : ConditionEvaluationResult.disabled("Docker is not available, skipping integration tests");
+                ? ConditionEvaluationResult.enabled("Docker is available")
+                : ConditionEvaluationResult.disabled("Docker is not available, skipping integration tests");
         } catch (Exception e) {
             return ConditionEvaluationResult.disabled("Docker/Testcontainers not available: " + e.getMessage());
         }

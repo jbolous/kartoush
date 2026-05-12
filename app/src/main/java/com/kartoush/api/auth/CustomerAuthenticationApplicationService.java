@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 public class CustomerAuthenticationApplicationService {
 
     private final CustomerAuthenticationFacade customerAuthenticationFacade;
+
     private final CustomerSignInFacade customerSignInFacade;
 
     public CustomerAuthenticationApplicationService(

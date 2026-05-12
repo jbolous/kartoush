@@ -17,4 +17,5 @@ import java.lang.annotation.Target;
 @IntegrationTest
 @SpringBootTest
 @ActiveProfiles("test")
-public @interface SpringIntegrationTest {}
+public @interface SpringIntegrationTest {
+}

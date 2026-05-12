@@ -22,8 +22,8 @@ public final class Ulids {
 
         } catch (RuntimeException ex) {
             throw new InvalidUlidException(
-                    fieldName + " is not a valid ULID: " + value,
-                    ex
+                fieldName + " is not a valid ULID: " + value,
+                ex
             );
         }
     }

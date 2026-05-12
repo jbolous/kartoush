@@ -11,8 +11,11 @@ import org.springframework.stereotype.Component;
 public class CustomerEmailProperties {
 
     private String senderName = "Kartoush";
+
     private String senderAddress = "no-reply@kartoush.dev";
+
     private String activationBaseUrl = "https://kartoush.dev/activate";
+
     private String passwordResetBaseUrl = "https://kartoush.dev/reset-password";
 
     public String getSenderName() {

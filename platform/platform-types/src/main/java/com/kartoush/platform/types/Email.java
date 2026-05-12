@@ -25,7 +25,7 @@ public record Email(String value) {
             throw new InvalidEmailException("Email must not be blank");
         }
 
-        if(value.length() > MAX_LENGTH) {
+        if (value.length() > MAX_LENGTH) {
             throw new InvalidEmailException("Email cannot be longer than " + MAX_LENGTH);
         }
 

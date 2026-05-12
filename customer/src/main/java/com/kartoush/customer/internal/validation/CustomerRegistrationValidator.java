@@ -2,7 +2,6 @@ package com.kartoush.customer.internal.validation;
 
 import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.internal.registration.TermsOfServiceCatalog;
-import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
 import java.util.ArrayList;
 import java.util.List;

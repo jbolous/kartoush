@@ -4,8 +4,7 @@ import com.kartoush.platform.types.exception.InvalidPhoneNumberException;
 
 import java.util.regex.Pattern;
 
-public record PhoneNumber(String value)
-{
+public record PhoneNumber(String value) {
     private static final Pattern PHONE_NUMBER_PATTERN = Pattern.compile("^\\+?[0-9]{7,15}$");
 
     public PhoneNumber {

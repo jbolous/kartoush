@@ -2,11 +2,13 @@ package com.kartoush.platform.validation.password;
 
 import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
+
 import java.util.List;
 
 public final class PasswordValidationSupport {
 
     private static final String PASSWORD_FIELD = "password";
+
     private static final String CONFIRM_PASSWORD_FIELD = "confirmPassword";
 
     private PasswordValidationSupport() {

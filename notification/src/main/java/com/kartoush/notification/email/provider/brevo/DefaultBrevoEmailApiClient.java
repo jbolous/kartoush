@@ -1,9 +1,9 @@
 package com.kartoush.notification.email.provider.brevo;
 
-import com.kartoush.notification.email.client.EmailApiClient;
-import com.kartoush.notification.email.delivery.EmailDeliveryException;
 import com.kartoush.notification.email.EmailMessage;
+import com.kartoush.notification.email.client.EmailApiClient;
 import com.kartoush.notification.email.config.EmailDeliveryProperties;
+import com.kartoush.notification.email.delivery.EmailDeliveryException;
 import com.kartoush.notification.email.http.NotificationHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +19,15 @@ import java.util.regex.Pattern;
 public class DefaultBrevoEmailApiClient implements EmailApiClient {
 
     private static final String PROVIDER = "brevo";
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultBrevoEmailApiClient.class);
+
     private static final Pattern MESSAGE_ID_PATTERN = Pattern.compile("\"messageId\"\\s*:\\s*\"([^\"]+)\"");
+
     private static final Pattern MESSAGE_IDS_PATTERN = Pattern.compile("\"messageIds\"\\s*:\\s*\\[\\s*\"([^\"]+)\"");
 
     private final NotificationHttpClient notificationHttpClient;
+
     private final EmailDeliveryProperties.Brevo properties;
 
     public DefaultBrevoEmailApiClient(

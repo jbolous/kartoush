@@ -43,8 +43,7 @@ public final class RequestValidationSupport {
 
         try {
             new PhoneNumber(phoneNumber);
-        }
-        catch (final InvalidPhoneNumberException ex) {
+        } catch (final InvalidPhoneNumberException ex) {
             errors.add(new ValidationError(field, ex.getMessage()));
         }
     }

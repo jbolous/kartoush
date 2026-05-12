@@ -20,7 +20,7 @@ public class CustomerPasswordEntity implements Persistable<String> {
     @Column(name = "customer_id", nullable = false, length = 26)
     private String customerId;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
     @Column(name = "created_at", nullable = false, updatable = false)

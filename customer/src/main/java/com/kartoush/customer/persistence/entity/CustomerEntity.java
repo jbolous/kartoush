@@ -49,7 +49,7 @@ public class CustomerEntity implements Persistable<String> {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<CustomerAddressEntity> addresses = new ArrayList<>();
+    private final List<CustomerAddressEntity> addresses = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
