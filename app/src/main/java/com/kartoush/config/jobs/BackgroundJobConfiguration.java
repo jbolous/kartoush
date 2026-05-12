@@ -24,6 +24,8 @@ public class BackgroundJobConfiguration {
         final JobScheduler jobRunrJobScheduler,
         final PlatformJobDispatcher platformJobDispatcher,
         final ObjectMapper objectMapper) {
-        return new JobRunrPlatformJobScheduler(jobRunrJobScheduler, platformJobDispatcher, objectMapper);
+        return new TransactionAwareBackgroundJobScheduler(
+            new JobRunrPlatformJobScheduler(jobRunrJobScheduler, platformJobDispatcher, objectMapper)
+        );
     }
 }

@@ -3,6 +3,7 @@ package com.kartoush.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kartoush.config.jobs.BackgroundJobConfiguration;
 import com.kartoush.config.jobs.PlatformJobDispatcher;
+import com.kartoush.config.jobs.TransactionAwareBackgroundJobScheduler;
 import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.jobs.JobHandler;
 import com.kartoush.platform.jobs.JobRequest;
@@ -27,6 +28,7 @@ class BackgroundJobConfigurationTest {
             assertThat(context).hasNotFailed();
             assertThat(context).hasSingleBean(BackgroundJobScheduler.class);
             assertThat(context).hasSingleBean(PlatformJobDispatcher.class);
+            assertThat(context.getBean(BackgroundJobScheduler.class)).isInstanceOf(TransactionAwareBackgroundJobScheduler.class);
         });
     }
 
