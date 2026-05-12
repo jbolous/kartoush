@@ -12,6 +12,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,6 +27,9 @@ class JobRunrInfrastructureIntegrationTest extends PostgresSpringIntegrationTest
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
     @Test
     void shouldProvidePlatformJobSchedulerBean() {
         assertThat(platformJobScheduler).isNotNull();
@@ -32,7 +37,9 @@ class JobRunrInfrastructureIntegrationTest extends PostgresSpringIntegrationTest
 
     @Test
     void shouldPersistEnqueuedJobsToPostgres() {
-        platformJobScheduler.enqueue(new ExampleJobRequest("01JOBJOBRUNR00000000000001"));
+        new TransactionTemplate(transactionManager).executeWithoutResult(status ->
+            platformJobScheduler.enqueue(new ExampleJobRequest("01JOBJOBRUNR00000000000001"))
+        );
 
         final Integer jobCount = jdbcTemplate.queryForObject(
             "SELECT COUNT(id) FROM jobrunr.jobrunr_jobs",

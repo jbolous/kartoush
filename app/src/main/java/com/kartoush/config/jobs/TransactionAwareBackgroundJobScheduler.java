@@ -9,22 +9,24 @@ import java.time.Instant;
 
 public class TransactionAwareBackgroundJobScheduler implements BackgroundJobScheduler {
 
-    private final BackgroundJobScheduler delegate;
+    private final JobRunrPlatformJobScheduler delegate;
 
-    public TransactionAwareBackgroundJobScheduler(final BackgroundJobScheduler delegate) {
+    public TransactionAwareBackgroundJobScheduler(final JobRunrPlatformJobScheduler delegate) {
         this.delegate = delegate;
     }
 
     @Override
     public void enqueue(final JobRequest request) {
         assertTransactionIsActive();
-        registerAfterCommit(() -> delegate.enqueue(request));
+        final JobRunrPlatformJobScheduler.SerializedJobRequest serializedJobRequest = delegate.snapshot(request);
+        registerAfterCommit(() -> delegate.enqueueSerialized(serializedJobRequest));
     }
 
     @Override
     public void schedule(final JobRequest request, final Instant scheduledAt) {
         assertTransactionIsActive();
-        registerAfterCommit(() -> delegate.schedule(request, scheduledAt));
+        final JobRunrPlatformJobScheduler.SerializedJobRequest serializedJobRequest = delegate.snapshot(request);
+        registerAfterCommit(() -> delegate.scheduleSerialized(serializedJobRequest, scheduledAt));
     }
 
     private void registerAfterCommit(final Runnable action) {
