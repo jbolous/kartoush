@@ -10,6 +10,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.time.Instant;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,7 +32,7 @@ class TransactionAwareBackgroundJobSchedulerTest {
     TransactionAwareBackgroundJobSchedulerTest() {
         doAnswer(invocation -> {
             @SuppressWarnings("unchecked")
-            final java.util.function.Consumer<TransactionStatus> action = invocation.getArgument(0);
+            final Consumer<TransactionStatus> action = invocation.getArgument(0);
             action.accept(mock(TransactionStatus.class));
             return null;
         }).when(transactionOperations).executeWithoutResult(any());
