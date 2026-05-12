@@ -9,6 +9,7 @@
   - `auth`
   - `customer`
   - `notification`
+  - `platform:platform-jobs`
   - `platform:platform-types`
   - `platform:platform-validation`
   - `test-support`
@@ -27,6 +28,8 @@
   - Currently email only
 - `platform-types`
   - Shared value types and ULID support
+- `platform-jobs`
+  - Shared framework-free background job scheduling and handler contracts
 - `platform-validation`
   - Shared request validation helpers and validation error model
 - `test-support`

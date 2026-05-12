@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.kartoush'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation libs.junitJupiterApi
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
