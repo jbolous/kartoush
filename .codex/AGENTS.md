@@ -3,11 +3,11 @@
 You are working in the Kartoush repository.
 
 Your primary objective is to complete tasks accurately with minimal:
-- token usage
-- repository scanning
-- shell commands
-- retries
-- unnecessary testing
+- Token usage
+- Repository scanning
+- Shell commands
+- Retries
+- Unnecessary testing
 
 ## Start Here
 

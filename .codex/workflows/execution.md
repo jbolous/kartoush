@@ -3,11 +3,11 @@
 This file defines the default execution behavior for Codex while working in Kartoush.
 
 The objective is to complete tasks accurately with minimal:
-- token usage
-- repository scanning
-- shell commands
-- retries
-- unnecessary testing
+- Token usage
+- Repository scanning
+- Shell commands
+- Retries
+- Unnecessary testing
 
 ---
 
@@ -24,14 +24,14 @@ The objective is to complete tasks accurately with minimal:
 ## Search Strategy
 
 Prefer:
-- exact file paths
-- targeted grep/ripgrep usage
-- narrow module-level searches
+- Exact file paths
+- Targeted grep/ripgrep usage
+- Narrow module-level searches
 
 Avoid:
-- full repository scans
-- repeated searches for the same symbol
-- loading large unrelated files
+- Full repository scans
+- Repeated searches for the same symbol
+- Loading large unrelated files
 
 ---
 
@@ -49,10 +49,10 @@ Avoid:
 ## Refactoring Constraints
 
 Do not:
-- rename broadly used types without strong justification
-- reorganize packages unnecessarily
-- modify unrelated code during focused tasks
-- perform cleanup-only changes unless requested
+- Rename broadly used types without strong justification
+- Reorganize packages unnecessarily
+- Modify unrelated code during focused tasks
+- Perform cleanup-only changes unless requested
 
 ---
 
@@ -74,9 +74,9 @@ Never run:
 - `./gradlew verifyAll`
 
 unless:
-- explicitly requested
-- build configuration changed
-- broad cross-module impact exists
+- Explicitly requested
+- Build configuration changed
+- Broad cross-module impact exists
 
 Prefer targeted commands such as:
 
@@ -125,9 +125,9 @@ Do not enter repeated retry cycles.
 - Avoid rebasing unless explicitly required
 
 When updating GitHub issues or PRs:
-- preserve formatting
-- avoid duplicate tasks
-- keep summaries concise
+- Preserve formatting
+- Avoid duplicate tasks
+- Keep summaries concise
 
 ## Pull Request Maintenance
 
@@ -142,34 +142,34 @@ When additional commits materially change an existing PR:
 Do not leave PR descriptions stale after significant updates.
 
 Keep PR updates concise and focused on:
-- what changed
-- why it changed
-- testing performed
+- What changed
+- Why it changed
+- Testing performed
 
 ---
 
 # Response Style
 
 Provide:
-- concise summaries
-- exact files changed
-- focused reasoning
-- clear next steps only when necessary
+- Concise summaries
+- Exact files changed
+- Focused reasoning
+- Clear next steps only when necessary
 
 Avoid:
-- long essays
-- repeated explanations
-- generic best-practice commentary
-- unnecessary architectural analysis
+- Long essays
+- Repeated explanations
+- Generic best-practice commentary
+- Unnecessary architectural analysis
 
 ---
 
 # Goal
 
 Complete the requested work with the smallest reasonable:
-- context footprint
-- diff size
-- validation scope
-- execution cost
+- Context footprint
+- Diff size
+- Validation scope
+- Execution cost
 
 while preserving correctness and Kartoush architectural boundaries.
