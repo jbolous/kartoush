@@ -12,11 +12,11 @@ import jakarta.persistence.PostPersist;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.time.Instant;
-import java.util.Objects;
-
 import jakarta.persistence.Transient;
 import org.springframework.data.domain.Persistable;
+
+import java.time.Instant;
+import java.util.Objects;
 
 @Entity
 @Table(name = "terms_of_service")

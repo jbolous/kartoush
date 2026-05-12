@@ -1,29 +1,29 @@
 package com.kartoush.api.error;
 
-import com.kartoush.auth.exception.PasswordSetupTokenConsumedException;
-import com.kartoush.auth.exception.PasswordResetTokenConsumedException;
-import com.kartoush.auth.exception.PasswordResetTokenExpiredException;
-import com.kartoush.auth.exception.PasswordResetTokenNotFoundException;
-import com.kartoush.auth.exception.PasswordSetupTokenExpiredException;
-import com.kartoush.auth.exception.PasswordSetupTokenNotFoundException;
 import com.kartoush.auth.exception.CustomerPasswordAlreadyExistsException;
 import com.kartoush.auth.exception.InvalidCustomerCredentialsException;
 import com.kartoush.auth.exception.InvalidPasswordResetException;
+import com.kartoush.auth.exception.PasswordResetTokenConsumedException;
+import com.kartoush.auth.exception.PasswordResetTokenExpiredException;
+import com.kartoush.auth.exception.PasswordResetTokenNotFoundException;
 import com.kartoush.auth.exception.PasswordReuseNotAllowedException;
+import com.kartoush.auth.exception.PasswordSetupTokenConsumedException;
+import com.kartoush.auth.exception.PasswordSetupTokenExpiredException;
+import com.kartoush.auth.exception.PasswordSetupTokenNotFoundException;
+import com.kartoush.customer.exception.ActivationTokenConsumedException;
+import com.kartoush.customer.exception.ActivationTokenExpiredException;
+import com.kartoush.customer.exception.ActivationTokenNotFoundException;
+import com.kartoush.customer.exception.CurrentTermsOfServiceNotFoundException;
 import com.kartoush.customer.exception.CustomerAddressNotFoundException;
 import com.kartoush.customer.exception.CustomerAlreadyExistsException;
 import com.kartoush.customer.exception.CustomerNotFoundException;
 import com.kartoush.customer.exception.CustomerPendingActivationException;
-import com.kartoush.customer.exception.ActivationTokenConsumedException;
-import com.kartoush.customer.exception.ActivationTokenExpiredException;
-import com.kartoush.customer.exception.ActivationTokenNotFoundException;
 import com.kartoush.customer.exception.InvalidActivationTokenResendException;
 import com.kartoush.customer.exception.InvalidCustomerActivationException;
-import com.kartoush.customer.exception.InvalidPasswordSetupException;
 import com.kartoush.customer.exception.InvalidCustomerReactivationException;
 import com.kartoush.customer.exception.InvalidCustomerStatusForUpdateException;
 import com.kartoush.customer.exception.InvalidCustomerStatusTransitionException;
-import com.kartoush.customer.exception.CurrentTermsOfServiceNotFoundException;
+import com.kartoush.customer.exception.InvalidPasswordSetupException;
 import com.kartoush.customer.exception.InvalidTermsOfServiceScheduleException;
 import com.kartoush.customer.exception.InvalidTermsOfServiceTransitionException;
 import com.kartoush.customer.exception.NoDueScheduledTermsOfServiceException;
@@ -173,6 +173,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             ErrorCode.INVALID_CUSTOMER_REACTIVATION,
             request);
     }
+
     @ExceptionHandler(InvalidCustomerStatusTransitionException.class)
     public ProblemDetail handleInvalidCustomerStatusTransitionException(
         final InvalidCustomerStatusTransitionException ex,
@@ -189,12 +190,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleCustomerAddressNotFoundException(
         final CustomerAddressNotFoundException ex,
         final HttpServletRequest request) {
-            return apiProblemFactory.create(
-                HttpStatus.NOT_FOUND,
-                "Customer Address Not Found",
-                ex.getMessage(),
-                ErrorCode.CUSTOMER_ADDRESS_NOT_FOUND,
-                request);
+        return apiProblemFactory.create(
+            HttpStatus.NOT_FOUND,
+            "Customer Address Not Found",
+            ex.getMessage(),
+            ErrorCode.CUSTOMER_ADDRESS_NOT_FOUND,
+            request);
     }
 
     @ExceptionHandler(CustomerPendingActivationException.class)

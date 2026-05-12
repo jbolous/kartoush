@@ -1,7 +1,7 @@
 package com.kartoush.auth.service.impl;
 
-import com.kartoush.auth.domain.PasswordSetupToken;
 import com.kartoush.auth.domain.IssuedPasswordSetupToken;
+import com.kartoush.auth.domain.PasswordSetupToken;
 import com.kartoush.auth.exception.PasswordSetupTokenConsumedException;
 import com.kartoush.auth.exception.PasswordSetupTokenExpiredException;
 import com.kartoush.auth.exception.PasswordSetupTokenNotFoundException;
@@ -12,11 +12,12 @@ import com.kartoush.auth.service.PasswordSetupTokenHasher;
 import com.kartoush.auth.service.PasswordSetupTokenService;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.ulid.UlidGenerator;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DefaultPasswordSetupTokenService implements PasswordSetupTokenService {
@@ -24,9 +25,13 @@ public class DefaultPasswordSetupTokenService implements PasswordSetupTokenServi
     private static final Duration PASSWORD_SETUP_TOKEN_TTL = Duration.ofHours(24);
 
     private final PasswordSetupTokenRepository passwordSetupTokenRepository;
+
     private final PasswordSetupTokenGenerator passwordSetupTokenGenerator;
+
     private final PasswordSetupTokenHasher passwordSetupTokenHasher;
+
     private final UlidGenerator ulidGenerator;
+
     private final Clock clock;
 
     public DefaultPasswordSetupTokenService(

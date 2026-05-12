@@ -15,7 +15,8 @@ public class OpenApiConfiguration {
             .info(new Info()
                 .title("Kartoush API")
                 .version("v1")
-                .description("Public and internal HTTP APIs for customer registration, lifecycle management, and Terms of Service workflows.")
+                .description(
+                    "Public and internal HTTP APIs for customer registration, lifecycle management, and Terms of Service workflows.")
                 .contact(new Contact().name("Kartoush")));
     }
 }

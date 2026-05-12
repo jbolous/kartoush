@@ -3,17 +3,19 @@ package com.kartoush.customer.internal.registration;
 import com.kartoush.customer.persistence.entity.TermsOfServiceEntity;
 import com.kartoush.customer.persistence.repository.TermsOfServiceRepository;
 import com.kartoush.customer.termsofservice.TermsOfServiceStatus;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class DefaultTermsOfServiceCatalog implements TermsOfServiceCatalog {
 
     private final TermsOfServiceRepository termsOfServiceRepository;
+
     private final Clock clock;
 
     public DefaultTermsOfServiceCatalog(

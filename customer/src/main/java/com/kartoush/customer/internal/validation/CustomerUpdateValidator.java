@@ -4,8 +4,10 @@ import com.kartoush.customer.domain.CustomerConstraints;
 import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

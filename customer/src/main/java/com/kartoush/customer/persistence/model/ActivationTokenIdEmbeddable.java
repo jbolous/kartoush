@@ -13,7 +13,8 @@ public class ActivationTokenIdEmbeddable implements Serializable {
     @Column(name = "id", nullable = false, updatable = false, length = 26)
     private String value;
 
-    protected ActivationTokenIdEmbeddable() {}
+    protected ActivationTokenIdEmbeddable() {
+    }
 
     private ActivationTokenIdEmbeddable(final String value) {
         this.value = Objects.requireNonNull(value, "value");

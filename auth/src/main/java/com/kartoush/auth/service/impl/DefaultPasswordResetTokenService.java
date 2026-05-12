@@ -25,9 +25,13 @@ public class DefaultPasswordResetTokenService implements PasswordResetTokenServi
     private static final Duration PASSWORD_RESET_TOKEN_TTL = Duration.ofHours(24);
 
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+
     private final PasswordResetTokenGenerator passwordResetTokenGenerator;
+
     private final PasswordResetTokenHasher passwordResetTokenHasher;
+
     private final UlidGenerator ulidGenerator;
+
     private final Clock clock;
 
     public DefaultPasswordResetTokenService(

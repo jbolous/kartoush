@@ -12,20 +12,22 @@ import com.kartoush.customer.service.TermsOfServiceManagementService;
 import com.kartoush.customer.termsofservice.TermsOfServiceContentType;
 import com.kartoush.customer.termsofservice.TermsOfServiceStatus;
 import com.kartoush.platform.ulid.UlidGenerator;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 @Service
 public class DefaultTermsOfServiceManagementService implements TermsOfServiceManagementService {
 
     private final TermsOfServiceRepository termsOfServiceRepository;
+
     private final UlidGenerator ulidGenerator;
+
     private final Clock clock;
 
     public DefaultTermsOfServiceManagementService(

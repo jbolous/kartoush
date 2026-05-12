@@ -5,9 +5,9 @@ import com.kartoush.platform.validation.RequestValidationSupport;
 import com.kartoush.platform.validation.ValidationError;
 import com.kartoush.platform.validation.password.PasswordPolicyValidator;
 import com.kartoush.platform.validation.password.PasswordValidationSupport;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
-import org.springframework.stereotype.Component;
 
 @Component
 public class CustomerPasswordSetupValidator extends RequestValidator {

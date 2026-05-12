@@ -1,11 +1,12 @@
 package com.kartoush.customer.service.impl;
 
 import com.kartoush.customer.service.ActivationTokenHasher;
+import org.springframework.stereotype.Component;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
-import org.springframework.stereotype.Component;
 
 @Component
 public class DefaultActivationTokenHasher implements ActivationTokenHasher {

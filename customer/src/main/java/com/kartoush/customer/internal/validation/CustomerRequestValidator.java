@@ -8,7 +8,7 @@ import java.util.List;
 
 public abstract class CustomerRequestValidator extends RequestValidator {
 
-    protected void validateCustomer(CreateCustomerInput input, List<ValidationError> errors){
+    protected void validateCustomer(CreateCustomerInput input, List<ValidationError> errors) {
 
         RequestValidationSupport.validateRequiredEmail("email", input.email(), errors);
         RequestValidationSupport.validateRequiredText("firstName", input.firstName(), 100, errors);

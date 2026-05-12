@@ -7,28 +7,36 @@ import java.util.Objects;
 public final class CustomerAddress {
 
     private final AddressId id;
+
     private final String label;
+
     private final String line1;
+
     private final String line2;
+
     private final String city;
+
     private final String stateOrProvince;
+
     private final String postalCode;
+
     private final String countryCode;
 
     private boolean defaultShipping;
+
     private boolean defaultBilling;
 
     public CustomerAddress(
-            final AddressId id,
-            final String label,
-            final String line1,
-            final String line2,
-            final String city,
-            final String stateOrProvince,
-            final String postalCode,
-            final String countryCode,
-            final boolean defaultShipping,
-            final boolean defaultBilling
+        final AddressId id,
+        final String label,
+        final String line1,
+        final String line2,
+        final String city,
+        final String stateOrProvince,
+        final String postalCode,
+        final String countryCode,
+        final boolean defaultShipping,
+        final boolean defaultBilling
     ) {
         this.id = Objects.requireNonNull(id, "id");
         this.label = normalizeOptional(label);
@@ -43,54 +51,54 @@ public final class CustomerAddress {
     }
 
     public static CustomerAddress createNew(
-            final AddressId id,
-            final String label,
-            final String line1,
-            final String line2,
-            final String city,
-            final String stateOrProvince,
-            final String postalCode,
-            final String countryCode,
-            final boolean defaultShipping,
-            final boolean defaultBilling
+        final AddressId id,
+        final String label,
+        final String line1,
+        final String line2,
+        final String city,
+        final String stateOrProvince,
+        final String postalCode,
+        final String countryCode,
+        final boolean defaultShipping,
+        final boolean defaultBilling
     ) {
         return new CustomerAddress(
-                id,
-                label,
-                line1,
-                line2,
-                city,
-                stateOrProvince,
-                postalCode,
-                countryCode,
-                defaultShipping,
-                defaultBilling
+            id,
+            label,
+            line1,
+            line2,
+            city,
+            stateOrProvince,
+            postalCode,
+            countryCode,
+            defaultShipping,
+            defaultBilling
         );
     }
 
     public static CustomerAddress fromPersistence(
-            final AddressId id,
-            final String label,
-            final String line1,
-            final String line2,
-            final String city,
-            final String stateOrProvince,
-            final String postalCode,
-            final String countryCode,
-            final boolean defaultShipping,
-            final boolean defaultBilling
+        final AddressId id,
+        final String label,
+        final String line1,
+        final String line2,
+        final String city,
+        final String stateOrProvince,
+        final String postalCode,
+        final String countryCode,
+        final boolean defaultShipping,
+        final boolean defaultBilling
     ) {
         return new CustomerAddress(
-                id,
-                label,
-                line1,
-                line2,
-                city,
-                stateOrProvince,
-                postalCode,
-                countryCode,
-                defaultShipping,
-                defaultBilling
+            id,
+            label,
+            line1,
+            line2,
+            city,
+            stateOrProvince,
+            postalCode,
+            countryCode,
+            defaultShipping,
+            defaultBilling
         );
     }
 

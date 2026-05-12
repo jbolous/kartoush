@@ -1,6 +1,7 @@
 package com.kartoush.auth.domain;
 
 import com.kartoush.platform.types.CustomerId;
+
 import java.time.Instant;
 import java.util.Objects;
 

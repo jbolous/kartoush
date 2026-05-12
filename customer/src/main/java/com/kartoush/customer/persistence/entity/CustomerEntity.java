@@ -1,11 +1,5 @@
 package com.kartoush.customer.persistence.entity;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-
 import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.platform.types.CustomerStatus;
 import jakarta.persistence.CascadeType;
@@ -23,6 +17,12 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import org.springframework.data.domain.Persistable;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 @Entity
 @Table(name = "customer")
@@ -45,9 +45,9 @@ public class CustomerEntity implements Persistable<String> {
     private CustomerStatus customerStatus;
 
     @OneToMany(
-            mappedBy = "customer",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
+        mappedBy = "customer",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
     )
     private final List<CustomerAddressEntity> addresses = new ArrayList<>();
 
@@ -62,10 +62,10 @@ public class CustomerEntity implements Persistable<String> {
     }
 
     private CustomerEntity(
-            CustomerIdEmbeddable id,
-            CustomerProfileEntity profile,
-            String email,
-            CustomerStatus customerStatus
+        CustomerIdEmbeddable id,
+        CustomerProfileEntity profile,
+        String email,
+        CustomerStatus customerStatus
     ) {
         this.id = Objects.requireNonNull(id, "id is required");
         this.profile = Objects.requireNonNull(profile, "profile is required");
@@ -74,10 +74,10 @@ public class CustomerEntity implements Persistable<String> {
     }
 
     public static CustomerEntity newCustomer(
-            CustomerIdEmbeddable id,
-            CustomerProfileEntity profile,
-            String email,
-            CustomerStatus status
+        CustomerIdEmbeddable id,
+        CustomerProfileEntity profile,
+        String email,
+        CustomerStatus status
     ) {
         return new CustomerEntity(id, profile, email, status);
     }

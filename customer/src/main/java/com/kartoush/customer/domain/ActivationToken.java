@@ -9,10 +9,15 @@ import java.util.Objects;
 public class ActivationToken {
 
     private final ActivationTokenId id;
+
     private final CustomerId customerId;
+
     private final String tokenHash;
+
     private final Instant expiresAt;
+
     private final Instant consumedAt;
+
     private final Instant createdAt;
 
     protected ActivationToken(

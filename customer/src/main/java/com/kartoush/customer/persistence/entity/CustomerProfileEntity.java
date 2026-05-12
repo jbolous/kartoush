@@ -65,8 +65,8 @@ public class CustomerProfileEntity {
         if (o == null || getClass() != o.getClass()) return false;
         CustomerProfileEntity that = (CustomerProfileEntity) o;
         return Objects.equals(firstName, that.firstName) &&
-                Objects.equals(lastName, that.lastName) &&
-                Objects.equals(phoneNumber, that.phoneNumber);
+            Objects.equals(lastName, that.lastName) &&
+            Objects.equals(phoneNumber, that.phoneNumber);
     }
 
     @Override

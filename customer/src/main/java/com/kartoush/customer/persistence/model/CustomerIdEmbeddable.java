@@ -13,7 +13,8 @@ public class CustomerIdEmbeddable implements Serializable {
     @Column(name = "id", nullable = false, updatable = false, length = 26)
     private String value;
 
-    protected CustomerIdEmbeddable() {}
+    protected CustomerIdEmbeddable() {
+    }
 
     private CustomerIdEmbeddable(String value) {
         this.value = Objects.requireNonNull(value, "value");
@@ -50,7 +51,7 @@ public class CustomerIdEmbeddable implements Serializable {
     @Override
     public String toString() {
         return "CustomerIdEmbeddable{" +
-                "value='" + value + '\'' +
-                '}';
+            "value='" + value + '\'' +
+            '}';
     }
 }

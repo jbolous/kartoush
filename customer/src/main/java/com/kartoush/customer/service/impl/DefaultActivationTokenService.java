@@ -14,15 +14,15 @@ import com.kartoush.customer.service.ActivationTokenGenerator;
 import com.kartoush.customer.service.ActivationTokenHasher;
 import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.IssuedActivationToken;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-
 import com.kartoush.platform.types.ActivationTokenId;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.ulid.UlidGenerator;
-import java.util.List;
 import org.springframework.stereotype.Service;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 
 @Service
 public class DefaultActivationTokenService implements ActivationTokenService {
@@ -30,11 +30,17 @@ public class DefaultActivationTokenService implements ActivationTokenService {
     private static final Duration ACTIVATION_TOKEN_TTL = Duration.ofHours(24);
 
     private final ActivationTokenRepository activationTokenRepository;
+
     private final CustomerRepository customerRepository;
+
     private final ActivationTokenGenerator activationTokenGenerator;
+
     private final ActivationTokenHasher activationTokenHasher;
+
     private final ActivationTokenMapper activationTokenMapper;
+
     private final UlidGenerator ulidGenerator;
+
     private final Clock clock;
 
     public DefaultActivationTokenService(
