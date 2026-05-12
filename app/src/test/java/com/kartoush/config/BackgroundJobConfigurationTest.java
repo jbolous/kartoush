@@ -10,6 +10,7 @@ import com.kartoush.platform.jobs.JobRequest;
 import org.junit.jupiter.api.Test;
 import org.jobrunr.scheduling.JobScheduler;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -19,6 +20,7 @@ class BackgroundJobConfigurationTest {
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
         .withBean(ObjectMapper.class, ObjectMapper::new)
         .withBean(JobScheduler.class, () -> mock(JobScheduler.class))
+        .withBean(PlatformTransactionManager.class, () -> mock(PlatformTransactionManager.class))
         .withBean(JobHandler.class, ExampleJobHandler::new)
         .withUserConfiguration(BackgroundJobConfiguration.class);
 

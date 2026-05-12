@@ -3,6 +3,8 @@ package com.kartoush.config.jobs;
 import com.kartoush.platform.jobs.JobRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionOperations;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -10,6 +12,8 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -19,8 +23,19 @@ class TransactionAwareBackgroundJobSchedulerTest {
 
     private final JobRunrPlatformJobScheduler delegate = mock(JobRunrPlatformJobScheduler.class);
 
+    private final TransactionOperations transactionOperations = mock(TransactionOperations.class);
+
     private final TransactionAwareBackgroundJobScheduler scheduler =
-        new TransactionAwareBackgroundJobScheduler(delegate);
+        new TransactionAwareBackgroundJobScheduler(delegate, transactionOperations);
+
+    TransactionAwareBackgroundJobSchedulerTest() {
+        doAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            final java.util.function.Consumer<TransactionStatus> action = invocation.getArgument(0);
+            action.accept(mock(TransactionStatus.class));
+            return null;
+        }).when(transactionOperations).executeWithoutResult(any());
+    }
 
     @AfterEach
     void tearDownTransactionState() {
@@ -49,6 +64,7 @@ class TransactionAwareBackgroundJobSchedulerTest {
 
         triggerAfterCommit();
 
+        verify(transactionOperations).executeWithoutResult(any());
         verify(delegate).enqueueSerialized(serializedJobRequest);
     }
 
@@ -91,6 +107,7 @@ class TransactionAwareBackgroundJobSchedulerTest {
 
         triggerAfterCommit();
 
+        verify(transactionOperations).executeWithoutResult(any());
         verify(delegate).scheduleSerialized(serializedJobRequest, scheduledAt);
     }
 
@@ -112,6 +129,26 @@ class TransactionAwareBackgroundJobSchedulerTest {
         triggerAfterCommit();
 
         verify(delegate).enqueueSerialized(serializedJobRequest);
+    }
+
+    @Test
+    void shouldNotPropagateSchedulingFailureAfterCommit() {
+        beginTransaction();
+        final ExampleJobRequest request = new ExampleJobRequest("01JAFTERCOMMIT0000000000005");
+        final JobRunrPlatformJobScheduler.SerializedJobRequest serializedJobRequest =
+            new JobRunrPlatformJobScheduler.SerializedJobRequest(
+                ExampleJobRequest.class.getName(),
+                "{\"customerId\":\"01JAFTERCOMMIT0000000000005\"}"
+            );
+
+        when(delegate.snapshot(request)).thenReturn(serializedJobRequest);
+        doAnswer(invocation -> {
+            throw new RuntimeException("boom");
+        }).when(delegate).enqueueSerialized(serializedJobRequest);
+
+        scheduler.enqueue(request);
+
+        triggerAfterCommit();
     }
 
     @Test

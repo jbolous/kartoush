@@ -79,9 +79,12 @@ That wrapper:
 
 - Registers enqueue and schedule operations only after a successful transaction
   commit
+- Executes the deferred scheduling work in its own transaction boundary
 - Rejects scheduling attempts outside an active transaction
 - Prevents later job scheduling flows from publishing background work before
   the underlying database changes are durable
+- Logs post-commit scheduling failures instead of surfacing them as if the
+  original database transaction failed
 
 ## Configuration Surface
 
