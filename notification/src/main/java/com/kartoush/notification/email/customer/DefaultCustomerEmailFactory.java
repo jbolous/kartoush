@@ -41,6 +41,7 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
         return new EmailMessage(EmailMessageType.CUSTOMER_PASSWORD_RESET, recipient, new Email(properties.getSenderAddress()),
             properties.getSenderName(), "Reset your Kartoush password", """
             We received a request to reset your Kartoush password.
+
             Use the link below to continue:
             %s
             """.formatted(actionUrl).trim(), actionUrl);
