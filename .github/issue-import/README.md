@@ -311,6 +311,10 @@ Source file names are useful when related work is being imported from local
 markdown files. GitHub issue numbers are useful when a dependency already
 exists in GitHub and is not represented by a local import file.
 
+Dependencies entries must stay as bullet list items. Non-list prose or empty
+dependency bullets inside a `Dependencies` section are treated as importer
+errors and move the file to `failed/` with a specific message.
+
 ## Label Handling
 
 `Labels:` can be defined as a comma-separated metadata value, for example:
@@ -576,6 +580,7 @@ Typical failure cases:
 
 - missing `Title:` metadata
 - invalid metadata before the blank-line separator
+- malformed `Dependencies` sections
 - GitHub issue creation failure
 - unresolved `Parent:`
 - sub-issue linking failure
