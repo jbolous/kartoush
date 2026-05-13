@@ -361,7 +361,7 @@ class DefaultCustomerServiceTest
     }
 
     @Test
-    void shouldIssueActivationTokenForResendForPendingCustomer() {
+    void shouldIssueActivationEmailForPendingCustomer() {
         // given
         final CustomerEntity customerEntity = mock(CustomerEntity.class);
         final Customer customer = mock(Customer.class);
@@ -377,7 +377,7 @@ class DefaultCustomerServiceTest
 
         // when
         final ActivationEmailDelivery activationEmail =
-            defaultCustomerService.issueActivationTokenForResend(CUSTOMER_ID_VALUE);
+            defaultCustomerService.issueActivationEmail(CUSTOMER_ID_VALUE);
 
         // then
         verify(customerRepository).findById(CUSTOMER_ID_EMBEDDABLE);
@@ -389,7 +389,7 @@ class DefaultCustomerServiceTest
     }
 
     @Test
-    void shouldThrowWhenIssuingActivationTokenForResendForNonPendingCustomer() {
+    void shouldThrowWhenIssuingActivationEmailForNonPendingCustomer() {
         // given
         final CustomerEntity customerEntity = mock(CustomerEntity.class);
         final Customer customer = mock(Customer.class);
@@ -399,7 +399,7 @@ class DefaultCustomerServiceTest
         given(customer.getStatus()).willReturn(CustomerStatus.ACTIVE);
 
         // when / then
-        assertThatThrownBy(() -> defaultCustomerService.issueActivationTokenForResend(CUSTOMER_ID_VALUE))
+        assertThatThrownBy(() -> defaultCustomerService.issueActivationEmail(CUSTOMER_ID_VALUE))
             .isInstanceOf(InvalidActivationTokenResendException.class)
             .hasMessage("Activation token cannot be resent while customer is in ACTIVE status");
 

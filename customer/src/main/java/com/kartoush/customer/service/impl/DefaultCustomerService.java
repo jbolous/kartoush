@@ -220,7 +220,7 @@ public class DefaultCustomerService implements CustomerService {
 
     @Override
     @Transactional
-    public ActivationEmailDelivery issueActivationTokenForResend(final String customerId) {
+    public ActivationEmailDelivery issueActivationEmail(final String customerId) {
         final CustomerEntity customerEntity = customerRepository
             .findById(CustomerIdEmbeddable.from(customerId))
             .orElseThrow(() -> new CustomerNotFoundException(customerId));

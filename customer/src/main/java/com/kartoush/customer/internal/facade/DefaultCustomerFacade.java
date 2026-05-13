@@ -15,10 +15,7 @@ import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import com.kartoush.customer.internal.validation.CustomerPasswordSetupValidator;
 import com.kartoush.customer.internal.validation.CustomerRegistrationValidator;
 import com.kartoush.customer.internal.validation.CustomerUpdateValidator;
-import com.kartoush.customer.service.ActivationEmailDelivery;
-import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
-import com.kartoush.customer.service.IssuedActivationToken;
 import com.kartoush.customer.service.job.ActivationEmailJobRequest;
 import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.types.CustomerId;
@@ -35,8 +32,6 @@ public class DefaultCustomerFacade implements CustomerFacade {
 
     private final CustomerService customerService;
 
-    private final ActivationTokenService activationTokenService;
-
     private final CustomerPasswordFacade customerPasswordFacade;
 
     private final BackgroundJobScheduler backgroundJobScheduler;
@@ -51,7 +46,6 @@ public class DefaultCustomerFacade implements CustomerFacade {
 
     public DefaultCustomerFacade(
         final CustomerService customerService,
-        final ActivationTokenService activationTokenService,
         final CustomerPasswordFacade customerPasswordFacade,
         final BackgroundJobScheduler backgroundJobScheduler,
         final UlidGenerator ulidGenerator,
@@ -60,7 +54,6 @@ public class DefaultCustomerFacade implements CustomerFacade {
         final CustomerRegistrationValidator customerRegistrationValidator
     ) {
         this.customerService = customerService;
-        this.activationTokenService = activationTokenService;
         this.customerPasswordFacade = customerPasswordFacade;
         this.backgroundJobScheduler = backgroundJobScheduler;
         this.ulidGenerator = ulidGenerator;
@@ -91,14 +84,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
             new Email(input.email()));
 
         final Customer savedCustomer = customerService.registerCustomer(customer, input.termsVersion());
-        final IssuedActivationToken issuedActivationToken = activationTokenService.createFor(savedCustomer.getId());
-
-        backgroundJobScheduler.enqueue(
-            new ActivationEmailJobRequest(
-                savedCustomer.getId().value(),
-                issuedActivationToken.rawToken()
-            )
-        );
+        backgroundJobScheduler.enqueue(new ActivationEmailJobRequest(savedCustomer.getId().value()));
 
         return toCustomerView(savedCustomer);
     }
@@ -152,13 +138,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
     @Override
     @Transactional
     public void resendActivationToken(final String customerId) {
-        final ActivationEmailDelivery activationEmailDelivery = customerService.issueActivationTokenForResend(customerId);
-        backgroundJobScheduler.enqueue(
-            new ActivationEmailJobRequest(
-                activationEmailDelivery.customerId().value(),
-                activationEmailDelivery.rawToken()
-            )
-        );
+        backgroundJobScheduler.enqueue(new ActivationEmailJobRequest(customerId));
     }
 
     @Override

@@ -1,7 +1,6 @@
 package com.kartoush.config.jobs;
 
-import com.kartoush.customer.domain.Customer;
-import com.kartoush.customer.exception.CustomerNotFoundException;
+import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.CustomerService;
 import com.kartoush.customer.service.job.ActivationEmailJobRequest;
 import com.kartoush.notification.email.customer.CustomerEmailFactory;
@@ -30,14 +29,13 @@ public class ActivationEmailJobHandler implements JobHandler<ActivationEmailJobR
 
     @Override
     public void handle(final ActivationEmailJobRequest request) {
-        final Customer customer = customerService.getCustomerById(request.customerId())
-            .orElseThrow(() -> new CustomerNotFoundException(request.customerId()));
+        final ActivationEmailDelivery activationEmail = customerService.issueActivationEmail(request.customerId());
 
         emailDeliveryService.send(
             customerEmailFactory.newActivationEmail(
-                customer.getEmail(),
-                CustomerId.of(request.customerId()),
-                request.rawToken()
+                activationEmail.email(),
+                activationEmail.customerId(),
+                activationEmail.rawToken()
             )
         );
     }

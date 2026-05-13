@@ -152,6 +152,10 @@ http://localhost:8000
 At the current stage, activation email scheduling is the first customer-facing
 flow that persists durable background jobs through JobRunr.
 
+The persisted job payload carries only the customer identifier. The activation
+token is issued when the job executes, so plaintext activation secrets are not
+stored in JobRunr tables.
+
 ## Test Behavior
 
 The `test` profile disables the background job server and dashboard.
