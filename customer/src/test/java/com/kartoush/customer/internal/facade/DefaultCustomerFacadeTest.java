@@ -3,9 +3,6 @@ package com.kartoush.customer.internal.facade;
 import com.kartoush.auth.domain.PasswordSetupToken;
 import com.kartoush.auth.domain.IssuedPasswordSetupToken;
 import com.kartoush.customer.internal.validation.CustomerRegistrationValidator;
-import com.kartoush.notification.email.customer.CustomerEmailFactory;
-import com.kartoush.notification.email.delivery.EmailDeliveryService;
-import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
@@ -18,6 +15,8 @@ import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
 import com.kartoush.customer.service.IssuedActivationToken;
+import com.kartoush.customer.service.job.ActivationEmailJobRequest;
+import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
@@ -32,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -61,16 +61,13 @@ class DefaultCustomerFacadeTest {
     private CustomerService customerService;
 
     @Mock
-    private EmailDeliveryService emailDeliveryService;
-
-    @Mock
-    private CustomerEmailFactory customerEmailFactory;
-
-    @Mock
     private ActivationTokenService activationTokenService;
 
     @Mock
     private CustomerPasswordFacade customerPasswordFacade;
+
+    @Mock
+    private BackgroundJobScheduler backgroundJobScheduler;
 
     @InjectMocks
     private DefaultCustomerFacade facade;
@@ -81,24 +78,27 @@ class DefaultCustomerFacadeTest {
         final var request = buildCustomerRequest();
         final var saved = buildCustomer();
         final var view = buildCustomerView();
-        final var issuedActivationToken = new IssuedActivationToken(mock(com.kartoush.customer.domain.ActivationToken.class), RAW_TOKEN);
-        final EmailMessage activationEmail = mock(EmailMessage.class);
+        final var issuedActivationToken =
+            new IssuedActivationToken(
+                mock(com.kartoush.customer.domain.ActivationToken.class),
+                RAW_TOKEN
+            );
 
         // when
         when(ulidGenerator.next()).thenReturn(CUSTOMER_ID);
         when(customerService.registerCustomer(any(), any())).thenReturn(saved);
         when(activationTokenService.createFor(CustomerId.of(CUSTOMER_ID))).thenReturn(issuedActivationToken);
-        when(customerEmailFactory.newActivationEmail(new Email(EMAIL), CustomerId.of(CUSTOMER_ID), RAW_TOKEN))
-            .thenReturn(activationEmail);
 
         final var result = facade.createCustomer(request);
 
         // then
         assertThat(result).isEqualTo(view);
         verify(validator).validate(request);
-        verify(customerService).registerCustomer(any(), org.mockito.ArgumentMatchers.eq(TERMS_VERSION));
+        verify(customerService).registerCustomer(any(), eq(TERMS_VERSION));
         verify(activationTokenService).createFor(CustomerId.of(CUSTOMER_ID));
-        verify(emailDeliveryService).send(activationEmail);
+        verify(backgroundJobScheduler).enqueue(
+            new ActivationEmailJobRequest(CUSTOMER_ID, RAW_TOKEN)
+        );
     }
 
     @Test
@@ -155,47 +155,48 @@ class DefaultCustomerFacadeTest {
         // given
         final ActivationEmailDelivery activationEmail =
             new ActivationEmailDelivery(CustomerId.of(CUSTOMER_ID), new Email(EMAIL), RAW_TOKEN);
-        final EmailMessage email = mock(EmailMessage.class);
         when(customerService.issueActivationTokenForResend(CUSTOMER_ID)).thenReturn(activationEmail);
-        when(customerEmailFactory.newActivationEmail(new Email(EMAIL), CustomerId.of(CUSTOMER_ID), RAW_TOKEN))
-            .thenReturn(email);
 
         // when
         facade.resendActivationToken(CUSTOMER_ID);
 
         // then
         verify(customerService).issueActivationTokenForResend(CUSTOMER_ID);
-        verify(emailDeliveryService).send(email);
+        verify(backgroundJobScheduler).enqueue(
+            new ActivationEmailJobRequest(CUSTOMER_ID, RAW_TOKEN)
+        );
     }
 
-    private CreateCustomerInput buildCustomerRequest(){
-        return  new CreateCustomerInput(
-                FIRST_NAME,
-                LAST_NAME,
-                EMAIL,
-                PHONE_NUMBER,
-                true,
-                TERMS_VERSION);
+    private CreateCustomerInput buildCustomerRequest() {
+        return new CreateCustomerInput(
+            FIRST_NAME,
+            LAST_NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            true,
+            TERMS_VERSION
+        );
     }
 
-    private Customer buildCustomer(){
-
-        CustomerId customerId = CustomerId.of(CUSTOMER_ID);
-        CustomerProfile profile = CustomerProfile.of(FIRST_NAME, LAST_NAME, PHONE_NUMBER);
+    private Customer buildCustomer() {
+        final CustomerId customerId = CustomerId.of(CUSTOMER_ID);
+        final CustomerProfile profile = CustomerProfile.of(FIRST_NAME, LAST_NAME, PHONE_NUMBER);
         return Customer.createNew(
-                customerId,
-                profile,
-                new Email(EMAIL));
+            customerId,
+            profile,
+            new Email(EMAIL)
+        );
     }
 
-    private CustomerView buildCustomerView(){
+    private CustomerView buildCustomerView() {
         return new CustomerView(
-                                CUSTOMER_ID,
-                                FIRST_NAME,
-                                LAST_NAME,
-                                EMAIL,
-                                PHONE_NUMBER,
-                                CustomerStatus.PENDING);
+            CUSTOMER_ID,
+            FIRST_NAME,
+            LAST_NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            CustomerStatus.PENDING
+        );
     }
 
     private Customer buildActivatedCustomer() {
@@ -204,7 +205,8 @@ class DefaultCustomerFacadeTest {
         final Customer customer = Customer.createNew(
             customerId,
             profile,
-            new Email(EMAIL));
+            new Email(EMAIL)
+        );
         customer.activate();
         return customer;
     }

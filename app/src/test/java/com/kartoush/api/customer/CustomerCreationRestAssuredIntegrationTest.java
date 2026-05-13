@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
-class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerRestAssuredIntegrationTest {
+class CustomerCreationRestAssuredIntegrationTest extends AbstractCustomerApiIntegrationTest {
 
     private static final String INVALID_EMAIL = "not-an-email";
     private static final String CURRENT_TERMS_VERSION = "2026.04.01";

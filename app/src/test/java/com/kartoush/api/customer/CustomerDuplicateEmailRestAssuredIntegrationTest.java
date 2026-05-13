@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
-class CustomerDuplicateEmailRestAssuredIntegrationTest extends AbstractCustomerRestAssuredIntegrationTest {
+class CustomerDuplicateEmailRestAssuredIntegrationTest extends AbstractCustomerApiIntegrationTest {
 
     private static final String CURRENT_TERMS_VERSION = "2026.04.01";
 

@@ -2,6 +2,7 @@ package com.kartoush.api.customer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kartoush.config.jobs.ActivationEmailJobHandler;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;
@@ -17,6 +18,8 @@ import com.kartoush.customer.persistence.model.CustomerIdEmbeddable;
 import com.kartoush.customer.persistence.repository.ActivationTokenRepository;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
 import com.kartoush.customer.service.ActivationTokenHasher;
+import com.kartoush.customer.service.job.ActivationEmailJobRequest;
+import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.types.ActivationTokenId;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
@@ -53,7 +56,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringIntegrationTest
 @AutoConfigureMockMvc
-class CustomerActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegrationTest {
+class ActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String BASE_URL = "/api/customers";
     private static final String ACTIVATION_PATH = "/{customerId}/activation";
@@ -89,6 +92,12 @@ class CustomerActivationAndPasswordSetupIntegrationTest extends PostgresSpringIn
     @Autowired
     private UlidGenerator ulidGenerator;
 
+    @Autowired
+    private ActivationEmailJobHandler activationEmailJobHandler;
+
+    @MockitoBean
+    private BackgroundJobScheduler backgroundJobScheduler;
+
     @MockitoBean
     private EmailDeliveryService emailDeliveryService;
 
@@ -102,7 +111,14 @@ class CustomerActivationAndPasswordSetupIntegrationTest extends PostgresSpringIn
         customerRepository.deleteAll();
 
         capturedActivationEmails.clear();
+        reset(backgroundJobScheduler);
         reset(emailDeliveryService);
+        doAnswer(invocation -> {
+            final ActivationEmailJobRequest request =
+                invocation.getArgument(0, ActivationEmailJobRequest.class);
+            activationEmailJobHandler.handle(request);
+            return null;
+        }).when(backgroundJobScheduler).enqueue(any(ActivationEmailJobRequest.class));
         doAnswer(invocation -> {
             final EmailMessage email = invocation.getArgument(0, EmailMessage.class);
             if (email.type() == EmailMessageType.CUSTOMER_ACTIVATION) {

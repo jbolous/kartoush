@@ -21,10 +21,10 @@ At this stage, Kartoush provides:
 - A JobRunr-backed adapter in `app`
 - Postgres-backed persistent job storage
 - Local and development dashboard support
+- Durable activation email job scheduling after customer registration and resend
 
 At this stage, Kartoush does not yet provide:
 
-- Activation email job scheduling
 - A broader recurring cleanup job implementation
 
 Those are follow-up tasks in the same epic.
@@ -146,21 +146,22 @@ export SPRING_PROFILES_ACTIVE=dev
 http://localhost:8000
 ```
 
-4. Trigger a code path that enqueues a background job once later tasks wire one
-   in
+4. Trigger a code path that enqueues a background job, such as customer
+   registration or activation-token resend
 
-At the current stage, the dashboard and database wiring can be verified even
-though customer-facing job scheduling is still a follow-up task.
+At the current stage, activation email scheduling is the first customer-facing
+flow that persists durable background jobs through JobRunr.
 
 ## Test Behavior
 
 The `test` profile disables the background job server and dashboard.
 
-This keeps most automated tests deterministic until later tasks begin
-exercising actual job scheduling behavior.
+This keeps most automated tests deterministic while focused integration tests
+still verify that JobRunr can persist scheduled jobs.
 
-Focused integration tests may still verify that JobRunr starts and can persist
-jobs when needed.
+Activation and sign-in flow tests currently stub the scheduler so they can
+continue asserting email-driven behavior without relying on asynchronous job
+execution.
 
 ## Operational Notes
 
