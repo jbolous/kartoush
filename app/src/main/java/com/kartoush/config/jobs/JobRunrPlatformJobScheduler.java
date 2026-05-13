@@ -28,33 +28,37 @@ public class JobRunrPlatformJobScheduler implements BackgroundJobScheduler {
 
     @Override
     public void enqueue(final JobRequest request) {
-        final SerializedJobRequest serializedJobRequest = serialize(request);
+        enqueueSerialized(snapshot(request));
+    }
 
+    void enqueueSerialized(final SerializedJobRequest serializedJobRequest) {
         try {
             jobRunrJobScheduler.enqueue(() -> platformJobDispatcher.dispatch(
                 serializedJobRequest.requestType(),
                 serializedJobRequest.payload()
             ));
         } catch (final RuntimeException ex) {
-            throw new JobSchedulingException("Failed to enqueue job request of type " + request.getClass().getName(), ex);
+            throw new JobSchedulingException("Failed to enqueue job request of type " + serializedJobRequest.requestType(), ex);
         }
     }
 
     @Override
     public void schedule(final JobRequest request, final Instant scheduledAt) {
-        final SerializedJobRequest serializedJobRequest = serialize(request);
+        scheduleSerialized(snapshot(request), scheduledAt);
+    }
 
+    void scheduleSerialized(final SerializedJobRequest serializedJobRequest, final Instant scheduledAt) {
         try {
             jobRunrJobScheduler.schedule(scheduledAt, () -> platformJobDispatcher.dispatch(
                 serializedJobRequest.requestType(),
                 serializedJobRequest.payload()
             ));
         } catch (final RuntimeException ex) {
-            throw new JobSchedulingException("Failed to schedule job request of type " + request.getClass().getName(), ex);
+            throw new JobSchedulingException("Failed to schedule job request of type " + serializedJobRequest.requestType(), ex);
         }
     }
 
-    private SerializedJobRequest serialize(final JobRequest request) {
+    SerializedJobRequest snapshot(final JobRequest request) {
         try {
             return new SerializedJobRequest(
                 request.getClass().getName(),
@@ -65,6 +69,6 @@ public class JobRunrPlatformJobScheduler implements BackgroundJobScheduler {
         }
     }
 
-    private record SerializedJobRequest(String requestType, String payload) {
+    record SerializedJobRequest(String requestType, String payload) {
     }
 }

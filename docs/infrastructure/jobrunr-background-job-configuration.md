@@ -25,7 +25,6 @@ At this stage, Kartoush provides:
 At this stage, Kartoush does not yet provide:
 
 - Activation email job scheduling
-- After-commit scheduling behavior
 - A broader recurring cleanup job implementation
 
 Those are follow-up tasks in the same epic.
@@ -70,6 +69,22 @@ The current profile behavior is:
 - `prod`
   - Background job server enabled by default
   - Dashboard disabled by default
+
+## After-Commit Scheduling
+
+Kartoush schedules background jobs through a transaction-aware app-side
+wrapper.
+
+That wrapper:
+
+- Registers enqueue and schedule operations only after a successful transaction
+  commit
+- Executes the deferred scheduling work in its own transaction boundary
+- Rejects scheduling attempts outside an active transaction
+- Prevents later job scheduling flows from publishing background work before
+  the underlying database changes are durable
+- Logs post-commit scheduling failures instead of surfacing them as if the
+  original database transaction failed
 
 ## Configuration Surface
 

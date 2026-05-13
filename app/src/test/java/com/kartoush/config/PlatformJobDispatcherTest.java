@@ -7,6 +7,8 @@ import com.kartoush.platform.jobs.JobRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.framework.ProxyFactory;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PlatformJobDispatcherTest {
@@ -15,7 +17,7 @@ class PlatformJobDispatcherTest {
     void shouldDeserializeRequestAndDispatchToMatchingHandler() throws Exception {
         final RecordingJobHandler jobHandler = new RecordingJobHandler();
         final PlatformJobDispatcher dispatcher =
-            new PlatformJobDispatcher(new ObjectMapper(), java.util.List.of(jobHandler));
+            new PlatformJobDispatcher(new ObjectMapper(), List.of(jobHandler));
         final ExampleJobRequest request = new ExampleJobRequest("01JOBJOBRUNR00000000000001");
 
         dispatcher.dispatch(
@@ -38,7 +40,7 @@ class PlatformJobDispatcherTest {
             (JobHandler<ExampleJobRequest>) proxyFactory.getProxy();
 
         final PlatformJobDispatcher dispatcher =
-            new PlatformJobDispatcher(new ObjectMapper(), java.util.List.of(proxiedHandler));
+            new PlatformJobDispatcher(new ObjectMapper(), List.of(proxiedHandler));
         final ExampleJobRequest request = new ExampleJobRequest("01JOBJOBRUNR00000000000001");
 
         dispatcher.dispatch(
