@@ -220,7 +220,19 @@ public class DefaultCustomerService implements CustomerService {
 
     @Override
     @Transactional
+    public void validateActivationEmailCanBeIssued(final String customerId) {
+        requirePendingCustomerForActivationEmail(customerId);
+    }
+
+    @Override
+    @Transactional
     public ActivationEmailDelivery issueActivationEmail(final String customerId) {
+        final Customer customer = requirePendingCustomerForActivationEmail(customerId);
+        final IssuedActivationToken issuedActivationToken = activationTokenService.resendFor(customer.getId());
+        return new ActivationEmailDelivery(customer.getId(), customer.getEmail(), issuedActivationToken.rawToken());
+    }
+
+    private Customer requirePendingCustomerForActivationEmail(final String customerId) {
         final CustomerEntity customerEntity = customerRepository
             .findById(CustomerIdEmbeddable.from(customerId))
             .orElseThrow(() -> new CustomerNotFoundException(customerId));
@@ -231,8 +243,7 @@ public class DefaultCustomerService implements CustomerService {
             throw new InvalidActivationTokenResendException(customer.getStatus());
         }
 
-        final IssuedActivationToken issuedActivationToken = activationTokenService.resendFor(customer.getId());
-        return new ActivationEmailDelivery(customer.getId(), customer.getEmail(), issuedActivationToken.rawToken());
+        return customer;
     }
 
     private void validateCustomerCanBeUpdated(final CustomerEntity customer) {

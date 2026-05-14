@@ -138,6 +138,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
     @Override
     @Transactional
     public void resendActivationToken(final String customerId) {
+        customerService.validateActivationEmailCanBeIssued(customerId);
         backgroundJobScheduler.enqueue(new ActivationEmailJobRequest(customerId));
     }
 

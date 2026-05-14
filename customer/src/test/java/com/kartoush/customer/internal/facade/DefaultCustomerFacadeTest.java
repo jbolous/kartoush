@@ -141,6 +141,7 @@ class DefaultCustomerFacadeTest {
         facade.resendActivationToken(CUSTOMER_ID);
 
         // then
+        verify(customerService).validateActivationEmailCanBeIssued(CUSTOMER_ID);
         verify(backgroundJobScheduler).enqueue(new ActivationEmailJobRequest(CUSTOMER_ID));
     }
 

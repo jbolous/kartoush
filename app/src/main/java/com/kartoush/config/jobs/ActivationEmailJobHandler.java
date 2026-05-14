@@ -6,7 +6,6 @@ import com.kartoush.customer.service.job.ActivationEmailJobRequest;
 import com.kartoush.notification.email.customer.CustomerEmailFactory;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.platform.jobs.JobHandler;
-import com.kartoush.platform.types.CustomerId;
 import org.springframework.stereotype.Component;
 
 @Component
