@@ -19,8 +19,9 @@ import com.kartoush.customer.service.ActivationEmailDelivery;
 import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
 import com.kartoush.customer.service.IssuedActivationToken;
-import com.kartoush.notification.email.customer.CustomerEmailFactory;
-import com.kartoush.notification.email.delivery.EmailDeliveryService;
+import com.kartoush.customer.service.job.ActivationEmailJobCipher;
+import com.kartoush.customer.service.job.ActivationEmailJobRequest;
+import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
@@ -35,13 +36,11 @@ public class DefaultCustomerFacade implements CustomerFacade {
 
     private final CustomerService customerService;
 
-    private final EmailDeliveryService emailDeliveryService;
-
-    private final CustomerEmailFactory customerEmailFactory;
-
     private final ActivationTokenService activationTokenService;
 
     private final CustomerPasswordFacade customerPasswordFacade;
+
+    private final BackgroundJobScheduler backgroundJobScheduler;
 
     private final UlidGenerator ulidGenerator;
 
@@ -51,24 +50,28 @@ public class DefaultCustomerFacade implements CustomerFacade {
 
     private final CustomerRegistrationValidator customerRegistrationValidator;
 
+    private final ActivationEmailJobCipher activationEmailJobCipher;
+
     public DefaultCustomerFacade(
         final CustomerService customerService,
-        final EmailDeliveryService emailDeliveryService,
-        final CustomerEmailFactory customerEmailFactory,
         final ActivationTokenService activationTokenService,
         final CustomerPasswordFacade customerPasswordFacade,
+        final BackgroundJobScheduler backgroundJobScheduler,
         final UlidGenerator ulidGenerator,
         final CustomerPasswordSetupValidator customerPasswordSetupValidator,
-        final CustomerUpdateValidator customerUpdateValidator, CustomerRegistrationValidator customerRegistrationValidator) {
+        final CustomerUpdateValidator customerUpdateValidator,
+        final CustomerRegistrationValidator customerRegistrationValidator,
+        final ActivationEmailJobCipher activationEmailJobCipher
+    ) {
         this.customerService = customerService;
-        this.emailDeliveryService = emailDeliveryService;
-        this.customerEmailFactory = customerEmailFactory;
         this.activationTokenService = activationTokenService;
         this.customerPasswordFacade = customerPasswordFacade;
+        this.backgroundJobScheduler = backgroundJobScheduler;
         this.ulidGenerator = ulidGenerator;
         this.customerPasswordSetupValidator = customerPasswordSetupValidator;
         this.customerUpdateValidator = customerUpdateValidator;
         this.customerRegistrationValidator = customerRegistrationValidator;
+        this.activationEmailJobCipher = activationEmailJobCipher;
     }
 
     @Override
@@ -81,6 +84,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
     }
 
     @Override
+    @Transactional
     public CustomerView createCustomer(final CreateCustomerInput input) {
         customerRegistrationValidator.validate(input);
 
@@ -93,14 +97,10 @@ public class DefaultCustomerFacade implements CustomerFacade {
 
         final Customer savedCustomer = customerService.registerCustomer(customer, input.termsVersion());
         final IssuedActivationToken issuedActivationToken = activationTokenService.createFor(savedCustomer.getId());
-
-        emailDeliveryService.send(
-            customerEmailFactory.newActivationEmail(
-                savedCustomer.getEmail(),
-                savedCustomer.getId(),
-                issuedActivationToken.rawToken()
-            )
-        );
+        backgroundJobScheduler.enqueue(new ActivationEmailJobRequest(
+            savedCustomer.getId().value(),
+            activationEmailJobCipher.encrypt(issuedActivationToken.rawToken())
+        ));
 
         return toCustomerView(savedCustomer);
     }
@@ -113,12 +113,12 @@ public class DefaultCustomerFacade implements CustomerFacade {
     }
 
     @Override
-    public CustomerView updateCustomer(String customerId, UpdateCustomerInput input) {
+    public CustomerView updateCustomer(final String customerId, final UpdateCustomerInput input) {
 
         customerUpdateValidator.validate(input);
 
-        CustomerProfile profile = buildCustomerProfile(input);
-        Customer savedCustomer = customerService.updateCustomer(customerId, profile);
+        final CustomerProfile profile = buildCustomerProfile(input);
+        final Customer savedCustomer = customerService.updateCustomer(customerId, profile);
 
         return toCustomerView(savedCustomer);
     }
@@ -152,33 +152,31 @@ public class DefaultCustomerFacade implements CustomerFacade {
     }
 
     @Override
+    @Transactional
     public void resendActivationToken(final String customerId) {
-        final ActivationEmailDelivery activationEmailDelivery = customerService.issueActivationTokenForResend(customerId);
-        emailDeliveryService.send(
-            customerEmailFactory.newActivationEmail(
-                activationEmailDelivery.email(),
-                activationEmailDelivery.customerId(),
-                activationEmailDelivery.rawToken()
-            )
-        );
+        final ActivationEmailDelivery activationEmailDelivery = customerService.issueActivationEmail(customerId);
+        backgroundJobScheduler.enqueue(new ActivationEmailJobRequest(
+            customerId,
+            activationEmailJobCipher.encrypt(activationEmailDelivery.rawToken())
+        ));
     }
 
     @Override
-    public CustomerView reactivateCustomer(String customerId) {
-        Customer reactiveCustomer = customerService.reactivateCustomer(customerId);
+    public CustomerView reactivateCustomer(final String customerId) {
+        final Customer reactiveCustomer = customerService.reactivateCustomer(customerId);
 
         return toCustomerView(reactiveCustomer);
     }
 
     @Override
-    public CustomerView reactivateCustomer(Email email) {
-        Customer reactivatedCustomer = customerService.reactivateCustomerByEmail(email);
+    public CustomerView reactivateCustomer(final Email email) {
+        final Customer reactivatedCustomer = customerService.reactivateCustomerByEmail(email);
 
         return toCustomerView(reactivatedCustomer);
     }
 
     @Override
-    public void deleteCustomer(String customerId) {
+    public void deleteCustomer(final String customerId) {
         customerService.deleteCustomer(CustomerId.of(customerId));
     }
 

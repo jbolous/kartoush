@@ -1,8 +1,11 @@
 package com.kartoush.api.customer;
 
+import com.kartoush.config.jobs.ActivationEmailJobHandler;
+import com.kartoush.customer.service.job.ActivationEmailJobRequest;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;
+import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.types.Email;
 import com.kartoush.platform.ulid.UlidGenerator;
 import com.kartoush.testsupport.HttpSpringIntegrationTest;
@@ -25,7 +28,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
 
 @HttpSpringIntegrationTest
-abstract class AbstractCustomerRestAssuredIntegrationTest extends PostgresRestAssuredIntegrationTest {
+abstract class AbstractCustomerApiIntegrationTest extends PostgresRestAssuredIntegrationTest {
 
     protected static final String BASE_URL = "/api/customers";
     protected static final String ACTIVATION_PATH = "/{customerId}/activation";
@@ -38,6 +41,12 @@ abstract class AbstractCustomerRestAssuredIntegrationTest extends PostgresRestAs
     @Autowired
     protected UlidGenerator ulidGenerator;
 
+    @Autowired
+    private ActivationEmailJobHandler activationEmailJobHandler;
+
+    @MockitoBean
+    private BackgroundJobScheduler backgroundJobScheduler;
+
     @MockitoBean
     private EmailDeliveryService emailDeliveryService;
 
@@ -46,7 +55,14 @@ abstract class AbstractCustomerRestAssuredIntegrationTest extends PostgresRestAs
     @BeforeEach
     void setUpActivationEmailCapture() {
         capturedActivationEmails.clear();
+        reset(backgroundJobScheduler);
         reset(emailDeliveryService);
+        doAnswer(invocation -> {
+            final ActivationEmailJobRequest request =
+                invocation.getArgument(0, ActivationEmailJobRequest.class);
+            activationEmailJobHandler.handle(request);
+            return null;
+        }).when(backgroundJobScheduler).enqueue(any(ActivationEmailJobRequest.class));
         doAnswer(invocation -> {
             final EmailMessage email = invocation.getArgument(0, EmailMessage.class);
             if (email.type() == EmailMessageType.CUSTOMER_ACTIVATION) {

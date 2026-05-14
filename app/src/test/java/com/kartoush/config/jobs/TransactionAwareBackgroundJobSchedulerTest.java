@@ -133,7 +133,7 @@ class TransactionAwareBackgroundJobSchedulerTest {
     }
 
     @Test
-    void shouldNotPropagateSchedulingFailureAfterCommit() {
+    void shouldPropagateSchedulingFailureAfterCommit() {
         beginTransaction();
         final ExampleJobRequest request = new ExampleJobRequest("01JAFTERCOMMIT0000000000005");
         final JobRunrPlatformJobScheduler.SerializedJobRequest serializedJobRequest =
@@ -149,7 +149,9 @@ class TransactionAwareBackgroundJobSchedulerTest {
 
         scheduler.enqueue(request);
 
-        triggerAfterCommit();
+        assertThatThrownBy(this::triggerAfterCommit)
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("boom");
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.kartoush.api.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kartoush.config.jobs.ActivationEmailJobHandler;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;
@@ -12,6 +13,8 @@ import com.kartoush.api.error.ErrorCode;
 import com.kartoush.customer.facade.model.CreateCustomerInput;
 import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
 import com.kartoush.auth.service.PasswordResetTokenHasher;
+import com.kartoush.customer.service.job.ActivationEmailJobRequest;
+import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
 import com.kartoush.platform.ulid.UlidGenerator;
@@ -77,6 +80,12 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
     @Autowired
     private UlidGenerator ulidGenerator;
 
+    @Autowired
+    private ActivationEmailJobHandler activationEmailJobHandler;
+
+    @MockitoBean
+    private BackgroundJobScheduler backgroundJobScheduler;
+
     @MockitoBean
     private EmailDeliveryService emailDeliveryService;
 
@@ -91,7 +100,15 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
 
         capturedActivationEmails.clear();
         capturedPasswordResetEmails.clear();
+        reset(backgroundJobScheduler);
         reset(emailDeliveryService);
+
+        doAnswer(invocation -> {
+            final ActivationEmailJobRequest request =
+                invocation.getArgument(0, ActivationEmailJobRequest.class);
+            activationEmailJobHandler.handle(request);
+            return null;
+        }).when(backgroundJobScheduler).enqueue(any(ActivationEmailJobRequest.class));
 
         doAnswer(invocation -> {
             final EmailMessage email = invocation.getArgument(0, EmailMessage.class);

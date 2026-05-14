@@ -35,6 +35,9 @@ logging:
     root: info
 
 kartoush:
+  jobs:
+    activation-email:
+      encryption-key: ${KARTOUSH_JOBS_ACTIVATION_EMAIL_ENCRYPTION_KEY:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
   email:
     customer:
       sender-name: ${KARTOUSH_EMAIL_SENDER_NAME:Kartoush}
