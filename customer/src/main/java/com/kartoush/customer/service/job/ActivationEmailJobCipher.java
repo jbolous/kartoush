@@ -68,8 +68,7 @@ public class ActivationEmailJobCipher {
             System.arraycopy(encryptedBytes, 0, payload, iv.length, encryptedBytes.length);
 
             return Base64.getUrlEncoder().withoutPadding().encodeToString(payload);
-        }
-        catch (final GeneralSecurityException exception) {
+        } catch (final GeneralSecurityException exception) {
             throw new IllegalStateException("Unable to encrypt activation email job token", exception);
         }
     }
@@ -89,8 +88,7 @@ public class ActivationEmailJobCipher {
             final byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
 
             return new String(decryptedBytes, StandardCharsets.UTF_8);
-        }
-        catch (final GeneralSecurityException | IllegalArgumentException exception) {
+        } catch (final GeneralSecurityException | IllegalArgumentException exception) {
             throw new IllegalStateException("Unable to decrypt activation email job token", exception);
         }
     }

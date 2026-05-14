@@ -12,7 +12,6 @@ import com.kartoush.customer.service.job.ActivationEmailJobRequest;
 import com.kartoush.notification.email.customer.CustomerEmailFactory;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.platform.jobs.JobHandler;
-import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,10 +71,9 @@ public class ActivationEmailJobHandler implements JobHandler<ActivationEmailJobR
 
         try {
             activationTokenService.validate(pendingCustomer.getId(), rawToken);
-        }
-        catch (final ActivationTokenNotFoundException
-            | ActivationTokenConsumedException
-            | ActivationTokenExpiredException exception) {
+        } catch (final ActivationTokenNotFoundException
+                       | ActivationTokenConsumedException
+                       | ActivationTokenExpiredException exception) {
             LOG.info(
                 "Skipping activation email job because token for customer {} is no longer valid",
                 request.customerId()
