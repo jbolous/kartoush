@@ -2,6 +2,8 @@ package com.kartoush.config.jobs;
 
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
+import com.kartoush.customer.exception.ActivationTokenConsumedException;
+import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
 import com.kartoush.customer.service.job.ActivationEmailJobCipher;
 import com.kartoush.customer.service.job.ActivationEmailJobRequest;
@@ -28,6 +30,8 @@ class ActivationEmailJobHandlerTest {
 
     private final CustomerService customerService = mock(CustomerService.class);
 
+    private final ActivationTokenService activationTokenService = mock(ActivationTokenService.class);
+
     private final ActivationEmailJobCipher activationEmailJobCipher = mock(ActivationEmailJobCipher.class);
 
     private final CustomerEmailFactory customerEmailFactory = mock(CustomerEmailFactory.class);
@@ -37,6 +41,7 @@ class ActivationEmailJobHandlerTest {
     private final ActivationEmailJobHandler handler =
         new ActivationEmailJobHandler(
             customerService,
+            activationTokenService,
             activationEmailJobCipher,
             customerEmailFactory,
             emailDeliveryService
@@ -65,6 +70,7 @@ class ActivationEmailJobHandlerTest {
 
         verify(customerService).getCustomerById(CUSTOMER_ID);
         verify(activationEmailJobCipher).decrypt("encrypted-token");
+        verify(activationTokenService).validate(CustomerId.of(CUSTOMER_ID), RAW_TOKEN);
         verify(customerEmailFactory).newActivationEmail(
             EMAIL,
             CustomerId.of(CUSTOMER_ID),
@@ -102,6 +108,28 @@ class ActivationEmailJobHandlerTest {
 
         verify(customerService).getCustomerById(CUSTOMER_ID);
         verify(activationEmailJobCipher, never()).decrypt("encrypted-token");
+        verify(emailDeliveryService, never()).send(any());
+    }
+
+    @Test
+    void shouldSkipWhenQueuedTokenIsNoLongerValid() {
+        final ActivationEmailJobRequest request = new ActivationEmailJobRequest(CUSTOMER_ID, "encrypted-token");
+        final Customer customer = Customer.createNew(
+            CustomerId.of(CUSTOMER_ID),
+            CustomerProfile.of("Jack", "Kartoush", "+13125550100"),
+            EMAIL
+        );
+
+        when(customerService.getCustomerById(CUSTOMER_ID)).thenReturn(Optional.of(customer));
+        when(activationEmailJobCipher.decrypt("encrypted-token")).thenReturn(RAW_TOKEN);
+        when(activationTokenService.validate(CustomerId.of(CUSTOMER_ID), RAW_TOKEN))
+            .thenThrow(new ActivationTokenConsumedException(CUSTOMER_ID));
+
+        handler.handle(request);
+
+        verify(customerService).getCustomerById(CUSTOMER_ID);
+        verify(activationEmailJobCipher).decrypt("encrypted-token");
+        verify(activationTokenService).validate(CustomerId.of(CUSTOMER_ID), RAW_TOKEN);
         verify(emailDeliveryService, never()).send(any());
     }
 }

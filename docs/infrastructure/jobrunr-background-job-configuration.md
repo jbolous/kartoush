@@ -83,8 +83,8 @@ That wrapper:
 - Rejects scheduling attempts outside an active transaction
 - Prevents later job scheduling flows from publishing background work before
   the underlying database changes are durable
-- Logs post-commit scheduling failures instead of surfacing them as if the
-  original database transaction failed
+- Surfaces post-commit scheduling failures back through the request path instead
+  of silently swallowing them after the original database transaction commits
 
 ## Configuration Surface
 

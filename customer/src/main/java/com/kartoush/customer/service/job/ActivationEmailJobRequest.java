@@ -4,6 +4,6 @@ import com.kartoush.platform.jobs.JobRequest;
 
 public record ActivationEmailJobRequest(
     String customerId,
-    String encryptedRawToken
+    String encryptedToken
 ) implements JobRequest {
 }
