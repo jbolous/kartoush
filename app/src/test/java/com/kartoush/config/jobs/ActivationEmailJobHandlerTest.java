@@ -1,8 +1,9 @@
 package com.kartoush.config.jobs;
 
-import com.kartoush.customer.service.ActivationEmailDelivery;
-import com.kartoush.customer.exception.CustomerNotFoundException;
+import com.kartoush.customer.domain.Customer;
+import com.kartoush.customer.domain.CustomerProfile;
 import com.kartoush.customer.service.CustomerService;
+import com.kartoush.customer.service.job.ActivationEmailJobCipher;
 import com.kartoush.customer.service.job.ActivationEmailJobRequest;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.customer.CustomerEmailFactory;
@@ -11,8 +12,11 @@ import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.Email;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,48 +28,80 @@ class ActivationEmailJobHandlerTest {
 
     private final CustomerService customerService = mock(CustomerService.class);
 
+    private final ActivationEmailJobCipher activationEmailJobCipher = mock(ActivationEmailJobCipher.class);
+
     private final CustomerEmailFactory customerEmailFactory = mock(CustomerEmailFactory.class);
 
     private final EmailDeliveryService emailDeliveryService = mock(EmailDeliveryService.class);
 
     private final ActivationEmailJobHandler handler =
-        new ActivationEmailJobHandler(customerService, customerEmailFactory, emailDeliveryService);
+        new ActivationEmailJobHandler(
+            customerService,
+            activationEmailJobCipher,
+            customerEmailFactory,
+            emailDeliveryService
+        );
 
     @Test
     void shouldIssueActivationEmailAndSendIt() {
-        final ActivationEmailJobRequest request = new ActivationEmailJobRequest(CUSTOMER_ID);
-        final ActivationEmailDelivery activationEmail =
-            new ActivationEmailDelivery(CustomerId.of(CUSTOMER_ID), EMAIL, RAW_TOKEN);
+        final ActivationEmailJobRequest request = new ActivationEmailJobRequest(CUSTOMER_ID, "encrypted-token");
+        final Customer customer = Customer.createNew(
+            CustomerId.of(CUSTOMER_ID),
+            CustomerProfile.of("Jack", "Kartoush", "+13125550100"),
+            EMAIL
+        );
         final EmailMessage emailMessage = mock(EmailMessage.class);
 
-        when(customerService.issueActivationEmail(CUSTOMER_ID)).thenReturn(activationEmail);
+        when(customerService.getCustomerById(CUSTOMER_ID)).thenReturn(Optional.of(customer));
+        when(activationEmailJobCipher.decrypt("encrypted-token")).thenReturn(RAW_TOKEN);
         when(customerEmailFactory.newActivationEmail(
-            activationEmail.email(),
-            activationEmail.customerId(),
-            activationEmail.rawToken()
+            EMAIL,
+            CustomerId.of(CUSTOMER_ID),
+            RAW_TOKEN
         ))
             .thenReturn(emailMessage);
 
         handler.handle(request);
 
-        verify(customerService).issueActivationEmail(CUSTOMER_ID);
+        verify(customerService).getCustomerById(CUSTOMER_ID);
+        verify(activationEmailJobCipher).decrypt("encrypted-token");
         verify(customerEmailFactory).newActivationEmail(
-            activationEmail.email(),
-            activationEmail.customerId(),
-            activationEmail.rawToken()
+            EMAIL,
+            CustomerId.of(CUSTOMER_ID),
+            RAW_TOKEN
         );
         verify(emailDeliveryService).send(emailMessage);
     }
 
     @Test
-    void shouldFailWhenActivationEmailCannotBeIssued() {
-        final ActivationEmailJobRequest request = new ActivationEmailJobRequest(CUSTOMER_ID);
+    void shouldSkipWhenCustomerCannotBeReloaded() {
+        final ActivationEmailJobRequest request = new ActivationEmailJobRequest(CUSTOMER_ID, "encrypted-token");
 
-        when(customerService.issueActivationEmail(CUSTOMER_ID))
-            .thenThrow(new CustomerNotFoundException(CUSTOMER_ID));
+        when(customerService.getCustomerById(CUSTOMER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> handler.handle(request))
-            .isInstanceOf(CustomerNotFoundException.class)
-            .hasMessage("Customer not found for id: " + CUSTOMER_ID);
+        handler.handle(request);
+
+        verify(customerService).getCustomerById(CUSTOMER_ID);
+        verify(activationEmailJobCipher, never()).decrypt("encrypted-token");
+        verify(emailDeliveryService, never()).send(any());
+    }
+
+    @Test
+    void shouldSkipWhenCustomerIsNoLongerPending() {
+        final ActivationEmailJobRequest request = new ActivationEmailJobRequest(CUSTOMER_ID, "encrypted-token");
+        final Customer customer = Customer.createNew(
+            CustomerId.of(CUSTOMER_ID),
+            CustomerProfile.of("Jack", "Kartoush", "+13125550100"),
+            EMAIL
+        );
+        customer.activate();
+
+        when(customerService.getCustomerById(CUSTOMER_ID)).thenReturn(Optional.of(customer));
+
+        handler.handle(request);
+
+        verify(customerService).getCustomerById(CUSTOMER_ID);
+        verify(activationEmailJobCipher, never()).decrypt("encrypted-token");
+        verify(emailDeliveryService, never()).send(any());
     }
 }

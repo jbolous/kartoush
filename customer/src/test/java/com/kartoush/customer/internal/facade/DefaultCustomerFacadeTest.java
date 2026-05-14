@@ -11,7 +11,11 @@ import com.kartoush.customer.facade.model.CustomerView;
 import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
 import com.kartoush.customer.internal.validation.CustomerRegistrationValidator;
 import com.kartoush.customer.internal.validation.CustomerPasswordSetupValidator;
+import com.kartoush.customer.service.ActivationEmailDelivery;
+import com.kartoush.customer.service.ActivationTokenService;
 import com.kartoush.customer.service.CustomerService;
+import com.kartoush.customer.service.IssuedActivationToken;
+import com.kartoush.customer.service.job.ActivationEmailJobCipher;
 import com.kartoush.customer.service.job.ActivationEmailJobRequest;
 import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.types.CustomerId;
@@ -58,10 +62,16 @@ class DefaultCustomerFacadeTest {
     private CustomerService customerService;
 
     @Mock
+    private ActivationTokenService activationTokenService;
+
+    @Mock
     private CustomerPasswordFacade customerPasswordFacade;
 
     @Mock
     private BackgroundJobScheduler backgroundJobScheduler;
+
+    @Mock
+    private ActivationEmailJobCipher activationEmailJobCipher;
 
     @InjectMocks
     private DefaultCustomerFacade facade;
@@ -72,9 +82,16 @@ class DefaultCustomerFacadeTest {
         final var request = buildCustomerRequest();
         final var saved = buildCustomer();
         final var view = buildCustomerView();
+        final var issuedActivationToken =
+            new IssuedActivationToken(
+                mock(com.kartoush.customer.domain.ActivationToken.class),
+                RAW_TOKEN
+            );
         // when
         when(ulidGenerator.next()).thenReturn(CUSTOMER_ID);
         when(customerService.registerCustomer(any(), any())).thenReturn(saved);
+        when(activationTokenService.createFor(CustomerId.of(CUSTOMER_ID))).thenReturn(issuedActivationToken);
+        when(activationEmailJobCipher.encrypt(RAW_TOKEN)).thenReturn("encrypted-token");
 
         final var result = facade.createCustomer(request);
 
@@ -82,7 +99,9 @@ class DefaultCustomerFacadeTest {
         assertThat(result).isEqualTo(view);
         verify(validator).validate(request);
         verify(customerService).registerCustomer(any(), eq(TERMS_VERSION));
-        verify(backgroundJobScheduler).enqueue(new ActivationEmailJobRequest(CUSTOMER_ID));
+        verify(activationTokenService).createFor(CustomerId.of(CUSTOMER_ID));
+        verify(activationEmailJobCipher).encrypt(RAW_TOKEN);
+        verify(backgroundJobScheduler).enqueue(new ActivationEmailJobRequest(CUSTOMER_ID, "encrypted-token"));
     }
 
     @Test
@@ -137,12 +156,17 @@ class DefaultCustomerFacadeTest {
     @Test
     void shouldResendActivationToken() {
         // given
+        final ActivationEmailDelivery activationEmailDelivery =
+            new ActivationEmailDelivery(CustomerId.of(CUSTOMER_ID), new Email(EMAIL), RAW_TOKEN);
+        when(customerService.issueActivationEmail(CUSTOMER_ID)).thenReturn(activationEmailDelivery);
+        when(activationEmailJobCipher.encrypt(RAW_TOKEN)).thenReturn("encrypted-token");
         // when
         facade.resendActivationToken(CUSTOMER_ID);
 
         // then
-        verify(customerService).validateActivationEmailCanBeIssued(CUSTOMER_ID);
-        verify(backgroundJobScheduler).enqueue(new ActivationEmailJobRequest(CUSTOMER_ID));
+        verify(customerService).issueActivationEmail(CUSTOMER_ID);
+        verify(activationEmailJobCipher).encrypt(RAW_TOKEN);
+        verify(backgroundJobScheduler).enqueue(new ActivationEmailJobRequest(CUSTOMER_ID, "encrypted-token"));
     }
 
     private CreateCustomerInput buildCustomerRequest() {

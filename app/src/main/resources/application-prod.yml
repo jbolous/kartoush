@@ -10,6 +10,9 @@ jobrunr:
     enabled: ${KARTOUSH_JOBRUNR_DASHBOARD_ENABLED:false}
 
 kartoush:
+  jobs:
+    activation-email:
+      encryption-key: ${KARTOUSH_JOBS_ACTIVATION_EMAIL_ENCRYPTION_KEY:}
   email:
     delivery:
       provider: ${KARTOUSH_EMAIL_DELIVERY_PROVIDER:brevo}

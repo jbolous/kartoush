@@ -220,12 +220,6 @@ public class DefaultCustomerService implements CustomerService {
 
     @Override
     @Transactional
-    public void validateActivationEmailCanBeIssued(final String customerId) {
-        requirePendingCustomerForActivationEmail(customerId);
-    }
-
-    @Override
-    @Transactional
     public ActivationEmailDelivery issueActivationEmail(final String customerId) {
         final Customer customer = requirePendingCustomerForActivationEmail(customerId);
         final IssuedActivationToken issuedActivationToken = activationTokenService.resendFor(customer.getId());
