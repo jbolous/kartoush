@@ -1,6 +1,6 @@
 package com.kartoush.notification.email.provider.mailtrap;
 
-import com.kartoush.notification.email.client.EmailApiClient;
+import com.kartoush.notification.email.client.EmailClient;
 import com.kartoush.notification.email.delivery.EmailDeliveryException;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;
@@ -19,8 +19,8 @@ import static org.mockito.Mockito.when;
 class MailtrapEmailDeliveryServiceTest {
 
     @Test
-    void shouldDelegateToMailtrapApiClient() {
-        final EmailApiClient emailApiClient = mock(EmailApiClient.class);
+    void shouldDelegateToMailtrapEmailClient() {
+        final EmailClient emailClient = mock(EmailClient.class);
         final EmailMessage email = new EmailMessage(
             EmailMessageType.CUSTOMER_ACTIVATION,
             new Email("jack@kartoush.com"),
@@ -30,17 +30,17 @@ class MailtrapEmailDeliveryServiceTest {
             "Hello from Kartoush",
             "https://kartoush.dev/activate?token=abc"
         );
-        when(emailApiClient.send(email)).thenReturn(Optional.of("mailtrap-message-id"));
+        when(emailClient.send(email)).thenReturn(Optional.of("mailtrap-message-id"));
 
-        final MailtrapEmailDeliveryService service = new MailtrapEmailDeliveryService(emailApiClient);
+        final MailtrapEmailDeliveryService service = new MailtrapEmailDeliveryService(emailClient);
 
         assertThatCode(() -> service.send(email)).doesNotThrowAnyException();
-        verify(emailApiClient).send(email);
+        verify(emailClient).send(email);
     }
 
     @Test
-    void shouldRethrowMailtrapDeliveryFailures() {
-        final EmailApiClient emailApiClient = mock(EmailApiClient.class);
+    void shouldRethrowMailtrapEmailDeliveryFailures() {
+        final EmailClient emailClient = mock(EmailClient.class);
         final EmailMessage email = new EmailMessage(
             EmailMessageType.CUSTOMER_PASSWORD_RESET,
             new Email("jack@kartoush.com"),
@@ -51,9 +51,9 @@ class MailtrapEmailDeliveryServiceTest {
             "https://kartoush.dev/reset-password?token=abc"
         );
         final EmailDeliveryException exception = new EmailDeliveryException("mailtrap", "Mailtrap email delivery failed");
-        doThrow(exception).when(emailApiClient).send(email);
+        doThrow(exception).when(emailClient).send(email);
 
-        final MailtrapEmailDeliveryService service = new MailtrapEmailDeliveryService(emailApiClient);
+        final MailtrapEmailDeliveryService service = new MailtrapEmailDeliveryService(emailClient);
 
         assertThatThrownBy(() -> service.send(email))
             .isInstanceOf(EmailDeliveryException.class)

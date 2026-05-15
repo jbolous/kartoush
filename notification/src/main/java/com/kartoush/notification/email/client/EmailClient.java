@@ -4,7 +4,7 @@ import com.kartoush.notification.email.EmailMessage;
 
 import java.util.Optional;
 
-public interface EmailApiClient {
+public interface EmailClient {
 
     Optional<String> send(EmailMessage email);
 }

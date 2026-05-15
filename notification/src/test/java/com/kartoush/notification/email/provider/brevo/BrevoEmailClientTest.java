@@ -1,10 +1,10 @@
 package com.kartoush.notification.email.provider.brevo;
 
-import com.kartoush.notification.email.delivery.EmailDeliveryException;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;
-import com.kartoush.notification.email.client.EmailApiClient;
+import com.kartoush.notification.email.client.EmailClient;
 import com.kartoush.notification.email.config.EmailDeliveryProperties;
+import com.kartoush.notification.email.delivery.EmailDeliveryException;
 import com.kartoush.notification.email.http.NotificationHttpClient;
 import com.kartoush.platform.types.Email;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class DefaultBrevoEmailApiClientTest {
+class BrevoEmailClientTest {
 
     @Test
     void shouldBuildBrevoRequestAndExtractMessageId() {
@@ -40,7 +40,7 @@ class DefaultBrevoEmailApiClientTest {
             return response;
         });
 
-        final EmailApiClient client = new DefaultBrevoEmailApiClient(notificationHttpClient, properties);
+        final EmailClient client = new BrevoEmailClient(notificationHttpClient, properties);
         final EmailMessage email = new EmailMessage(
             EmailMessageType.CUSTOMER_ACTIVATION,
             new Email("jack@kartoush.com"),
@@ -48,7 +48,8 @@ class DefaultBrevoEmailApiClientTest {
             "Kartoush",
             "Activate your Kartoush account",
             "Click here",
-            "https://kartoush.dev/activate?token=abc"
+            "https://kartoush.dev/activate?token=abc",
+            "<p><a href=\"https://kartoush.dev/activate?token=abc\">Activate</a></p>"
         );
 
         final Optional<String> messageId = client.send(email);
@@ -58,6 +59,7 @@ class DefaultBrevoEmailApiClientTest {
         assertThat(response.request.headers().firstValue("api-key")).contains("brevo-api-key");
         assertThat(response.request.headers().firstValue("content-type")).contains("application/json");
         assertThat(response.request.method()).isEqualTo("POST");
+        assertThat(response.request.bodyPublisher()).isPresent();
     }
 
     @Test
@@ -70,7 +72,7 @@ class DefaultBrevoEmailApiClientTest {
         when(notificationHttpClient.send(any(HttpRequest.class), any(String.class)))
             .thenReturn(new HttpRequestCapturingResponse(500, "{\"message\":\"provider failure\"}"));
 
-        final EmailApiClient client = new DefaultBrevoEmailApiClient(notificationHttpClient, properties);
+        final EmailClient client = new BrevoEmailClient(notificationHttpClient, properties);
         final EmailMessage email = new EmailMessage(
             EmailMessageType.CUSTOMER_PASSWORD_RESET,
             new Email("jack@kartoush.com"),
@@ -78,7 +80,8 @@ class DefaultBrevoEmailApiClientTest {
             "Kartoush",
             "Reset your Kartoush password",
             "Reset it here",
-            "https://kartoush.dev/reset-password?token=abc"
+            "https://kartoush.dev/reset-password?token=abc",
+            "<p><a href=\"https://kartoush.dev/reset-password?token=abc\">Reset</a></p>"
         );
 
         assertThatThrownBy(() -> client.send(email))

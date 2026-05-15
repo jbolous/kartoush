@@ -1,7 +1,7 @@
 package com.kartoush.notification.email.provider.brevo;
 
 import com.kartoush.notification.email.EmailMessage;
-import com.kartoush.notification.email.client.EmailApiClient;
+import com.kartoush.notification.email.client.EmailClient;
 import com.kartoush.notification.email.config.EmailDeliveryProperties;
 import com.kartoush.notification.email.delivery.EmailDeliveryException;
 import com.kartoush.notification.email.http.NotificationHttpClient;
@@ -16,11 +16,11 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DefaultBrevoEmailApiClient implements EmailApiClient {
+public class BrevoEmailClient implements EmailClient {
 
     private static final String PROVIDER = "brevo";
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultBrevoEmailApiClient.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BrevoEmailClient.class);
 
     private static final Pattern MESSAGE_ID_PATTERN = Pattern.compile("\"messageId\"\\s*:\\s*\"([^\"]+)\"");
 
@@ -30,7 +30,7 @@ public class DefaultBrevoEmailApiClient implements EmailApiClient {
 
     private final EmailDeliveryProperties.Brevo properties;
 
-    public DefaultBrevoEmailApiClient(
+    public BrevoEmailClient(
         final NotificationHttpClient notificationHttpClient,
         final EmailDeliveryProperties.Brevo properties
     ) {
@@ -64,6 +64,13 @@ public class DefaultBrevoEmailApiClient implements EmailApiClient {
     }
 
     private String toJson(final EmailMessage email) {
+        final String htmlContent = email.htmlBody() == null
+            ? ""
+            : """
+                ,
+                  "htmlContent": "%s"
+                """.formatted(escape(email.htmlBody()));
+
         return """
             {
               "sender": {
@@ -77,13 +84,15 @@ public class DefaultBrevoEmailApiClient implements EmailApiClient {
               ],
               "subject": "%s",
               "textContent": "%s"
+              %s
             }
             """.formatted(
             escape(email.senderName()),
             escape(email.senderAddress().value()),
             escape(email.recipient().value()),
             escape(email.subject()),
-            escape(email.textBody())
+            escape(email.textBody()),
+            htmlContent
         ).trim();
     }
 

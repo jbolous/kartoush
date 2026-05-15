@@ -1,6 +1,6 @@
 package com.kartoush.notification.email.provider.brevo;
 
-import com.kartoush.notification.email.client.EmailApiClient;
+import com.kartoush.notification.email.client.EmailClient;
 import com.kartoush.notification.email.delivery.EmailDeliveryException;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;
@@ -19,8 +19,8 @@ import static org.mockito.Mockito.when;
 class BrevoEmailDeliveryServiceTest {
 
     @Test
-    void shouldDelegateToBrevoApiClient() {
-        final EmailApiClient emailApiClient = mock(EmailApiClient.class);
+    void shouldDelegateToBrevoEmailClient() {
+        final EmailClient emailClient = mock(EmailClient.class);
         final EmailMessage email = new EmailMessage(
             EmailMessageType.CUSTOMER_PASSWORD_RESET,
             new Email("jack@kartoush.com"),
@@ -30,17 +30,17 @@ class BrevoEmailDeliveryServiceTest {
             "Reset it here",
             "https://kartoush.dev/reset-password?token=abc"
         );
-        when(emailApiClient.send(email)).thenReturn(Optional.of("brevo-message-id"));
+        when(emailClient.send(email)).thenReturn(Optional.of("brevo-message-id"));
 
-        final BrevoEmailDeliveryService service = new BrevoEmailDeliveryService(emailApiClient);
+        final BrevoEmailDeliveryService service = new BrevoEmailDeliveryService(emailClient);
 
         assertThatCode(() -> service.send(email)).doesNotThrowAnyException();
-        verify(emailApiClient).send(email);
+        verify(emailClient).send(email);
     }
 
     @Test
-    void shouldRethrowBrevoDeliveryFailures() {
-        final EmailApiClient emailApiClient = mock(EmailApiClient.class);
+    void shouldRethrowBrevoEmailDeliveryFailures() {
+        final EmailClient emailClient = mock(EmailClient.class);
         final EmailMessage email = new EmailMessage(
             EmailMessageType.CUSTOMER_PASSWORD_RESET,
             new Email("jack@kartoush.com"),
@@ -51,9 +51,9 @@ class BrevoEmailDeliveryServiceTest {
             "https://kartoush.dev/reset-password?token=abc"
         );
         final EmailDeliveryException exception = new EmailDeliveryException("brevo", "Brevo email delivery failed");
-        doThrow(exception).when(emailApiClient).send(email);
+        doThrow(exception).when(emailClient).send(email);
 
-        final BrevoEmailDeliveryService service = new BrevoEmailDeliveryService(emailApiClient);
+        final BrevoEmailDeliveryService service = new BrevoEmailDeliveryService(emailClient);
 
         assertThatThrownBy(() -> service.send(email))
             .isInstanceOf(EmailDeliveryException.class)

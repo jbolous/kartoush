@@ -55,19 +55,9 @@ public class EmailDeliveryProperties {
 
     public static class Mailtrap {
 
-        private String apiBaseUrl = "https://sandbox.api.mailtrap.io/api/send";
-
         private String apiToken = "";
 
         private long inboxId;
-
-        public String getApiBaseUrl() {
-            return apiBaseUrl;
-        }
-
-        public void setApiBaseUrl(final String apiBaseUrl) {
-            this.apiBaseUrl = apiBaseUrl;
-        }
 
         public String getApiToken() {
             return apiToken;
@@ -86,7 +76,6 @@ public class EmailDeliveryProperties {
         }
 
         void validate() {
-            NotificationPropertyValidator.validateHttpUrl(apiBaseUrl, "kartoush.email.delivery.mailtrap.api-base-url");
             NotificationPropertyValidator.validateRequiredText(apiToken, "kartoush.email.delivery.mailtrap.api-token");
             if (inboxId <= 0) {
                 throw new IllegalStateException("kartoush.email.delivery.mailtrap.inbox-id must be greater than zero");

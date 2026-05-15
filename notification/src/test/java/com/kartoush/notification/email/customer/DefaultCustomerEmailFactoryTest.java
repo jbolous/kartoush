@@ -32,6 +32,9 @@ class DefaultCustomerEmailFactoryTest {
         assertThat(email.subject()).isEqualTo("Activate your Kartoush account");
         assertThat(email.actionUrl())
             .isEqualTo("https://kartoush.dev/activate?customerId=01J2Z5Y6K4Z6D5H2X3JH8M9N0P&token=activation-token");
+        assertThat(email.htmlBody())
+            .contains("<a href=\"https://kartoush.dev/activate?customerId=01J2Z5Y6K4Z6D5H2X3JH8M9N0P&token=activation-token\">")
+            .contains("Activate your Kartoush account");
     }
 
     @Test
@@ -51,5 +54,8 @@ class DefaultCustomerEmailFactoryTest {
         assertThat(email.subject()).isEqualTo("Reset your Kartoush password");
         assertThat(email.actionUrl())
             .isEqualTo("https://kartoush.dev/reset-password?email=jack%40kartoush.com&token=reset-token");
+        assertThat(email.htmlBody())
+            .contains("<a href=\"https://kartoush.dev/reset-password?email=jack%40kartoush.com&token=reset-token\">")
+            .contains("Reset your Kartoush password");
     }
 }
