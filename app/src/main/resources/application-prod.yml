@@ -13,6 +13,8 @@ kartoush:
   jobs:
     activation-email:
       encryption-key: ${KARTOUSH_JOBS_ACTIVATION_EMAIL_ENCRYPTION_KEY:}
+    cleanup:
+      enabled: true
   email:
     delivery:
       provider: ${KARTOUSH_EMAIL_DELIVERY_PROVIDER:brevo}

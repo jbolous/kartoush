@@ -11,6 +11,9 @@ jobrunr:
     port: ${KARTOUSH_JOBRUNR_DASHBOARD_PORT:8000}
 
 kartoush:
+  jobs:
+    cleanup:
+      enabled: true
   email:
     customer:
       activation-base-url: ${KARTOUSH_EMAIL_ACTIVATION_BASE_URL:http://localhost:8080/dev/customers/activate}
