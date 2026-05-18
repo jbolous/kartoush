@@ -10,6 +10,9 @@ jobrunr:
     enabled: false
 
 kartoush:
+  jobs:
+    cleanup:
+      enabled: false
   email:
     delivery:
       provider: ${KARTOUSH_EMAIL_DELIVERY_PROVIDER:noop}
