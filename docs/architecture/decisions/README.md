@@ -135,6 +135,7 @@ Numbers indicate chronological order and do not imply priority.
 - [0029 - Customer credential ownership and registration handoff](./0029-customer-credential-ownership-and-registration-handoff.md)
 - [0030 - External customer authentication strategy](./0030-external-customer-authentication-strategy.md)
 - [0031 - Transactional Email Provider and Sending Domain Strategy](./0031-transactional-email-provider-and-sending-domain-strategy.md)
+- [0032 - Durable Background Job Execution Strategy](./0032-durable-background-job-execution-strategy.md)
 
 ---
 

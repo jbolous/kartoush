@@ -10,6 +10,10 @@ This document covers runtime configuration only.
 It does not replace the architectural decision work tracked separately for the
 broader background job direction.
 
+See:
+
+- ADR 0032: Durable Background Job Execution Strategy
+
 ## Current Role
 
 JobRunr is the infrastructure mechanism for durable background job execution in
