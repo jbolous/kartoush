@@ -5,6 +5,8 @@ import com.kartoush.notification.email.client.EmailClient;
 import com.kartoush.notification.email.config.EmailDeliveryProperties;
 import com.kartoush.notification.email.delivery.EmailDeliveryException;
 import com.kartoush.notification.email.http.NotificationHttpClient;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,9 +14,8 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class BrevoEmailClient implements EmailClient {
 
@@ -22,9 +23,7 @@ public class BrevoEmailClient implements EmailClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(BrevoEmailClient.class);
 
-    private static final Pattern MESSAGE_ID_PATTERN = Pattern.compile("\"messageId\"\\s*:\\s*\"([^\"]+)\"");
-
-    private static final Pattern MESSAGE_IDS_PATTERN = Pattern.compile("\"messageIds\"\\s*:\\s*\\[\\s*\"([^\"]+)\"");
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final NotificationHttpClient notificationHttpClient;
 
@@ -46,7 +45,7 @@ public class BrevoEmailClient implements EmailClient {
             .header("accept", "application/json")
             .header("content-type", "application/json")
             .header("api-key", properties.getApiKey())
-            .POST(HttpRequest.BodyPublishers.ofString(toJson(email)))
+            .POST(HttpRequest.BodyPublishers.ofString(toJsonBody(email)))
             .build();
 
         final HttpResponse<String> response = notificationHttpClient.send(request, PROVIDER);
@@ -63,58 +62,62 @@ public class BrevoEmailClient implements EmailClient {
         return extractMessageId(response.body());
     }
 
-    private String toJson(final EmailMessage email) {
-        final String htmlContent = email.htmlBody() == null
-            ? ""
-            : """
-                ,
-                  "htmlContent": "%s"
-                """.formatted(escape(email.htmlBody()));
-
-        return """
-            {
-              "sender": {
-                "name": "%s",
-                "email": "%s"
-              },
-              "to": [
-                {
-                  "email": "%s"
-                }
-              ],
-              "subject": "%s",
-              "textContent": "%s"
-              %s
-            }
-            """.formatted(
-            escape(email.senderName()),
-            escape(email.senderAddress().value()),
-            escape(email.recipient().value()),
-            escape(email.subject()),
-            escape(email.textBody()),
-            htmlContent
-        ).trim();
+    private String toJsonBody(final EmailMessage email) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(
+                new BrevoSendEmailRequest(
+                    new Sender(email.senderName(), email.senderAddress().value()),
+                    List.of(new Recipient(email.recipient().value())),
+                    email.subject(),
+                    email.textBody(),
+                    email.htmlBody()
+                )
+            );
+        } catch (final RuntimeException exception) {
+            throw exception;
+        } catch (final Exception exception) {
+            throw new EmailDeliveryException(PROVIDER, "Brevo email delivery failed", exception);
+        }
     }
 
     private Optional<String> extractMessageId(final String body) {
-        final Matcher messageIdMatcher = MESSAGE_ID_PATTERN.matcher(body);
-        if (messageIdMatcher.find()) {
-            return Optional.of(messageIdMatcher.group(1));
-        }
+        try {
+            final BrevoSendEmailResponse response = OBJECT_MAPPER.readValue(body, BrevoSendEmailResponse.class);
+            if (response.messageId() != null && !response.messageId().isBlank()) {
+                return Optional.of(response.messageId());
+            }
 
-        final Matcher messageIdsMatcher = MESSAGE_IDS_PATTERN.matcher(body);
-        if (messageIdsMatcher.find()) {
-            return Optional.of(messageIdsMatcher.group(1));
-        }
+            if (response.messageIds() != null && !response.messageIds().isEmpty()) {
+                return Optional.ofNullable(response.messageIds().getFirst());
+            }
 
-        return Optional.empty();
+            return Optional.empty();
+        } catch (final RuntimeException exception) {
+            throw exception;
+        } catch (final Exception exception) {
+            throw new EmailDeliveryException(PROVIDER, "Brevo email delivery failed", exception);
+        }
     }
 
-    private String escape(final String value) {
-        return value
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("\r", "\\r")
-            .replace("\n", "\\n");
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private record BrevoSendEmailRequest(
+        Sender sender,
+        List<Recipient> to,
+        String subject,
+        String textContent,
+        String htmlContent
+    ) {
+    }
+
+    private record Sender(String name, String email) {
+    }
+
+    private record Recipient(String email) {
+    }
+
+    private record BrevoSendEmailResponse(
+        String messageId,
+        List<String> messageIds
+    ) {
     }
 }
