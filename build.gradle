@@ -46,13 +46,12 @@ subprojects {
 
     apply plugin: 'jacoco'
 
-    tasks.withType(Test).configureEach {
-        useJUnitPlatform()
+    tasks.named('test').configure {
         finalizedBy(tasks.named('jacocoTestReport'))
     }
 
     tasks.named('jacocoTestReport', JacocoReport).configure {
-        dependsOn(tasks.withType(Test))
+        dependsOn(tasks.named('test'))
 
         reports {
             xml.required = true
