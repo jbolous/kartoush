@@ -45,8 +45,7 @@ public class MailtrapEmailClient implements EmailClient {
                 .stream()
                 .flatMap(List::stream)
                 .findFirst();
-        }
-        catch (final RuntimeException exception) {
+        } catch (final RuntimeException exception) {
             if (exception instanceof EmailDeliveryException deliveryException) {
                 throw deliveryException;
             }
