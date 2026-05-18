@@ -219,6 +219,7 @@ Requirements:
 - Do not include commentary before or after the markdown
 - Do not wrap prose early unless needed for a list item
 - When status is unknown, use: Status: Backlog
+- Prefer putting test coverage into the implementation task itself unless the testing scope is independently meaningful
 - When there are no dependencies, use:
   ## Dependencies
   - None
@@ -252,6 +253,7 @@ Requirements:
 - Do not wrap prose early unless needed for a list item
 - Use `Parent: #<issue-number>` when the epic number is known
 - When status is unknown, use: Status: Backlog
+- Prefer putting test coverage into the implementation task itself unless the testing scope is independently meaningful
 - When there are no dependencies, use:
   ## Dependencies
   - None
