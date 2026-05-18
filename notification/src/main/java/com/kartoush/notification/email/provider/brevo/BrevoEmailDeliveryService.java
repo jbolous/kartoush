@@ -1,6 +1,6 @@
 package com.kartoush.notification.email.provider.brevo;
 
-import com.kartoush.notification.email.client.EmailApiClient;
+import com.kartoush.notification.email.client.EmailClient;
 import com.kartoush.notification.email.delivery.EmailDeliveryException;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.notification.email.EmailMessage;
@@ -13,16 +13,16 @@ public class BrevoEmailDeliveryService implements EmailDeliveryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(BrevoEmailDeliveryService.class);
 
-    private final EmailApiClient emailApiClient;
+    private final EmailClient emailClient;
 
-    public BrevoEmailDeliveryService(final EmailApiClient emailApiClient) {
-        this.emailApiClient = emailApiClient;
+    public BrevoEmailDeliveryService(final EmailClient emailClient) {
+        this.emailClient = emailClient;
     }
 
     @Override
     public void send(final EmailMessage email) {
         try {
-            final Optional<String> providerMessageId = emailApiClient.send(email);
+            final Optional<String> providerMessageId = emailClient.send(email);
             if (providerMessageId.isPresent()) {
                 LOG.info(
                     "Brevo email sent for type={} recipient={} providerMessageId={}",

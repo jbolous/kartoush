@@ -11,7 +11,8 @@ public record EmailMessage(
     String senderName,
     String subject,
     String textBody,
-    String actionUrl
+    String actionUrl,
+    String htmlBody
 ) {
 
     public EmailMessage {
@@ -22,6 +23,24 @@ public record EmailMessage(
         subject = requireNonBlank(subject, "subject must not be blank");
         textBody = requireNonBlank(textBody, "textBody must not be blank");
         actionUrl = requireNonBlank(actionUrl, "actionUrl must not be blank");
+        if (htmlBody != null && htmlBody.isBlank()) {
+            throw new IllegalArgumentException("htmlBody must not be blank when provided");
+        }
+        if (htmlBody != null) {
+            htmlBody = htmlBody.trim();
+        }
+    }
+
+    public EmailMessage(
+        final EmailMessageType type,
+        final Email recipient,
+        final Email senderAddress,
+        final String senderName,
+        final String subject,
+        final String textBody,
+        final String actionUrl
+    ) {
+        this(type, recipient, senderAddress, senderName, subject, textBody, actionUrl, null);
     }
 
     private static String requireNonBlank(final String value, final String message) {

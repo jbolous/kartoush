@@ -12,10 +12,12 @@ jobrunr:
 
 kartoush:
   email:
+    customer:
+      activation-base-url: ${KARTOUSH_EMAIL_ACTIVATION_BASE_URL:http://localhost:8080/dev/customers/activate}
+      password-reset-base-url: ${KARTOUSH_EMAIL_PASSWORD_RESET_BASE_URL:http://localhost:8080/dev/auth/password-reset}
     delivery:
       provider: ${KARTOUSH_EMAIL_DELIVERY_PROVIDER:mailtrap}
       enabled: ${KARTOUSH_EMAIL_DELIVERY_ENABLED:false}
       mailtrap:
-        api-base-url: ${KARTOUSH_EMAIL_MAILTRAP_API_BASE_URL:https://sandbox.api.mailtrap.io/api/send}
         api-token: ${KARTOUSH_EMAIL_MAILTRAP_API_TOKEN:}
         inbox-id: ${KARTOUSH_EMAIL_MAILTRAP_INBOX_ID:0}

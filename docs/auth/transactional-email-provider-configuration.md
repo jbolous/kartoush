@@ -19,7 +19,7 @@ email boundary:
   - Logs that delivery was requested
   - Safe default when delivery is disabled
 - `mailtrap`
-  - Sends email through the Mailtrap email sandbox API
+  - Sends email through the Mailtrap Java SDK against the email sandbox
   - Intended for local and development inspection
 - `brevo`
   - Sends email through the Brevo transactional email API
@@ -55,8 +55,8 @@ Examples:
 ```bash
 export KARTOUSH_EMAIL_SENDER_NAME="Kartoush"
 export KARTOUSH_EMAIL_SENDER_ADDRESS="no-reply@notify.kartoush.com"
-export KARTOUSH_EMAIL_ACTIVATION_BASE_URL="http://localhost:3000/activate"
-export KARTOUSH_EMAIL_PASSWORD_RESET_BASE_URL="http://localhost:3000/reset-password"
+export KARTOUSH_EMAIL_ACTIVATION_BASE_URL="http://localhost:8080/dev/customers/activate"
+export KARTOUSH_EMAIL_PASSWORD_RESET_BASE_URL="http://localhost:8080/dev/auth/password-reset"
 ```
 
 ## Local Development With Mailtrap
@@ -68,7 +68,6 @@ same terminal session before starting the application:
 export SPRING_PROFILES_ACTIVE=dev
 export KARTOUSH_EMAIL_DELIVERY_PROVIDER=mailtrap
 export KARTOUSH_EMAIL_DELIVERY_ENABLED=true
-export KARTOUSH_EMAIL_MAILTRAP_API_BASE_URL="https://sandbox.api.mailtrap.io/api/send"
 export KARTOUSH_EMAIL_MAILTRAP_API_TOKEN="your-mailtrap-api-token"
 export KARTOUSH_EMAIL_MAILTRAP_INBOX_ID=12345
 ```
@@ -97,6 +96,14 @@ Use this flow when you want to verify local customer emails in Mailtrap:
 Use the `dev` profile for real local Mailtrap delivery checks. The `test`
 profile stays on no-op delivery and is intended for automated tests rather
 than provider-backed local inspection.
+
+In the current local developer flow, those links target small backend-hosted
+`dev` pages rather than a separate frontend. That keeps activation and password
+reset testing usable before a standalone UI exists.
+
+Those `dev` pages are intentionally temporary. They are a local testing bridge
+for Mailtrap-backed email flows until Kartoush has a real frontend for
+activation, initial password setup, and password reset.
 
 ## Test Behavior
 

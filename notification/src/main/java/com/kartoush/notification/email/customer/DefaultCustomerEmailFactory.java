@@ -30,8 +30,16 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
                 + "%s",
             actionUrl);
 
+        final String activationHtmlBody = """
+            <p>Welcome to Kartoush.</p>
+            <p>Activate your account using the link below:</p>
+            <p><a href="%s">Activate your Kartoush account</a></p>
+            <p>If the button does not work, copy and paste this URL into your browser:</p>
+            <p>%s</p>
+            """.formatted(actionUrl, actionUrl).trim();
+
         return new EmailMessage(EmailMessageType.CUSTOMER_ACTIVATION, recipient, new Email(properties.getSenderAddress()),
-            properties.getSenderName(), "Activate your Kartoush account", activationBody, actionUrl);
+            properties.getSenderName(), "Activate your Kartoush account", activationBody, actionUrl, activationHtmlBody);
     }
 
     @Override
@@ -45,8 +53,16 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
                 + "%s",
             actionUrl);
 
+        final String passwordResetHtmlBody = """
+            <p>We received a request to reset your Kartoush password.</p>
+            <p>Use the link below to continue:</p>
+            <p><a href="%s">Reset your Kartoush password</a></p>
+            <p>If the button does not work, copy and paste this URL into your browser:</p>
+            <p>%s</p>
+            """.formatted(actionUrl, actionUrl).trim();
+
         return new EmailMessage(EmailMessageType.CUSTOMER_PASSWORD_RESET, recipient, new Email(properties.getSenderAddress()),
-            properties.getSenderName(), "Reset your Kartoush password", passwordResetBody, actionUrl);
+            properties.getSenderName(), "Reset your Kartoush password", passwordResetBody, actionUrl, passwordResetHtmlBody);
     }
 
     private String encode(final String value) {
