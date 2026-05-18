@@ -90,8 +90,7 @@ public class DevEmailActionController {
                     escape(activationView.passwordSetupToken())
                 )
             );
-        }
-        catch (final RuntimeException exception) {
+        } catch (final RuntimeException exception) {
             return htmlError("Activation failed", exception.getMessage());
         }
     }
@@ -115,8 +114,7 @@ public class DevEmailActionController {
                     <p>You can now use the normal sign-in API flow.</p>
                     """.formatted(escape(customerId))
             );
-        }
-        catch (final RuntimeException exception) {
+        } catch (final RuntimeException exception) {
             return htmlError("Initial password setup failed", exception.getMessage());
         }
     }
@@ -172,8 +170,7 @@ public class DevEmailActionController {
                     <p>You can now sign in with the new password.</p>
                     """.formatted(escape(email))
             );
-        }
-        catch (final RuntimeException exception) {
+        } catch (final RuntimeException exception) {
             return htmlError("Password reset failed", exception.getMessage());
         }
     }

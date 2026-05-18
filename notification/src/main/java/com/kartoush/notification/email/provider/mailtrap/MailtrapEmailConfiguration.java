@@ -14,7 +14,7 @@ import java.time.Duration;
 public class MailtrapEmailConfiguration {
 
     @Bean
-    MailtrapClient mailtrapSdkClient(final EmailDeliveryProperties properties) {
+    MailtrapClient mailtrapClient(final EmailDeliveryProperties properties) {
         try {
             final EmailDeliveryProperties.Mailtrap mailtrapProperties = properties.getMailtrap();
             final MailtrapConfig config = new MailtrapConfig.Builder()
@@ -25,14 +25,13 @@ public class MailtrapEmailConfiguration {
                 .build();
 
             return MailtrapClientFactory.createMailtrapClient(config);
-        }
-        catch (final RuntimeException exception) {
+        } catch (final RuntimeException exception) {
             throw new EmailDeliveryException("mailtrap", "Mailtrap email delivery failed", exception);
         }
     }
 
     @Bean
-    MailtrapEmailClient mailtrapEmailClient(final MailtrapClient mailtrapSdkClient) {
-        return new MailtrapEmailClient(mailtrapSdkClient);
+    MailtrapEmailClient mailtrapEmailClient(final MailtrapClient mailtrapClient) {
+        return new MailtrapEmailClient(mailtrapClient);
     }
 }
