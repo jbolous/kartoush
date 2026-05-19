@@ -1,5 +1,5 @@
-Welcome to Kartoush, {{firstName}}.
+Welcome to Kartoush, [(${firstName})].
 
 Your account is ready.
 You can continue here:
-{{actionUrl}}
+[(${actionUrl})]

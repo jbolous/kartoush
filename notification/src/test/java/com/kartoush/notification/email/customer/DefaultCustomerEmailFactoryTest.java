@@ -3,7 +3,7 @@ package com.kartoush.notification.email.customer;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;
 import com.kartoush.notification.email.config.CustomerEmailProperties;
-import com.kartoush.notification.email.template.ClasspathEmailTemplateRenderer;
+import com.kartoush.notification.email.template.ThymeleafEmailTemplateRenderer;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.Email;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ class DefaultCustomerEmailFactoryTest {
         CustomerId.of("01J2Z5Y6K4Z6D5H2X3JH8M9N0P");
     private static final Email RECIPIENT = new Email("jack@kartoush.com");
 
-    private final ClasspathEmailTemplateRenderer templateRenderer = new ClasspathEmailTemplateRenderer();
+    private final ThymeleafEmailTemplateRenderer templateRenderer = new ThymeleafEmailTemplateRenderer();
 
     @Test
     void shouldBuildActivationEmail() {
@@ -30,7 +30,7 @@ class DefaultCustomerEmailFactoryTest {
         assertThat(email.actionUrl())
             .isEqualTo("https://kartoush.dev/activate?customerId=01J2Z5Y6K4Z6D5H2X3JH8M9N0P&token=activation-token");
         assertThat(email.htmlBody())
-            .contains("<a href=\"https://kartoush.dev/activate?customerId=01J2Z5Y6K4Z6D5H2X3JH8M9N0P&token=activation-token\">")
+            .contains("<a href=\"https://kartoush.dev/activate?customerId=01J2Z5Y6K4Z6D5H2X3JH8M9N0P&amp;token=activation-token\">")
             .contains("Activate your Kartoush account");
     }
 
@@ -46,7 +46,7 @@ class DefaultCustomerEmailFactoryTest {
         assertThat(email.actionUrl())
             .isEqualTo("https://kartoush.dev/reset-password?email=jack%40kartoush.com&token=reset-token");
         assertThat(email.htmlBody())
-            .contains("<a href=\"https://kartoush.dev/reset-password?email=jack%40kartoush.com&token=reset-token\">")
+            .contains("<a href=\"https://kartoush.dev/reset-password?email=jack%40kartoush.com&amp;token=reset-token\">")
             .contains("Reset your Kartoush password");
     }
 

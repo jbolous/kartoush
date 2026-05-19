@@ -3,7 +3,7 @@ package com.kartoush.notification.email.customer;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;
 import com.kartoush.notification.email.config.CustomerEmailProperties;
-import com.kartoush.notification.email.template.ClasspathEmailTemplateRenderer;
+import com.kartoush.notification.email.template.ThymeleafEmailTemplateRenderer;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.Email;
 import org.apache.commons.text.StringEscapeUtils;
@@ -16,25 +16,39 @@ import java.util.Map;
 @Component
 public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
 
-    private static final String ACTIVATION_TEXT_TEMPLATE = "email/customer/activation-email.txt";
+    private static final String ACTIVATION_TEMPLATE = "customer/activation-email";
 
-    private static final String ACTIVATION_HTML_TEMPLATE = "email/customer/activation-email.html";
+    private static final String PASSWORD_RESET_TEMPLATE = "customer/password-reset-email";
 
-    private static final String PASSWORD_RESET_TEXT_TEMPLATE = "email/customer/password-reset-email.txt";
+    private static final String WELCOME_TEMPLATE = "customer/welcome-email";
 
-    private static final String PASSWORD_RESET_HTML_TEMPLATE = "email/customer/password-reset-email.html";
+    private static final String ACTIVATION_EMAIL_SUBJECT = "Activate your Kartoush account";
 
-    private static final String WELCOME_TEXT_TEMPLATE = "email/customer/welcome-email.txt";
+    private static final String PASSWORD_RESET_EMAIL_SUBJECT = "Reset your Kartoush password";
 
-    private static final String WELCOME_HTML_TEMPLATE = "email/customer/welcome-email.html";
+    private static final String WELCOME_EMAIL_SUBJECT = "Welcome to Kartoush";
+
+    private static final String ACTIVATION_LINK_LABEL = "Activate your Kartoush account";
+
+    private static final String PASSWORD_RESET_LINK_LABEL = "Reset your Kartoush password";
+
+    private static final String WELCOME_LINK_LABEL = "Continue to Kartoush";
+
+    private static final String ACTION_URL = "actionUrl";
+
+    private static final String ESCAPED_ACTION_URL = "escapedActionUrl";
+
+    private static final String ACTION_LINK_HTML = "actionLinkHtml";
+
+    private static final String FIRST_NAME = "firstName";
 
     private final CustomerEmailProperties properties;
 
-    private final ClasspathEmailTemplateRenderer templateRenderer;
+    private final ThymeleafEmailTemplateRenderer templateRenderer;
 
     public DefaultCustomerEmailFactory(
         final CustomerEmailProperties properties,
-        final ClasspathEmailTemplateRenderer templateRenderer) {
+        final ThymeleafEmailTemplateRenderer templateRenderer) {
         this.properties = properties;
         this.templateRenderer = templateRenderer;
     }
@@ -43,43 +57,54 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
     public EmailMessage newActivationEmail(final Email recipient, final CustomerId customerId, final String rawActivationToken) {
         final String actionUrl = properties.getActivationBaseUrl() + "?customerId=" + encode(customerId.value()) + "&token=" + encode(
             rawActivationToken);
-        final Map<String, String> variables = Map.of("actionUrl", actionUrl);
-        final String activationBody = templateRenderer.render(ACTIVATION_TEXT_TEMPLATE, variables);
-        final String activationHtmlBody = templateRenderer.render(ACTIVATION_HTML_TEMPLATE, variables);
+        final String escapedActionUrl = escapeHtml(actionUrl);
+        final Map<String, Object> variables = Map.of(
+            ACTION_URL, actionUrl,
+            ESCAPED_ACTION_URL, escapedActionUrl,
+            ACTION_LINK_HTML, "<a href=\"" + escapedActionUrl + "\">" + ACTIVATION_LINK_LABEL + "</a>"
+        );
+        final String activationBody = templateRenderer.renderText(ACTIVATION_TEMPLATE, variables);
+        final String activationHtmlBody = templateRenderer.renderHtml(ACTIVATION_TEMPLATE, variables);
 
         return new EmailMessage(EmailMessageType.CUSTOMER_ACTIVATION, recipient, new Email(properties.getSenderAddress()),
-            properties.getSenderName(), "Activate your Kartoush account", activationBody, actionUrl, activationHtmlBody);
+            properties.getSenderName(), ACTIVATION_EMAIL_SUBJECT, activationBody, actionUrl, activationHtmlBody);
     }
 
     @Override
     public EmailMessage newPasswordResetEmail(final Email recipient, final String rawResetToken) {
         final String actionUrl = properties.getPasswordResetBaseUrl() + "?email=" + encode(recipient.value()) + "&token=" + encode(
             rawResetToken);
-        final Map<String, String> variables = Map.of("actionUrl", actionUrl);
-        final String passwordResetBody = templateRenderer.render(PASSWORD_RESET_TEXT_TEMPLATE, variables);
-        final String passwordResetHtmlBody = templateRenderer.render(PASSWORD_RESET_HTML_TEMPLATE, variables);
+        final String escapedActionUrl = escapeHtml(actionUrl);
+        final Map<String, Object> variables = Map.of(
+            ACTION_URL, actionUrl,
+            ESCAPED_ACTION_URL, escapedActionUrl,
+            ACTION_LINK_HTML, "<a href=\"" + escapedActionUrl + "\">" + PASSWORD_RESET_LINK_LABEL + "</a>"
+        );
+        final String passwordResetBody = templateRenderer.renderText(PASSWORD_RESET_TEMPLATE, variables);
+        final String passwordResetHtmlBody = templateRenderer.renderHtml(PASSWORD_RESET_TEMPLATE, variables);
 
         return new EmailMessage(EmailMessageType.CUSTOMER_PASSWORD_RESET, recipient, new Email(properties.getSenderAddress()),
-            properties.getSenderName(), "Reset your Kartoush password", passwordResetBody, actionUrl, passwordResetHtmlBody);
+            properties.getSenderName(), PASSWORD_RESET_EMAIL_SUBJECT, passwordResetBody, actionUrl, passwordResetHtmlBody);
     }
 
     @Override
     public EmailMessage newWelcomeEmail(final Email recipient, final String firstName) {
         final String actionUrl = properties.getWelcomeBaseUrl();
-        final Map<String, String> variables = Map.of(
-            "firstName", firstName,
-            "escapedFirstName", escapeHtml(firstName),
-            "actionUrl", actionUrl
+        final Map<String, Object> variables = Map.of(
+            FIRST_NAME, firstName,
+            ACTION_URL, actionUrl,
+            ESCAPED_ACTION_URL, escapeHtml(actionUrl),
+            ACTION_LINK_HTML, "<a href=\"" + escapeHtml(actionUrl) + "\">" + WELCOME_LINK_LABEL + "</a>"
         );
-        final String welcomeBody = templateRenderer.render(WELCOME_TEXT_TEMPLATE, variables);
-        final String welcomeHtmlBody = templateRenderer.render(WELCOME_HTML_TEMPLATE, variables);
+        final String welcomeBody = templateRenderer.renderText(WELCOME_TEMPLATE, variables);
+        final String welcomeHtmlBody = templateRenderer.renderHtml(WELCOME_TEMPLATE, variables);
 
         return new EmailMessage(
             EmailMessageType.CUSTOMER_WELCOME,
             recipient,
             new Email(properties.getSenderAddress()),
             properties.getSenderName(),
-            "Welcome to Kartoush",
+            WELCOME_EMAIL_SUBJECT,
             welcomeBody,
             actionUrl,
             welcomeHtmlBody

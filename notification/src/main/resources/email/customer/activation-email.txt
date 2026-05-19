@@ -1,4 +1,4 @@
 Welcome to Kartoush.
 
 Activate your account using the link below:
-{{actionUrl}}
+[(${actionUrl})]

@@ -32,6 +32,7 @@ springBootTestcontainers = { module = "org.springframework.boot:spring-boot-test
 restAssured = { module = "io.rest-assured:rest-assured", version.ref = "restAssuredVersion" }
 mailtrapJava = { module = "io.mailtrap:mailtrap-java", version.ref = "mailtrapJavaVersion" }
 commonsText = { module = "org.apache.commons:commons-text", version.ref = "commonsTextVersion" }
+thymeleaf = { module = "org.thymeleaf:thymeleaf" }
 
 flywayPostgresql = { module = "org.flywaydb:flyway-database-postgresql" }
 postgresql = { module = "org.postgresql:postgresql" }
