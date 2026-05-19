@@ -21,6 +21,7 @@ import com.kartoush.customer.service.CustomerService;
 import com.kartoush.customer.service.IssuedActivationToken;
 import com.kartoush.customer.service.job.ActivationEmailJobCipher;
 import com.kartoush.customer.service.job.ActivationEmailJobRequest;
+import com.kartoush.customer.service.job.WelcomeEmailJobRequest;
 import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
@@ -134,6 +135,7 @@ public class DefaultCustomerFacade implements CustomerFacade {
     }
 
     @Override
+    @Transactional
     public void setInitialPassword(final String customerId, final InitialCustomerPasswordInput input) {
         customerPasswordSetupValidator.validate(input);
 
@@ -149,6 +151,8 @@ public class DefaultCustomerFacade implements CustomerFacade {
             input.setupToken(),
             input.password()
         );
+
+        backgroundJobScheduler.enqueue(new WelcomeEmailJobRequest(customer.getId().value()));
     }
 
     @Override

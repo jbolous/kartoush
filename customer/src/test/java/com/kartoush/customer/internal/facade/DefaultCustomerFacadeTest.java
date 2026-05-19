@@ -17,6 +17,7 @@ import com.kartoush.customer.service.CustomerService;
 import com.kartoush.customer.service.IssuedActivationToken;
 import com.kartoush.customer.service.job.ActivationEmailJobCipher;
 import com.kartoush.customer.service.job.ActivationEmailJobRequest;
+import com.kartoush.customer.service.job.WelcomeEmailJobRequest;
 import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
@@ -151,6 +152,7 @@ class DefaultCustomerFacadeTest {
             SETUP_TOKEN,
             "Password123!"
         );
+        verify(backgroundJobScheduler).enqueue(new WelcomeEmailJobRequest(CUSTOMER_ID));
     }
 
     @Test

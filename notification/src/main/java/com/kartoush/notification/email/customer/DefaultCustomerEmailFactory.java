@@ -65,6 +65,37 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
             properties.getSenderName(), "Reset your Kartoush password", passwordResetBody, actionUrl, passwordResetHtmlBody);
     }
 
+    @Override
+    public EmailMessage newWelcomeEmail(final Email recipient, final String firstName) {
+        final String actionUrl = properties.getWelcomeBaseUrl();
+        final String welcomeBody = String.format(
+            "Welcome to Kartoush, %s.%n%n"
+                + "Your account is ready.%n"
+                + "You can continue here:%n"
+                + "%s",
+            firstName,
+            actionUrl
+        );
+        final String welcomeHtmlBody = """
+            <p>Welcome to Kartoush, %s.</p>
+            <p>Your account is ready.</p>
+            <p><a href="%s">Continue to Kartoush</a></p>
+            <p>If the button does not work, copy and paste this URL into your browser:</p>
+            <p>%s</p>
+            """.formatted(firstName, actionUrl, actionUrl).trim();
+
+        return new EmailMessage(
+            EmailMessageType.CUSTOMER_WELCOME,
+            recipient,
+            new Email(properties.getSenderAddress()),
+            properties.getSenderName(),
+            "Welcome to Kartoush",
+            welcomeBody,
+            actionUrl,
+            welcomeHtmlBody
+        );
+    }
+
     private String encode(final String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }

@@ -3,6 +3,7 @@ package com.kartoush.api.customer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kartoush.config.jobs.ActivationEmailJobHandler;
+import com.kartoush.config.jobs.WelcomeEmailJobHandler;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;
@@ -19,6 +20,7 @@ import com.kartoush.customer.persistence.repository.ActivationTokenRepository;
 import com.kartoush.customer.persistence.repository.CustomerRepository;
 import com.kartoush.customer.service.ActivationTokenHasher;
 import com.kartoush.customer.service.job.ActivationEmailJobRequest;
+import com.kartoush.customer.service.job.WelcomeEmailJobRequest;
 import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.types.ActivationTokenId;
 import com.kartoush.platform.types.CustomerId;
@@ -95,6 +97,9 @@ class ActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegratio
     @Autowired
     private ActivationEmailJobHandler activationEmailJobHandler;
 
+    @Autowired
+    private WelcomeEmailJobHandler welcomeEmailJobHandler;
+
     @MockitoBean
     private BackgroundJobScheduler backgroundJobScheduler;
 
@@ -105,20 +110,26 @@ class ActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegratio
 
     private final List<CapturedActivationEmail> capturedActivationEmails = new ArrayList<>();
 
+    private final List<Email> capturedWelcomeEmails = new ArrayList<>();
+
     @BeforeEach
     void setUp() {
         activationTokenRepository.deleteAll();
         customerRepository.deleteAll();
 
         capturedActivationEmails.clear();
+        capturedWelcomeEmails.clear();
         reset(backgroundJobScheduler);
         reset(emailDeliveryService);
         doAnswer(invocation -> {
-            final ActivationEmailJobRequest request =
-                invocation.getArgument(0, ActivationEmailJobRequest.class);
-            activationEmailJobHandler.handle(request);
+            final Object request = invocation.getArgument(0);
+            if (request instanceof ActivationEmailJobRequest activationEmailJobRequest) {
+                activationEmailJobHandler.handle(activationEmailJobRequest);
+            } else if (request instanceof WelcomeEmailJobRequest welcomeEmailJobRequest) {
+                welcomeEmailJobHandler.handle(welcomeEmailJobRequest);
+            }
             return null;
-        }).when(backgroundJobScheduler).enqueue(any(ActivationEmailJobRequest.class));
+        }).when(backgroundJobScheduler).enqueue(any());
         doAnswer(invocation -> {
             final EmailMessage email = invocation.getArgument(0, EmailMessage.class);
             if (email.type() == EmailMessageType.CUSTOMER_ACTIVATION) {
@@ -126,6 +137,8 @@ class ActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegratio
                     email.recipient(),
                     queryParam(email.actionUrl(), "token")
                 ));
+            } else if (email.type() == EmailMessageType.CUSTOMER_WELCOME) {
+                capturedWelcomeEmails.add(email.recipient());
             }
             return null;
         }).when(emailDeliveryService).send(any(EmailMessage.class));
@@ -272,6 +285,7 @@ class ActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegratio
         assertThat(customerPasswordRepository.findById(createdCustomer.customerId())).isPresent();
         assertThat(customerPasswordRepository.findById(createdCustomer.customerId()).orElseThrow().getPasswordHash())
             .isNotEqualTo(PASSWORD);
+        assertThat(capturedWelcomeEmails).containsExactly(new Email(createdCustomer.email()));
     }
 
     @Test
@@ -284,6 +298,8 @@ class ActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegratio
                     new InitialCustomerPasswordInput("setup-token", PASSWORD, PASSWORD))))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.INVALID_PASSWORD_SETUP.name()));
+
+        assertThat(capturedWelcomeEmails).isEmpty();
     }
 
     @Test
@@ -410,6 +426,7 @@ class ActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegratio
         final JsonNode response = objectMapper.readTree(responseBody);
         return new CreatedCustomer(
             response.get("customerId").asText(),
+            email,
             latestCapturedToken().rawToken());
     }
 
@@ -444,7 +461,7 @@ class ActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegratio
         return customerPasswordFacade.issuePasswordSetupToken(CustomerId.of(customerId)).rawToken();
     }
 
-    private record CreatedCustomer(String customerId, String rawToken) {
+    private record CreatedCustomer(String customerId, String email, String rawToken) {
     }
 
     private record CapturedActivationEmail(Email email, String rawToken) {

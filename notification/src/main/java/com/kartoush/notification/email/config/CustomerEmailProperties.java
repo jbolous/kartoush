@@ -18,6 +18,10 @@ public class CustomerEmailProperties {
 
     private String passwordResetBaseUrl = "https://kartoush.dev/reset-password";
 
+    private boolean welcomeEnabled = true;
+
+    private String welcomeBaseUrl = "https://kartoush.dev/sign-in";
+
     public String getSenderName() {
         return senderName;
     }
@@ -50,11 +54,28 @@ public class CustomerEmailProperties {
         this.passwordResetBaseUrl = passwordResetBaseUrl;
     }
 
+    public boolean isWelcomeEnabled() {
+        return welcomeEnabled;
+    }
+
+    public void setWelcomeEnabled(final boolean welcomeEnabled) {
+        this.welcomeEnabled = welcomeEnabled;
+    }
+
+    public String getWelcomeBaseUrl() {
+        return welcomeBaseUrl;
+    }
+
+    public void setWelcomeBaseUrl(final String welcomeBaseUrl) {
+        this.welcomeBaseUrl = welcomeBaseUrl;
+    }
+
     @PostConstruct
     void validate() {
         NotificationPropertyValidator.validateRequiredText(senderName, "kartoush.email.customer.sender-name");
         NotificationPropertyValidator.validateHttpUrl(activationBaseUrl, "kartoush.email.customer.activation-base-url");
         NotificationPropertyValidator.validateHttpUrl(passwordResetBaseUrl, "kartoush.email.customer.password-reset-base-url");
+        NotificationPropertyValidator.validateHttpUrl(welcomeBaseUrl, "kartoush.email.customer.welcome-base-url");
 
         try {
             new Email(senderAddress);
