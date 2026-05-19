@@ -8,6 +8,7 @@ dependencies {
 
     implementation(libs.springBootStarterDataJpa)
     implementation(libs.mailtrapJava)
+    implementation(libs.commonsText)
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

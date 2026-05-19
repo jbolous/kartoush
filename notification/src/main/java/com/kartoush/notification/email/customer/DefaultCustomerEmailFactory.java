@@ -6,6 +6,7 @@ import com.kartoush.notification.email.config.CustomerEmailProperties;
 import com.kartoush.notification.email.template.ClasspathEmailTemplateRenderer;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.Email;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Component;
 
 import java.net.URLEncoder;
@@ -90,11 +91,6 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
     }
 
     private String escapeHtml(final String value) {
-        return value
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("\"", "&quot;")
-            .replace("'", "&#39;");
+        return StringEscapeUtils.escapeHtml4(value);
     }
 }
