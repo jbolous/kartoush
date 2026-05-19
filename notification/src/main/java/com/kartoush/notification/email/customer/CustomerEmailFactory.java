@@ -9,4 +9,6 @@ public interface CustomerEmailFactory {
     EmailMessage newActivationEmail(Email recipient, CustomerId customerId, String rawActivationToken);
 
     EmailMessage newPasswordResetEmail(Email recipient, String rawResetToken);
+
+    EmailMessage newWelcomeEmail(Email recipient, String firstName);
 }

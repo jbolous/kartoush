@@ -17,13 +17,7 @@ class DefaultCustomerEmailFactoryTest {
 
     @Test
     void shouldBuildActivationEmail() {
-        final CustomerEmailProperties properties = new CustomerEmailProperties();
-        properties.setSenderName("Kartoush");
-        properties.setSenderAddress("no-reply@kartoush.dev");
-        properties.setActivationBaseUrl("https://kartoush.dev/activate");
-        properties.setPasswordResetBaseUrl("https://kartoush.dev/reset-password");
-
-        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(properties);
+        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties());
 
         final EmailMessage email = factory.newActivationEmail(RECIPIENT, CUSTOMER_ID, "activation-token");
 
@@ -39,13 +33,7 @@ class DefaultCustomerEmailFactoryTest {
 
     @Test
     void shouldBuildPasswordResetEmail() {
-        final CustomerEmailProperties properties = new CustomerEmailProperties();
-        properties.setSenderName("Kartoush");
-        properties.setSenderAddress("no-reply@kartoush.dev");
-        properties.setActivationBaseUrl("https://kartoush.dev/activate");
-        properties.setPasswordResetBaseUrl("https://kartoush.dev/reset-password");
-
-        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(properties);
+        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties());
 
         final EmailMessage email = factory.newPasswordResetEmail(RECIPIENT, "reset-token");
 
@@ -57,5 +45,43 @@ class DefaultCustomerEmailFactoryTest {
         assertThat(email.htmlBody())
             .contains("<a href=\"https://kartoush.dev/reset-password?email=jack%40kartoush.com&token=reset-token\">")
             .contains("Reset your Kartoush password");
+    }
+
+    @Test
+    void shouldBuildWelcomeEmail() {
+        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties());
+
+        final EmailMessage email = factory.newWelcomeEmail(RECIPIENT, "Jack");
+
+        assertThat(email.type()).isEqualTo(EmailMessageType.CUSTOMER_WELCOME);
+        assertThat(email.recipient()).isEqualTo(RECIPIENT);
+        assertThat(email.subject()).isEqualTo("Welcome to Kartoush");
+        assertThat(email.actionUrl()).isEqualTo("https://kartoush.dev/sign-in");
+        assertThat(email.textBody()).contains("Welcome to Kartoush, Jack.");
+        assertThat(email.htmlBody())
+            .contains("<a href=\"https://kartoush.dev/sign-in\">")
+            .contains("Continue to Kartoush");
+    }
+
+    @Test
+    void shouldEscapeWelcomeEmailFirstNameInHtmlBody() {
+        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties());
+
+        final EmailMessage email = factory.newWelcomeEmail(RECIPIENT, "<a href=\"https://evil.example\">Jack</a>");
+
+        assertThat(email.textBody()).contains("<a href=\"https://evil.example\">Jack</a>");
+        assertThat(email.htmlBody())
+            .contains("&lt;a href=&quot;https://evil.example&quot;&gt;Jack&lt;/a&gt;")
+            .doesNotContain("<a href=\"https://evil.example\">Jack</a>");
+    }
+
+    private CustomerEmailProperties emailProperties() {
+        final CustomerEmailProperties properties = new CustomerEmailProperties();
+        properties.setSenderName("Kartoush");
+        properties.setSenderAddress("no-reply@kartoush.dev");
+        properties.setActivationBaseUrl("https://kartoush.dev/activate");
+        properties.setPasswordResetBaseUrl("https://kartoush.dev/reset-password");
+        properties.setWelcomeBaseUrl("https://kartoush.dev/sign-in");
+        return properties;
     }
 }
