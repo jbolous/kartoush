@@ -68,6 +68,7 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
     @Override
     public EmailMessage newWelcomeEmail(final Email recipient, final String firstName) {
         final String actionUrl = properties.getWelcomeBaseUrl();
+        final String escapedFirstName = escapeHtml(firstName);
         final String welcomeBody = String.format(
             "Welcome to Kartoush, %s.%n%n"
                 + "Your account is ready.%n"
@@ -82,7 +83,7 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
             <p><a href="%s">Continue to Kartoush</a></p>
             <p>If the button does not work, copy and paste this URL into your browser:</p>
             <p>%s</p>
-            """.formatted(firstName, actionUrl, actionUrl).trim();
+            """.formatted(escapedFirstName, actionUrl, actionUrl).trim();
 
         return new EmailMessage(
             EmailMessageType.CUSTOMER_WELCOME,
@@ -98,5 +99,14 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
 
     private String encode(final String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private String escapeHtml(final String value) {
+        return value
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
     }
 }

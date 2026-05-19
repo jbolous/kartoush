@@ -63,6 +63,18 @@ class DefaultCustomerEmailFactoryTest {
             .contains("Continue to Kartoush");
     }
 
+    @Test
+    void shouldEscapeWelcomeEmailFirstNameInHtmlBody() {
+        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties());
+
+        final EmailMessage email = factory.newWelcomeEmail(RECIPIENT, "<a href=\"https://evil.example\">Jack</a>");
+
+        assertThat(email.textBody()).contains("<a href=\"https://evil.example\">Jack</a>");
+        assertThat(email.htmlBody())
+            .contains("&lt;a href=&quot;https://evil.example&quot;&gt;Jack&lt;/a&gt;")
+            .doesNotContain("<a href=\"https://evil.example\">Jack</a>");
+    }
+
     private CustomerEmailProperties emailProperties() {
         final CustomerEmailProperties properties = new CustomerEmailProperties();
         properties.setSenderName("Kartoush");
