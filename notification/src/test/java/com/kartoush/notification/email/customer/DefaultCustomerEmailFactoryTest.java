@@ -3,6 +3,7 @@ package com.kartoush.notification.email.customer;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;
 import com.kartoush.notification.email.config.CustomerEmailProperties;
+import com.kartoush.notification.email.template.ClasspathEmailTemplateRenderer;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.Email;
 import org.junit.jupiter.api.Test;
@@ -15,9 +16,11 @@ class DefaultCustomerEmailFactoryTest {
         CustomerId.of("01J2Z5Y6K4Z6D5H2X3JH8M9N0P");
     private static final Email RECIPIENT = new Email("jack@kartoush.com");
 
+    private final ClasspathEmailTemplateRenderer templateRenderer = new ClasspathEmailTemplateRenderer();
+
     @Test
     void shouldBuildActivationEmail() {
-        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties());
+        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties(), templateRenderer);
 
         final EmailMessage email = factory.newActivationEmail(RECIPIENT, CUSTOMER_ID, "activation-token");
 
@@ -33,7 +36,7 @@ class DefaultCustomerEmailFactoryTest {
 
     @Test
     void shouldBuildPasswordResetEmail() {
-        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties());
+        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties(), templateRenderer);
 
         final EmailMessage email = factory.newPasswordResetEmail(RECIPIENT, "reset-token");
 
@@ -49,7 +52,7 @@ class DefaultCustomerEmailFactoryTest {
 
     @Test
     void shouldBuildWelcomeEmail() {
-        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties());
+        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties(), templateRenderer);
 
         final EmailMessage email = factory.newWelcomeEmail(RECIPIENT, "Jack");
 
@@ -65,7 +68,7 @@ class DefaultCustomerEmailFactoryTest {
 
     @Test
     void shouldEscapeWelcomeEmailFirstNameInHtmlBody() {
-        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties());
+        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties(), templateRenderer);
 
         final EmailMessage email = factory.newWelcomeEmail(RECIPIENT, "<a href=\"https://evil.example\">Jack</a>");
 

@@ -3,40 +3,48 @@ package com.kartoush.notification.email.customer;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;
 import com.kartoush.notification.email.config.CustomerEmailProperties;
+import com.kartoush.notification.email.template.ClasspathEmailTemplateRenderer;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.Email;
 import org.springframework.stereotype.Component;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 @Component
 public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
 
+    private static final String ACTIVATION_TEXT_TEMPLATE = "email/customer/activation-email.txt";
+
+    private static final String ACTIVATION_HTML_TEMPLATE = "email/customer/activation-email.html";
+
+    private static final String PASSWORD_RESET_TEXT_TEMPLATE = "email/customer/password-reset-email.txt";
+
+    private static final String PASSWORD_RESET_HTML_TEMPLATE = "email/customer/password-reset-email.html";
+
+    private static final String WELCOME_TEXT_TEMPLATE = "email/customer/welcome-email.txt";
+
+    private static final String WELCOME_HTML_TEMPLATE = "email/customer/welcome-email.html";
+
     private final CustomerEmailProperties properties;
 
-    public DefaultCustomerEmailFactory(final CustomerEmailProperties properties) {
+    private final ClasspathEmailTemplateRenderer templateRenderer;
+
+    public DefaultCustomerEmailFactory(
+        final CustomerEmailProperties properties,
+        final ClasspathEmailTemplateRenderer templateRenderer) {
         this.properties = properties;
+        this.templateRenderer = templateRenderer;
     }
 
     @Override
     public EmailMessage newActivationEmail(final Email recipient, final CustomerId customerId, final String rawActivationToken) {
         final String actionUrl = properties.getActivationBaseUrl() + "?customerId=" + encode(customerId.value()) + "&token=" + encode(
             rawActivationToken);
-
-        final String activationBody = String.format(
-            "Welcome to Kartoush.%n%n"
-                + "Activate your account using the link below:%n"
-                + "%s",
-            actionUrl);
-
-        final String activationHtmlBody = """
-            <p>Welcome to Kartoush.</p>
-            <p>Activate your account using the link below:</p>
-            <p><a href="%s">Activate your Kartoush account</a></p>
-            <p>If the button does not work, copy and paste this URL into your browser:</p>
-            <p>%s</p>
-            """.formatted(actionUrl, actionUrl).trim();
+        final Map<String, String> variables = Map.of("actionUrl", actionUrl);
+        final String activationBody = templateRenderer.render(ACTIVATION_TEXT_TEMPLATE, variables);
+        final String activationHtmlBody = templateRenderer.render(ACTIVATION_HTML_TEMPLATE, variables);
 
         return new EmailMessage(EmailMessageType.CUSTOMER_ACTIVATION, recipient, new Email(properties.getSenderAddress()),
             properties.getSenderName(), "Activate your Kartoush account", activationBody, actionUrl, activationHtmlBody);
@@ -46,20 +54,9 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
     public EmailMessage newPasswordResetEmail(final Email recipient, final String rawResetToken) {
         final String actionUrl = properties.getPasswordResetBaseUrl() + "?email=" + encode(recipient.value()) + "&token=" + encode(
             rawResetToken);
-
-        final String passwordResetBody = String.format(
-            "We received a request to reset your Kartoush password.%n%n"
-                + "Use the link below to continue:%n"
-                + "%s",
-            actionUrl);
-
-        final String passwordResetHtmlBody = """
-            <p>We received a request to reset your Kartoush password.</p>
-            <p>Use the link below to continue:</p>
-            <p><a href="%s">Reset your Kartoush password</a></p>
-            <p>If the button does not work, copy and paste this URL into your browser:</p>
-            <p>%s</p>
-            """.formatted(actionUrl, actionUrl).trim();
+        final Map<String, String> variables = Map.of("actionUrl", actionUrl);
+        final String passwordResetBody = templateRenderer.render(PASSWORD_RESET_TEXT_TEMPLATE, variables);
+        final String passwordResetHtmlBody = templateRenderer.render(PASSWORD_RESET_HTML_TEMPLATE, variables);
 
         return new EmailMessage(EmailMessageType.CUSTOMER_PASSWORD_RESET, recipient, new Email(properties.getSenderAddress()),
             properties.getSenderName(), "Reset your Kartoush password", passwordResetBody, actionUrl, passwordResetHtmlBody);
@@ -68,22 +65,13 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
     @Override
     public EmailMessage newWelcomeEmail(final Email recipient, final String firstName) {
         final String actionUrl = properties.getWelcomeBaseUrl();
-        final String escapedFirstName = escapeHtml(firstName);
-        final String welcomeBody = String.format(
-            "Welcome to Kartoush, %s.%n%n"
-                + "Your account is ready.%n"
-                + "You can continue here:%n"
-                + "%s",
-            firstName,
-            actionUrl
+        final Map<String, String> variables = Map.of(
+            "firstName", firstName,
+            "escapedFirstName", escapeHtml(firstName),
+            "actionUrl", actionUrl
         );
-        final String welcomeHtmlBody = """
-            <p>Welcome to Kartoush, %s.</p>
-            <p>Your account is ready.</p>
-            <p><a href="%s">Continue to Kartoush</a></p>
-            <p>If the button does not work, copy and paste this URL into your browser:</p>
-            <p>%s</p>
-            """.formatted(escapedFirstName, actionUrl, actionUrl).trim();
+        final String welcomeBody = templateRenderer.render(WELCOME_TEXT_TEMPLATE, variables);
+        final String welcomeHtmlBody = templateRenderer.render(WELCOME_HTML_TEMPLATE, variables);
 
         return new EmailMessage(
             EmailMessageType.CUSTOMER_WELCOME,
