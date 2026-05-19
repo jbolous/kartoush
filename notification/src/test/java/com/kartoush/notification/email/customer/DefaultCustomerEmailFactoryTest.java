@@ -32,6 +32,14 @@ class DefaultCustomerEmailFactoryTest {
 
     private static final String WELCOME_BASE_URL = "https://kartoush.dev/sign-in";
 
+    private static final String ACTIVATE_ACCOUNT_MSG = "Activate your Kartoush account";
+
+    private static final String WELCOME_MSG = "Welcome to Kartoush";
+
+    private static final String CONTINUE_TO_KARTOUSH_MSG = "Continue to Kartoush";
+
+    private static final String RESET_PASSWORD_MSG = "Reset your Kartoush password";
+
     private static final CustomerId CUSTOMER_ID = CustomerId.of(CUSTOMER_ID_VALUE);
 
     private static final Email RECIPIENT = new Email("jack@kartoush.com");
@@ -46,12 +54,12 @@ class DefaultCustomerEmailFactoryTest {
 
         assertThat(email.type()).isEqualTo(EmailMessageType.CUSTOMER_ACTIVATION);
         assertThat(email.recipient()).isEqualTo(RECIPIENT);
-        assertThat(email.subject()).isEqualTo("Activate your Kartoush account");
+        assertThat(email.subject()).isEqualTo(ACTIVATE_ACCOUNT_MSG);
         assertThat(email.actionUrl())
             .isEqualTo(ACTIVATION_BASE_URL + "?customerId=" + CUSTOMER_ID_VALUE + "&token=" + ACTIVATION_TOKEN);
         assertThat(email.htmlBody())
             .contains("<a href=\"" + ACTIVATION_BASE_URL + "?customerId=" + CUSTOMER_ID_VALUE + "&amp;token=" + ACTIVATION_TOKEN + "\">")
-            .contains("Activate your Kartoush account");
+            .contains(ACTIVATE_ACCOUNT_MSG);
     }
 
     @Test
@@ -62,12 +70,12 @@ class DefaultCustomerEmailFactoryTest {
 
         assertThat(email.type()).isEqualTo(EmailMessageType.CUSTOMER_PASSWORD_RESET);
         assertThat(email.recipient()).isEqualTo(RECIPIENT);
-        assertThat(email.subject()).isEqualTo("Reset your Kartoush password");
+        assertThat(email.subject()).isEqualTo(RESET_PASSWORD_MSG);
         assertThat(email.actionUrl())
             .isEqualTo(PASSWORD_RESET_BASE_URL + "?email=jack%40kartoush.com&token=" + RESET_TOKEN);
         assertThat(email.htmlBody())
             .contains("<a href=\"" + PASSWORD_RESET_BASE_URL + "?email=jack%40kartoush.com&amp;token=" + RESET_TOKEN + "\">")
-            .contains("Reset your Kartoush password");
+            .contains(RESET_PASSWORD_MSG);
     }
 
     @Test
@@ -78,12 +86,12 @@ class DefaultCustomerEmailFactoryTest {
 
         assertThat(email.type()).isEqualTo(EmailMessageType.CUSTOMER_WELCOME);
         assertThat(email.recipient()).isEqualTo(RECIPIENT);
-        assertThat(email.subject()).isEqualTo("Welcome to Kartoush");
+        assertThat(email.subject()).isEqualTo(WELCOME_MSG);
         assertThat(email.actionUrl()).isEqualTo(WELCOME_BASE_URL);
-        assertThat(email.textBody()).contains("Welcome to Kartoush, " + FIRST_NAME + ".");
+        assertThat(email.textBody()).contains(WELCOME_MSG + ", " + FIRST_NAME + ".");
         assertThat(email.htmlBody())
             .contains("<a href=\"" + WELCOME_BASE_URL + "\">")
-            .contains("Continue to Kartoush");
+            .contains(CONTINUE_TO_KARTOUSH_MSG);
     }
 
     @Test
@@ -96,6 +104,21 @@ class DefaultCustomerEmailFactoryTest {
         assertThat(email.htmlBody())
             .contains("&lt;a href=&quot;https://evil.example&quot;&gt;Jack&lt;/a&gt;")
             .doesNotContain(MALICIOUS_FIRST_NAME);
+    }
+
+    @Test
+    void shouldRenderCustomerEmailTemplatesFromClasspath() {
+        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties(), templateRenderer);
+
+        assertThat(factory.newActivationEmail(RECIPIENT, CUSTOMER_ID, ACTIVATION_TOKEN).htmlBody())
+            .contains(ACTIVATE_ACCOUNT_MSG);
+
+        assertThat(factory.newPasswordResetEmail(RECIPIENT, RESET_TOKEN).htmlBody())
+            .contains(RESET_PASSWORD_MSG);
+
+        assertThat(factory.newWelcomeEmail(RECIPIENT, FIRST_NAME).htmlBody())
+            .contains(WELCOME_MSG)
+            .contains(CONTINUE_TO_KARTOUSH_MSG);
     }
 
     private CustomerEmailProperties emailProperties() {
