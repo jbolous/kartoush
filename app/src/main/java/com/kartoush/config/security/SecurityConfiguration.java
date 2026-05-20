@@ -23,7 +23,7 @@ public class SecurityConfiguration {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
-            .httpBasic(AbstractHttpConfigurer::disable)
+            .httpBasic(Customizer.withDefaults())
             .logout(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(exceptions -> exceptions
@@ -48,6 +48,8 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/auth/sign-in").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/password-reset").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/password-reset/confirm").permitAll()
+                .requestMatchers("/internal/**").hasRole("ADMIN")
+                .requestMatchers("/api/**").denyAll()
                 .anyRequest().permitAll())
             .anonymous(Customizer.withDefaults());
 

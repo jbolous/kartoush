@@ -2,6 +2,11 @@ spring:
   config:
     activate:
       on-profile: dev
+  security:
+    user:
+      name: ${KARTOUSH_INTERNAL_ADMIN_USERNAME:kartoush-admin}
+      password: ${KARTOUSH_INTERNAL_ADMIN_PASSWORD:change-me}
+      roles: ADMIN
 
 jobrunr:
   background-job-server:

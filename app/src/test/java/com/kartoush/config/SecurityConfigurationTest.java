@@ -9,10 +9,13 @@ import com.kartoush.api.auth.SignInView;
 import com.kartoush.api.customer.CustomerController;
 import com.kartoush.api.error.ApiExceptionHandler;
 import com.kartoush.api.error.ApiProblemFactory;
+import com.kartoush.api.terms.InternalTermsOfServiceManagementController;
 import com.kartoush.api.terms.TermsOfServiceController;
 import com.kartoush.config.security.SecurityConfiguration;
 import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.TermsOfServiceFacade;
+import com.kartoush.customer.facade.TermsOfServiceManagementFacade;
+import com.kartoush.customer.facade.model.TermsOfServiceManagementView;
 import com.kartoush.customer.facade.model.TermsOfServiceView;
 import com.kartoush.customer.termsofservice.TermsOfServiceContentType;
 import com.kartoush.customer.termsofservice.TermsOfServiceStatus;
@@ -31,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,7 +43,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({
     AuthenticationController.class,
     CustomerController.class,
-    TermsOfServiceController.class
+    TermsOfServiceController.class,
+    InternalTermsOfServiceManagementController.class
 })
 @AutoConfigureMockMvc
 @Import({
@@ -52,6 +57,16 @@ class SecurityConfigurationTest {
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
     private static final String CUSTOMER_LIST_PATH = "/api/customers";
     private static final String PUBLIC_TERMS_PATH = "/api/terms-of-service/current";
+    private static final String INTERNAL_TERMS_DRAFTS_PATH = "/internal/terms-of-service/drafts";
+    private static final String INTERNAL_ADMIN_USERNAME = "internal-admin";
+    private static final String INTERNAL_ADMIN_PASSWORD = "test-internal-admin-password";
+    private static final String INTERNAL_TERMS_DRAFT_REQUEST = """
+        {
+          "version": "2026.06.01",
+          "content": "Draft terms",
+          "contentType": "MARKDOWN"
+        }
+        """;
 
     @Autowired
     private MockMvc mockMvc;
@@ -69,6 +84,9 @@ class SecurityConfigurationTest {
 
     @MockitoBean
     private TermsOfServiceFacade termsOfServiceFacade;
+
+    @MockitoBean
+    private TermsOfServiceManagementFacade termsOfServiceManagementFacade;
 
     @Test
     void shouldAllowAnonymousSignIn() throws Exception {
@@ -106,10 +124,42 @@ class SecurityConfigurationTest {
 
     @Test
     void shouldAllowAnonymousCustomerListAccess() throws Exception {
-        when(customerFacade.getCustomers()).thenReturn(java.util.List.of());
-
         mockMvc.perform(get(CUSTOMER_LIST_PATH))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$").isArray());
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.errorCode").value("AUTHENTICATION_REQUIRED"))
+            .andExpect(jsonPath("$.title").value("Authentication Required"));
+    }
+
+    @Test
+    void shouldRejectAnonymousInternalTermsAccess() throws Exception {
+        mockMvc.perform(post(INTERNAL_TERMS_DRAFTS_PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(INTERNAL_TERMS_DRAFT_REQUEST))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.errorCode").value("AUTHENTICATION_REQUIRED"))
+            .andExpect(jsonPath("$.title").value("Authentication Required"));
+    }
+
+    @Test
+    void shouldAllowAdminInternalTermsAccessUsingHttpBasic() throws Exception {
+        when(termsOfServiceManagementFacade.createDraft(any(), any(), any()))
+            .thenReturn(new TermsOfServiceManagementView(
+                "01KQ0INTERNALTERMS000000001",
+                "2026.06.01",
+                "Draft terms",
+                TermsOfServiceContentType.MARKDOWN,
+                TermsOfServiceStatus.DRAFT,
+                null,
+                null,
+                Instant.parse("2026-05-01T00:00:00Z"),
+                Instant.parse("2026-05-01T00:00:00Z")
+            ));
+
+        mockMvc.perform(post(INTERNAL_TERMS_DRAFTS_PATH)
+                .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(INTERNAL_TERMS_DRAFT_REQUEST))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.status").value("DRAFT"));
     }
 }

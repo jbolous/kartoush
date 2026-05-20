@@ -37,9 +37,12 @@ The registration, activation, initial password setup, password reset, and
 sign-in routes are currently public entry points by design.
 
 Kartoush now issues opaque bearer tokens, but it does not yet use those
-tokens to protect customer or internal routes. Runtime token validation and
-authenticated route enforcement remain follow-up work under the API security
-track.
+tokens to protect customer routes. Runtime token validation and authenticated
+customer-route enforcement remain follow-up work under the API security track.
+
+Internal management routes under `/internal/**` currently use HTTP Basic
+authentication with an admin user configured through Spring Security user
+properties.
 
 ### Customer eligibility rules
 
@@ -141,7 +144,6 @@ The following are intentionally not implemented yet:
 - External authentication providers such as Google or Facebook
 - Password history enforcement beyond the current immediate previous-password rule
 - Runtime token validation for protected customer routes
-- Runtime authorization for internal management APIs
 
 Those concerns are tracked separately and should not be inferred from the
 current bearer token issuance alone.
