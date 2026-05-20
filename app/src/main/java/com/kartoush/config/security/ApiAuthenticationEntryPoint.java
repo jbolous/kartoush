@@ -3,9 +3,9 @@ package com.kartoush.config.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kartoush.api.error.ApiProblemFactory;
 import com.kartoush.api.error.ErrorCode;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -31,10 +31,10 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(
-        final HttpServletRequest request,
-        final HttpServletResponse response,
-        final AuthenticationException authException
-    ) throws IOException, ServletException {
+        final @NonNull HttpServletRequest request,
+        final @NonNull HttpServletResponse response,
+        final @NonNull AuthenticationException authException
+    ) throws IOException {
         final ProblemDetail problem = apiProblemFactory.create(
             HttpStatus.UNAUTHORIZED,
             "Authentication Required",

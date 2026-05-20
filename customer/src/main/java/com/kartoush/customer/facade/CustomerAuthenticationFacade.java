@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface CustomerAuthenticationFacade {
 
-    Optional<CustomerAuthCandidateView> findAuthenticationCandidateByEmail(Email email);
+    Optional<CustomerAuthCandidateView> findAuthCandidateByEmail(Email email);
 }

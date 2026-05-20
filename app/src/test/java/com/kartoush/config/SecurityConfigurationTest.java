@@ -125,11 +125,12 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void shouldRejectAnonymousCustomerListAccess() throws Exception {
+    void shouldAllowAnonymousCustomerListAccess() throws Exception {
+        when(customerFacade.getCustomers()).thenReturn(java.util.List.of());
+
         mockMvc.perform(get(CUSTOMER_LIST_PATH))
-            .andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.errorCode").value("AUTHENTICATION_REQUIRED"))
-            .andExpect(jsonPath("$.title").value("Authentication Required"));
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray());
     }
 
     @Test

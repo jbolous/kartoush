@@ -6,6 +6,7 @@ import com.kartoush.api.error.ErrorCode;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -31,9 +32,9 @@ public class ApiAccessDeniedHandler implements AccessDeniedHandler {
 
     @Override
     public void handle(
-        final HttpServletRequest request,
-        final HttpServletResponse response,
-        final AccessDeniedException accessDeniedException
+        final @NonNull HttpServletRequest request,
+        final @NonNull HttpServletResponse response,
+        final @NonNull AccessDeniedException accessDeniedException
     ) throws IOException, ServletException {
         final ProblemDetail problem = apiProblemFactory.create(
             HttpStatus.FORBIDDEN,

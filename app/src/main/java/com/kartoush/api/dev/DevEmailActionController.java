@@ -1,7 +1,7 @@
 package com.kartoush.api.dev;
 
-import com.kartoush.api.auth.CustomerPasswordResetApplicationService;
-import com.kartoush.api.auth.ResetCustomerPasswordRequest;
+import com.kartoush.api.auth.PasswordResetService;
+import com.kartoush.api.auth.ResetPasswordRequest;
 import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.model.CustomerActivationView;
 import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
@@ -23,11 +23,11 @@ public class DevEmailActionController {
 
     private final CustomerFacade customerFacade;
 
-    private final CustomerPasswordResetApplicationService customerPasswordResetApplicationService;
+    private final PasswordResetService customerPasswordResetApplicationService;
 
     public DevEmailActionController(
         final CustomerFacade customerFacade,
-        final CustomerPasswordResetApplicationService customerPasswordResetApplicationService
+        final PasswordResetService customerPasswordResetApplicationService
     ) {
         this.customerFacade = customerFacade;
         this.customerPasswordResetApplicationService = customerPasswordResetApplicationService;
@@ -161,7 +161,7 @@ public class DevEmailActionController {
     ) {
         try {
             customerPasswordResetApplicationService.resetPassword(
-                new ResetCustomerPasswordRequest(email, token, password, confirmPassword)
+                new ResetPasswordRequest(email, token, password, confirmPassword)
             );
             return htmlOk(
                 "Password reset complete",

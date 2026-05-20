@@ -44,7 +44,7 @@ class DefaultCustomerAuthenticationFacadeTest {
         when(customerService.findCustomerByEmail(EMAIL)).thenReturn(Optional.of(customer));
 
         final Optional<CustomerAuthCandidateView> result =
-            customerAuthenticationFacade.findAuthenticationCandidateByEmail(EMAIL);
+            customerAuthenticationFacade.findAuthCandidateByEmail(EMAIL);
 
         assertThat(result).contains(new CustomerAuthCandidateView(
             CUSTOMER_ID,
@@ -59,7 +59,7 @@ class DefaultCustomerAuthenticationFacadeTest {
         when(customerService.findCustomerByEmail(EMAIL)).thenReturn(Optional.empty());
 
         final Optional<CustomerAuthCandidateView> result =
-            customerAuthenticationFacade.findAuthenticationCandidateByEmail(EMAIL);
+            customerAuthenticationFacade.findAuthCandidateByEmail(EMAIL);
 
         assertThat(result).isEmpty();
         verify(customerService).findCustomerByEmail(EMAIL);

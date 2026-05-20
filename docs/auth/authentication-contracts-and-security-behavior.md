@@ -123,11 +123,11 @@ The current auth behavior is covered by:
 
 Representative tests include:
 
-- `CustomerAuthenticationControllerWebMvcTest`
-- `CustomerAuthenticationOpenApiWebMvcTest`
+- `AuthenticationControllerWebMvcTest`
+- `AuthenticationOpenApiWebMvcTest`
 - `CustomerActivationAndPasswordSetupIntegrationTest`
-- `CustomerPasswordResetFlowIntegrationTest`
-- `CustomerSignInFlowIntegrationTest`
+- `PasswordResetFlowIntegrationTest`
+- `SignInFlowIntegrationTest`
 - `DefaultCustomerSignInFacadeTest`
 - `DefaultCustomerPasswordFacadeResetTest`
 - `DefaultCustomerAuthSessionServiceTest`
