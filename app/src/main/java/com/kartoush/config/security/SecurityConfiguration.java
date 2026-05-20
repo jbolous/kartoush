@@ -48,7 +48,6 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/auth/sign-in").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/password-reset").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/password-reset/confirm").permitAll()
-                .requestMatchers("/internal/**").hasRole("ADMIN")
                 .anyRequest().permitAll())
             .anonymous(Customizer.withDefaults());
 
