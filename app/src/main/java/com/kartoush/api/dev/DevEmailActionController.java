@@ -195,6 +195,7 @@ public class DevEmailActionController {
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <title>%s</title>
+                <link rel="icon" type="image/svg+xml" href="/favicon.svg">
                 <style>
                   body { font-family: sans-serif; margin: 2rem; line-height: 1.5; }
                   form { display: grid; gap: 0.75rem; max-width: 28rem; margin-top: 1rem; }
