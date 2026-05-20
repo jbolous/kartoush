@@ -24,8 +24,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CustomerAuthenticationController.class)
-@AutoConfigureMockMvc
+@WebMvcTest(AuthenticationController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @EnableConfigurationProperties(SpringDocConfigProperties.class)
 @Import({
     ApiExceptionHandler.class,
@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     SpringDocWebMvcConfiguration.class,
     MultipleOpenApiSupportConfiguration.class
 })
-class CustomerAuthenticationOpenApiWebMvcTest {
+class AuthenticationOpenApiWebMvcTest {
 
     private static final String API_DOCS_PATH = "/v3/api-docs";
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
@@ -50,10 +50,10 @@ class CustomerAuthenticationOpenApiWebMvcTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private CustomerAuthenticationApplicationService customerAuthenticationApplicationService;
+    private AuthenticationService customerAuthenticationApplicationService;
 
     @MockitoBean
-    private CustomerPasswordResetApplicationService customerPasswordResetApplicationService;
+    private PasswordResetService customerPasswordResetApplicationService;
 
     @MockitoBean
     private ApiProblemFactory apiProblemFactory;
@@ -78,9 +78,9 @@ class CustomerAuthenticationOpenApiWebMvcTest {
                 .value(API_PROBLEM_RESPONSE_REF))
             .andExpect(jsonPath(problemSchemaRefPath(PASSWORD_RESET_CONFIRM_PATH, "post", HttpStatus.CONFLICT.value()))
                 .value(API_PROBLEM_RESPONSE_REF))
-            .andExpect(jsonPath("$.components.schemas.CustomerSignInView.properties.accessToken.type")
+            .andExpect(jsonPath("$.components.schemas.SignInView.properties.accessToken.type")
                 .value("string"))
-            .andExpect(jsonPath("$.components.schemas.CustomerSignInView.properties.tokenType.type")
+            .andExpect(jsonPath("$.components.schemas.SignInView.properties.tokenType.type")
                 .value("string"));
     }
 

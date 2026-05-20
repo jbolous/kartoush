@@ -5,6 +5,7 @@ import com.kartoush.api.error.ApiProblemFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springdoc.core.configuration.SpringDocConfiguration;
 import org.springdoc.core.configuration.SpringDocSpecPropertiesConfiguration;
@@ -21,14 +22,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CustomerAuthenticationController.class)
+@WebMvcTest(AuthenticationController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @ImportAutoConfiguration(exclude = {
     SpringDocConfiguration.class,
     SpringDocSpecPropertiesConfiguration.class,
     SpringDocWebMvcConfiguration.class,
     MultipleOpenApiSupportConfiguration.class
 })
-class CustomerAuthenticationControllerWebMvcTest {
+class AuthenticationControllerWebMvcTest {
 
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
     private static final String PASSWORD_RESET_PATH = "/api/auth/password-reset";
@@ -43,15 +45,15 @@ class CustomerAuthenticationControllerWebMvcTest {
     private ApiProblemFactory apiProblemFactory;
 
     @MockitoBean
-    private CustomerAuthenticationApplicationService customerAuthenticationApplicationService;
+    private AuthenticationService customerAuthenticationApplicationService;
 
     @MockitoBean
-    private CustomerPasswordResetApplicationService customerPasswordResetApplicationService;
+    private PasswordResetService customerPasswordResetApplicationService;
 
     @Test
     void shouldSignInCustomer() throws Exception {
-        final CustomerSignInRequest request = new CustomerSignInRequest("jack@kartoush.com", "Password123!");
-        final CustomerSignInView response = new CustomerSignInView("opaque-token", "Bearer");
+        final SignInRequest request = new SignInRequest("jack@kartoush.com", "Password123!");
+        final SignInView response = new SignInView("opaque-token", "Bearer");
 
         when(customerAuthenticationApplicationService.signIn(eq(request.email()), eq(request.password())))
             .thenReturn(response);
@@ -68,7 +70,7 @@ class CustomerAuthenticationControllerWebMvcTest {
 
     @Test
     void shouldRequestPasswordReset() throws Exception {
-        final ForgotCustomerPasswordRequest request = new ForgotCustomerPasswordRequest("jack@kartoush.com");
+        final ForgotPasswordRequest request = new ForgotPasswordRequest("jack@kartoush.com");
 
         mockMvc.perform(post(PASSWORD_RESET_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -80,8 +82,8 @@ class CustomerAuthenticationControllerWebMvcTest {
 
     @Test
     void shouldResetCustomerPassword() throws Exception {
-        final ResetCustomerPasswordRequest request =
-            new ResetCustomerPasswordRequest("jack@kartoush.com", "reset-token", "Password123!", "Password123!");
+        final ResetPasswordRequest request =
+            new ResetPasswordRequest("jack@kartoush.com", "reset-token", "Password123!", "Password123!");
 
         mockMvc.perform(post(PASSWORD_RESET_CONFIRM_PATH)
                 .contentType(MediaType.APPLICATION_JSON)

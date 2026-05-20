@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-@Schema(name = "CustomerSignInRequest", description = "Request payload for customer sign-in")
-public record CustomerSignInRequest(
+@Schema(name = "SignInRequest", description = "Request payload for customer sign-in")
+public record SignInRequest(
     @NotBlank(message = "email must not be blank")
     @Email(message = "email must be a well-formed email address")
     @Schema(

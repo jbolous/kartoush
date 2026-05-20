@@ -2,8 +2,8 @@ package com.kartoush.api.auth;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(name = "CustomerSignInView", description = "Opaque bearer token returned after successful customer authentication")
-public record CustomerSignInView(
+@Schema(name = "SignInView", description = "Opaque bearer token returned after successful customer authentication")
+public record SignInView(
     @Schema(description = "Opaque access token for subsequent authenticated requests", example = "uRL-safe-opaque-access-token")
     String accessToken,
 

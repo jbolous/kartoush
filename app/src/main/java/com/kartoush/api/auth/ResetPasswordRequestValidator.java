@@ -11,17 +11,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class ResetCustomerPasswordRequestValidator {
+public class ResetPasswordRequestValidator {
 
     private static final String VALIDATION_MESSAGE = "Request validation failed";
 
     private final PasswordPolicyValidator passwordPolicyValidator;
 
-    public ResetCustomerPasswordRequestValidator(final PasswordPolicyValidator passwordPolicyValidator) {
+    public ResetPasswordRequestValidator(final PasswordPolicyValidator passwordPolicyValidator) {
         this.passwordPolicyValidator = passwordPolicyValidator;
     }
 
-    public void validate(final ResetCustomerPasswordRequest request) {
+    public void validate(final ResetPasswordRequest request) {
         final List<ValidationError> errors = new ArrayList<>();
 
         if (request == null) {

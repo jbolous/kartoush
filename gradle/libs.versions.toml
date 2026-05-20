@@ -22,6 +22,7 @@ springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starte
 swaggerAnnotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version = "2.2.28" }
 springBootStarterTest = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "springBootVersion" }
 springBootStarterDataJpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "springBootVersion" }
+springBootStarterSecurity = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "springBootVersion" }
 springBootStarterWeb = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "springBootVersion" }
 springBootStarterWebmvcTest = { module = "org.springframework.boot:spring-boot-starter-webmvc-test", version.ref = "springBootVersion" }
 jobrunrSpringBoot4Starter = { module = "org.jobrunr:jobrunr-spring-boot-4-starter", version.ref = "jobrunrVersion" }
@@ -30,6 +31,7 @@ springBootTest = { module = "org.springframework.boot:spring-boot-test", version
 springBootTestAutoconfigure = { module = "org.springframework.boot:spring-boot-test-autoconfigure", version.ref = "springBootVersion" }
 springBootTestcontainers = { module = "org.springframework.boot:spring-boot-testcontainers", version.ref = "springBootVersion" }
 restAssured = { module = "io.rest-assured:rest-assured", version.ref = "restAssuredVersion" }
+springSecurityTest = { module = "org.springframework.security:spring-security-test" }
 mailtrapJava = { module = "io.mailtrap:mailtrap-java", version.ref = "mailtrapJavaVersion" }
 commonsText = { module = "org.apache.commons:commons-text", version.ref = "commonsTextVersion" }
 thymeleaf = { module = "org.thymeleaf:thymeleaf" }

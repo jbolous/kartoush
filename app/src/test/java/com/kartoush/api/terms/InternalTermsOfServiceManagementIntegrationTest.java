@@ -21,10 +21,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringIntegrationTest
 @AutoConfigureMockMvc
+@WithMockUser(roles = "ADMIN")
 class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String BASE_URL = "/internal/terms-of-service";
