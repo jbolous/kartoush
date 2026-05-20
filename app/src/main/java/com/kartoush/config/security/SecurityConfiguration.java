@@ -41,6 +41,7 @@ public class SecurityConfiguration {
                 .requestMatchers("/actuator/health/**").permitAll()
                 .requestMatchers("/dev/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/terms-of-service/**").permitAll()
+                .requestMatchers(HttpMethod.HEAD, "/api/terms-of-service/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/customers").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/customers/*/activation").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/customers/*/initial-password").permitAll()

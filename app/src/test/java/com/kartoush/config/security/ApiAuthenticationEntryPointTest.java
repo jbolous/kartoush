@@ -21,6 +21,7 @@ class ApiAuthenticationEntryPointTest {
         entryPoint.commence(request, response, new BadCredentialsException("bad credentials"));
 
         assertThat(response.getStatus()).isEqualTo(401);
+        assertThat(response.getHeader("WWW-Authenticate")).isEqualTo("Basic realm=\"Kartoush Internal\"");
         assertThat(response.getContentType()).isEqualTo("application/problem+json");
         assertThat(response.getContentAsString()).contains("\"errorCode\":\"AUTHENTICATION_REQUIRED\"");
         assertThat(response.getContentAsString()).contains("\"title\":\"Authentication Required\"");

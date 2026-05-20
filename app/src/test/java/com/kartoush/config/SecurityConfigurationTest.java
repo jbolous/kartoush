@@ -37,6 +37,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -124,6 +125,12 @@ class SecurityConfigurationTest {
         mockMvc.perform(get(PUBLIC_TERMS_PATH))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.version").value("2026.04.01"));
+    }
+
+    @Test
+    void shouldAllowAnonymousHeadPublicTermsAccess() throws Exception {
+        mockMvc.perform(head(PUBLIC_TERMS_PATH))
+            .andExpect(status().isOk());
     }
 
     @Test

@@ -18,6 +18,8 @@ import java.io.IOException;
 @Component
 public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
+    private static final String BASIC_CHALLENGE = "Basic realm=\"Kartoush Internal\"";
+
     private final ApiProblemFactory apiProblemFactory;
 
     private final ObjectMapper objectMapper;
@@ -51,6 +53,7 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
         final ProblemDetail problem,
         final HttpStatus status) throws IOException {
         response.setStatus(status.value());
+        response.setHeader("WWW-Authenticate", BASIC_CHALLENGE);
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         objectMapper.writeValue(response.getOutputStream(), problem);
     }
