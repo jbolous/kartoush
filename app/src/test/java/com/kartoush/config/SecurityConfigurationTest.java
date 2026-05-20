@@ -11,6 +11,8 @@ import com.kartoush.api.error.ApiExceptionHandler;
 import com.kartoush.api.error.ApiProblemFactory;
 import com.kartoush.api.terms.InternalTermsOfServiceManagementController;
 import com.kartoush.api.terms.TermsOfServiceController;
+import com.kartoush.config.security.ApiAccessDeniedHandler;
+import com.kartoush.config.security.ApiAuthenticationEntryPoint;
 import com.kartoush.config.security.SecurityConfiguration;
 import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.TermsOfServiceFacade;
@@ -50,6 +52,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({
     ApiExceptionHandler.class,
     ApiProblemFactory.class,
+    ApiAuthenticationEntryPoint.class,
+    ApiAccessDeniedHandler.class,
     SecurityConfiguration.class
 })
 class SecurityConfigurationTest {
