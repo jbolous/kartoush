@@ -18,7 +18,7 @@ public class DefaultCustomerAuthenticationFacade implements CustomerAuthenticati
     }
 
     @Override
-    public Optional<CustomerAuthCandidateView> findAuthenticationCandidateByEmail(final Email email) {
+    public Optional<CustomerAuthCandidateView> findAuthCandidateByEmail(final Email email) {
         return customerService.findCustomerByEmail(email)
             .map(customer -> new CustomerAuthCandidateView(
                 customer.getId().value(),

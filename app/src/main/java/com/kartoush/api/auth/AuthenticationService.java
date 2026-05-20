@@ -12,13 +12,13 @@ import com.kartoush.platform.types.exception.InvalidEmailException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CustomerAuthenticationApplicationService {
+public class AuthenticationService {
 
     private final CustomerAuthenticationFacade customerAuthenticationFacade;
 
     private final CustomerSignInFacade customerSignInFacade;
 
-    public CustomerAuthenticationApplicationService(
+    public AuthenticationService(
         final CustomerAuthenticationFacade customerAuthenticationFacade,
         final CustomerSignInFacade customerSignInFacade
     ) {
@@ -26,7 +26,7 @@ public class CustomerAuthenticationApplicationService {
         this.customerSignInFacade = customerSignInFacade;
     }
 
-    public CustomerSignInView signIn(final String emailAddress, final String rawPassword) {
+    public SignInView signIn(final String emailAddress, final String rawPassword) {
         final Email email;
 
         try {
@@ -35,7 +35,7 @@ public class CustomerAuthenticationApplicationService {
             throw new InvalidCustomerCredentialsException();
         }
 
-        final CustomerAuthCandidateView candidate = customerAuthenticationFacade.findAuthenticationCandidateByEmail(email)
+        final CustomerAuthCandidateView candidate = customerAuthenticationFacade.findAuthCandidateByEmail(email)
             .orElseThrow(InvalidCustomerCredentialsException::new);
 
         if (candidate.status() != CustomerStatus.ACTIVE) {
@@ -45,6 +45,6 @@ public class CustomerAuthenticationApplicationService {
         final IssuedCustomerAccessToken accessToken =
             customerSignInFacade.signIn(CustomerId.of(candidate.customerId()), rawPassword);
 
-        return new CustomerSignInView(accessToken.accessToken(), accessToken.tokenType());
+        return new SignInView(accessToken.accessToken(), accessToken.tokenType());
     }
 }

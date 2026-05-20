@@ -28,6 +28,7 @@ dependencies {
     testImplementation project(":test-support")
 
     implementation(libs.jobrunrSpringBoot4Starter)
+    implementation(libs.springBootStarterSecurity)
     implementation(libs.springBootStarterWeb)
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -46,6 +47,7 @@ dependencies {
     testImplementation(libs.testcontainersJunitJupiter)
     testImplementation(libs.testcontainersPostgresql)
     testImplementation(libs.springBootStarterWebmvcTest)
+    testImplementation(libs.springSecurityTest)
 
     testImplementation project(":test-support")
     testImplementation(libs.springBootStarterTest)

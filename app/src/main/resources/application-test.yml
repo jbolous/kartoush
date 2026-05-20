@@ -2,6 +2,11 @@ spring:
   config:
     activate:
       on-profile: test
+  security:
+    user:
+      name: internal-admin
+      password: test-internal-admin-password
+      roles: ADMIN
 
 jobrunr:
   background-job-server:

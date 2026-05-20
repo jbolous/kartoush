@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringIntegrationTest
 @AutoConfigureMockMvc
-class CustomerSignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
+class SignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String CUSTOMERS_PATH = "/api/customers";
     private static final String ACTIVATION_PATH = "/{customerId}/activation";
@@ -120,7 +120,7 @@ class CustomerSignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
         mockMvc.perform(post(SIGN_IN_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new CustomerSignInRequest(createdCustomer.email(), PASSWORD))))
+                    new SignInRequest(createdCustomer.email(), PASSWORD))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.accessToken").isNotEmpty())
             .andExpect(jsonPath("$.tokenType").value("Bearer"));
@@ -137,7 +137,7 @@ class CustomerSignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
         mockMvc.perform(post(SIGN_IN_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new CustomerSignInRequest(createdCustomer.email(), "WrongPassword123!"))))
+                    new SignInRequest(createdCustomer.email(), "WrongPassword123!"))))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.INVALID_CUSTOMER_CREDENTIALS.name()));
 
@@ -151,7 +151,7 @@ class CustomerSignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
         mockMvc.perform(post(SIGN_IN_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new CustomerSignInRequest(createdCustomer.email(), PASSWORD))))
+                    new SignInRequest(createdCustomer.email(), PASSWORD))))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.INVALID_CUSTOMER_CREDENTIALS.name()));
 
@@ -163,7 +163,7 @@ class CustomerSignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
         mockMvc.perform(post(SIGN_IN_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new CustomerSignInRequest("not-an-email", PASSWORD))))
+                    new SignInRequest("not-an-email", PASSWORD))))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.VALIDATION_FAILED.name()))
             .andExpect(jsonPath("$.errors[0].field").value("email"));

@@ -20,18 +20,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Customer authentication operations.")
-public class CustomerAuthenticationController {
+public class AuthenticationController {
 
-    private final CustomerAuthenticationApplicationService customerAuthenticationApplicationService;
+    private final AuthenticationService authenticationService;
 
-    private final CustomerPasswordResetApplicationService customerPasswordResetApplicationService;
+    private final PasswordResetService passwordResetService;
 
-    public CustomerAuthenticationController(
-        final CustomerAuthenticationApplicationService customerAuthenticationApplicationService,
-        final CustomerPasswordResetApplicationService customerPasswordResetApplicationService
+    public AuthenticationController(
+        final AuthenticationService authenticationService,
+        final PasswordResetService passwordResetService
     ) {
-        this.customerAuthenticationApplicationService = customerAuthenticationApplicationService;
-        this.customerPasswordResetApplicationService = customerPasswordResetApplicationService;
+        this.authenticationService = authenticationService;
+        this.passwordResetService = passwordResetService;
     }
 
     @Operation(
@@ -43,26 +43,26 @@ public class CustomerAuthenticationController {
         description = "Customer authenticated successfully",
         content = @Content(
             mediaType = "application/json",
-            schema = @Schema(implementation = CustomerSignInView.class)
+            schema = @Schema(implementation = SignInView.class)
         )
     )
     @CustomerAuthenticationFailedApiResponse
     @ValidationFailedApiResponse
     @InternalServerErrorApiResponse
     @PostMapping("/sign-in")
-    public ResponseEntity<CustomerSignInView> signIn(
+    public ResponseEntity<SignInView> signIn(
         @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true,
             description = "Customer sign-in payload",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = CustomerSignInRequest.class)
+                schema = @Schema(implementation = SignInRequest.class)
             )
         )
-        @Valid @RequestBody final CustomerSignInRequest request
+        @Valid @RequestBody final SignInRequest request
     ) {
         return ResponseEntity.ok(
-            customerAuthenticationApplicationService.signIn(request.email(), request.password())
+            authenticationService.signIn(request.email(), request.password())
         );
     }
 
@@ -80,12 +80,12 @@ public class CustomerAuthenticationController {
             description = "Customer password reset request payload",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = ForgotCustomerPasswordRequest.class)
+                schema = @Schema(implementation = ForgotPasswordRequest.class)
             )
         )
-        @Valid @RequestBody final ForgotCustomerPasswordRequest request
+        @Valid @RequestBody final ForgotPasswordRequest request
     ) {
-        customerPasswordResetApplicationService.requestPasswordReset(request.email());
+        passwordResetService.requestPasswordReset(request.email());
         return ResponseEntity.noContent().build();
     }
 
@@ -105,12 +105,12 @@ public class CustomerAuthenticationController {
             description = "Customer password reset confirmation payload",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = ResetCustomerPasswordRequest.class)
+                schema = @Schema(implementation = ResetPasswordRequest.class)
             )
         )
-        @Valid @RequestBody final ResetCustomerPasswordRequest request
+        @Valid @RequestBody final ResetPasswordRequest request
     ) {
-        customerPasswordResetApplicationService.resetPassword(request);
+        passwordResetService.resetPassword(request);
         return ResponseEntity.noContent().build();
     }
 }

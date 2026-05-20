@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-@Schema(name = "ResetCustomerPasswordRequest", description = "Request payload for customer password reset completion")
-public record ResetCustomerPasswordRequest(
+@Schema(name = "ResetPasswordRequest", description = "Request payload for customer password reset completion")
+public record ResetPasswordRequest(
     @NotBlank(message = "email must not be blank")
     @Email(message = "email must be a well-formed email address")
     @Schema(

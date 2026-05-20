@@ -1,6 +1,6 @@
 package com.kartoush.api.dev;
 
-import com.kartoush.api.auth.CustomerPasswordResetApplicationService;
+import com.kartoush.api.auth.PasswordResetService;
 import com.kartoush.api.error.ApiProblemFactory;
 import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.model.CustomerActivationView;
@@ -8,6 +8,7 @@ import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springdoc.core.configuration.SpringDocConfiguration;
@@ -27,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(DevEmailActionController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("dev")
 @ImportAutoConfiguration(exclude = {
     SpringDocConfiguration.class,
@@ -46,7 +48,7 @@ class DevEmailActionControllerWebMvcTest {
     private CustomerFacade customerFacade;
 
     @MockitoBean
-    private CustomerPasswordResetApplicationService customerPasswordResetApplicationService;
+    private PasswordResetService customerPasswordResetApplicationService;
 
     @Test
     void shouldRenderActivationPage() throws Exception {

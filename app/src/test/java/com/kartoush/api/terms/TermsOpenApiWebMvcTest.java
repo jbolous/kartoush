@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     TermsOfServiceController.class,
     InternalTermsOfServiceManagementController.class
 })
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @EnableConfigurationProperties(SpringDocConfigProperties.class)
 @Import({
     ApiExceptionHandler.class,

@@ -47,7 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringIntegrationTest
 @AutoConfigureMockMvc
-class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegrationTest {
+class PasswordResetFlowIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String CUSTOMERS_PATH = "/api/customers";
     private static final String ACTIVATION_PATH = "/{customerId}/activation";
@@ -133,7 +133,7 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
 
         mockMvc.perform(post(PASSWORD_RESET_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new ForgotCustomerPasswordRequest(createdCustomer.email()))))
+                .content(objectMapper.writeValueAsString(new ForgotPasswordRequest(createdCustomer.email()))))
             .andExpect(status().isNoContent());
 
         assertThat(capturedPasswordResetEmails).hasSize(1);
@@ -145,7 +145,7 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
     void shouldReturnNoContentForUnknownEmailWithoutIssuingResetToken() throws Exception {
         mockMvc.perform(post(PASSWORD_RESET_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new ForgotCustomerPasswordRequest("unknown@kartoush.com"))))
+                .content(objectMapper.writeValueAsString(new ForgotPasswordRequest("unknown@kartoush.com"))))
             .andExpect(status().isNoContent());
 
         assertThat(capturedPasswordResetEmails).isEmpty();
@@ -158,7 +158,7 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
 
         mockMvc.perform(post(PASSWORD_RESET_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new ForgotCustomerPasswordRequest(tooLongEmail))))
+                .content(objectMapper.writeValueAsString(new ForgotPasswordRequest(tooLongEmail))))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.VALIDATION_FAILED.name()))
             .andExpect(jsonPath("$.errors[0].field").value("email"));
@@ -170,7 +170,7 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
         mockMvc.perform(post(SIGN_IN_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new CustomerSignInRequest(createdCustomer.email(), ORIGINAL_PASSWORD))))
+                    new SignInRequest(createdCustomer.email(), ORIGINAL_PASSWORD))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.accessToken").isNotEmpty());
 
@@ -183,7 +183,7 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
         mockMvc.perform(post(PASSWORD_RESET_CONFIRM_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new ResetCustomerPasswordRequest(createdCustomer.email(), resetToken, NEW_PASSWORD, NEW_PASSWORD))))
+                    new ResetPasswordRequest(createdCustomer.email(), resetToken, NEW_PASSWORD, NEW_PASSWORD))))
             .andExpect(status().isNoContent());
 
         assertThat(customerAuthSessionRepository.findAll())
@@ -193,14 +193,14 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
         mockMvc.perform(post(SIGN_IN_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new CustomerSignInRequest(createdCustomer.email(), ORIGINAL_PASSWORD))))
+                    new SignInRequest(createdCustomer.email(), ORIGINAL_PASSWORD))))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.INVALID_CUSTOMER_CREDENTIALS.name()));
 
         mockMvc.perform(post(SIGN_IN_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new CustomerSignInRequest(createdCustomer.email(), NEW_PASSWORD))))
+                    new SignInRequest(createdCustomer.email(), NEW_PASSWORD))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.accessToken").isNotEmpty());
     }
@@ -213,7 +213,7 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
         mockMvc.perform(post(PASSWORD_RESET_CONFIRM_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new ResetCustomerPasswordRequest(
+                    new ResetPasswordRequest(
                         createdCustomer.email(),
                         resetToken,
                         ORIGINAL_PASSWORD,
@@ -230,7 +230,7 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
         mockMvc.perform(post(PASSWORD_RESET_CONFIRM_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new ResetCustomerPasswordRequest(
+                    new ResetPasswordRequest(
                         createdCustomer.email(),
                         "invalid-reset-token",
                         NEW_PASSWORD,
@@ -244,8 +244,8 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
     void shouldRejectConsumedPasswordResetToken() throws Exception {
         final CreatedCustomer createdCustomer = createActiveCustomerWithPassword();
         final String resetToken = requestPasswordResetAndCaptureToken(createdCustomer.email());
-        final ResetCustomerPasswordRequest request =
-            new ResetCustomerPasswordRequest(createdCustomer.email(), resetToken, NEW_PASSWORD, NEW_PASSWORD);
+        final ResetPasswordRequest request =
+            new ResetPasswordRequest(createdCustomer.email(), resetToken, NEW_PASSWORD, NEW_PASSWORD);
 
         mockMvc.perform(post(PASSWORD_RESET_CONFIRM_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -277,7 +277,7 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
         mockMvc.perform(post(PASSWORD_RESET_CONFIRM_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new ResetCustomerPasswordRequest(
+                    new ResetPasswordRequest(
                         createdCustomer.email(),
                         EXPIRED_RESET_TOKEN,
                         NEW_PASSWORD,
@@ -294,7 +294,7 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
         mockMvc.perform(post(PASSWORD_RESET_CONFIRM_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
-                    new ResetCustomerPasswordRequest(
+                    new ResetPasswordRequest(
                         tooLongEmail,
                         "reset-token",
                         NEW_PASSWORD,
@@ -308,7 +308,7 @@ class CustomerPasswordResetFlowIntegrationTest extends PostgresSpringIntegration
     private String requestPasswordResetAndCaptureToken(final String email) throws Exception {
         mockMvc.perform(post(PASSWORD_RESET_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new ForgotCustomerPasswordRequest(email))))
+                .content(objectMapper.writeValueAsString(new ForgotPasswordRequest(email))))
             .andExpect(status().isNoContent());
 
         return capturedPasswordResetEmails.getLast().rawToken();

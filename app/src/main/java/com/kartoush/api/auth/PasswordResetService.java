@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class CustomerPasswordResetApplicationService {
+public class PasswordResetService {
 
     private final CustomerAuthenticationFacade customerAuthenticationFacade;
 
@@ -30,26 +30,26 @@ public class CustomerPasswordResetApplicationService {
 
     private final CustomerEmailFactory customerEmailFactory;
 
-    private final ResetCustomerPasswordRequestValidator resetCustomerPasswordRequestValidator;
+    private final ResetPasswordRequestValidator resetPasswordRequestValidator;
 
-    public CustomerPasswordResetApplicationService(
+    public PasswordResetService(
         final CustomerAuthenticationFacade customerAuthenticationFacade,
         final CustomerPasswordFacade customerPasswordFacade,
         final EmailDeliveryService emailDeliveryService,
         final CustomerEmailFactory customerEmailFactory,
-        final ResetCustomerPasswordRequestValidator resetCustomerPasswordRequestValidator
+        final ResetPasswordRequestValidator resetPasswordRequestValidator
     ) {
         this.customerAuthenticationFacade = customerAuthenticationFacade;
         this.customerPasswordFacade = customerPasswordFacade;
         this.emailDeliveryService = emailDeliveryService;
         this.customerEmailFactory = customerEmailFactory;
-        this.resetCustomerPasswordRequestValidator = resetCustomerPasswordRequestValidator;
+        this.resetPasswordRequestValidator = resetPasswordRequestValidator;
     }
 
     public void requestPasswordReset(final String emailAddress) {
         final Email email = parseEmail(emailAddress);
 
-        final Optional<CustomerAuthCandidateView> candidate = customerAuthenticationFacade.findAuthenticationCandidateByEmail(email);
+        final Optional<CustomerAuthCandidateView> candidate = customerAuthenticationFacade.findAuthCandidateByEmail(email);
 
         if (candidate.isEmpty()) {
             return;
@@ -73,11 +73,11 @@ public class CustomerPasswordResetApplicationService {
         );
     }
 
-    public void resetPassword(final ResetCustomerPasswordRequest request) {
-        resetCustomerPasswordRequestValidator.validate(request);
+    public void resetPassword(final ResetPasswordRequest request) {
+        resetPasswordRequestValidator.validate(request);
 
         final Email email = parseEmail(request.email());
-        final CustomerAuthCandidateView candidate = customerAuthenticationFacade.findAuthenticationCandidateByEmail(email)
+        final CustomerAuthCandidateView candidate = customerAuthenticationFacade.findAuthCandidateByEmail(email)
             .orElseThrow(() -> new PasswordResetTokenNotFoundException(email.value()));
 
         if (candidate.status() != CustomerStatus.ACTIVE) {

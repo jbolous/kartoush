@@ -1,6 +1,7 @@
 package com.kartoush.api.terms;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -28,6 +29,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String BASE_URL = "/internal/terms-of-service";
+    private static final String INTERNAL_ADMIN_USERNAME = "internal-admin";
+    private static final String INTERNAL_ADMIN_PASSWORD = "test-internal-admin-password";
     private static final String CURRENT_VERSION = "2026.04.01";
     private static final String CURRENT_CONTENT = "Current active terms content";
     private static final Instant CURRENT_EFFECTIVE_AT = Instant.parse("2026-04-01T00:00:00Z");
@@ -65,6 +68,7 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
         );
 
         mockMvc.perform(post(BASE_URL + "/drafts")
+                .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD))
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
@@ -92,6 +96,7 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
         );
 
         mockMvc.perform(put(BASE_URL + "/drafts/{termsOfServiceId}", draft.getId())
+                .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD))
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
@@ -116,12 +121,14 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
         );
 
         mockMvc.perform(post(BASE_URL + "/{termsOfServiceId}/schedule", draft.getId())
+                .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD))
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(scheduleRequest)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value(TermsOfServiceStatus.SCHEDULED.name()));
 
-        mockMvc.perform(post(BASE_URL + "/{termsOfServiceId}/unschedule", draft.getId()))
+        mockMvc.perform(post(BASE_URL + "/{termsOfServiceId}/unschedule", draft.getId())
+                .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value(TermsOfServiceStatus.DRAFT.name()))
             .andExpect(jsonPath("$.effectiveAt").doesNotExist());
@@ -140,7 +147,8 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
             TermsOfServiceContentType.MARKDOWN
         ));
 
-        mockMvc.perform(post(BASE_URL + "/{termsOfServiceId}/activate", draft.getId()))
+        mockMvc.perform(post(BASE_URL + "/{termsOfServiceId}/activate", draft.getId())
+                .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.version").value(ACTIVATED_VERSION))
             .andExpect(jsonPath("$.status").value(TermsOfServiceStatus.ACTIVE.name()));
@@ -167,7 +175,8 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
             Instant.parse("2025-12-01T00:00:00Z")
         ));
 
-        mockMvc.perform(post(BASE_URL + "/promote-due"))
+        mockMvc.perform(post(BASE_URL + "/promote-due")
+                .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.version").value(PROMOTED_VERSION))
             .andExpect(jsonPath("$.status").value(TermsOfServiceStatus.ACTIVE.name()));
@@ -189,6 +198,7 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
         );
 
         mockMvc.perform(post(BASE_URL + "/drafts")
+                .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD))
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
@@ -217,6 +227,7 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
         );
 
         mockMvc.perform(post(BASE_URL + "/drafts")
+                .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD))
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isConflict());
