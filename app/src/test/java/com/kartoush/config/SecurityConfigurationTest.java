@@ -25,9 +25,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -51,13 +55,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     InternalTermsOfServiceManagementController.class
 })
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
 @Import({
     ApiExceptionHandler.class,
     ApiProblemFactory.class,
     ApiAuthenticationEntryPoint.class,
     ApiAccessDeniedHandler.class,
-    SecurityConfiguration.class
+    SecurityConfiguration.class,
+    SecurityConfigurationTest.TestSecurityUsers.class
 })
 class SecurityConfigurationTest {
 
@@ -174,5 +178,17 @@ class SecurityConfigurationTest {
                 .content(INTERNAL_TERMS_DRAFT_REQUEST))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.status").value("DRAFT"));
+    }
+
+    @TestConfiguration
+    static class TestSecurityUsers {
+
+        @Bean
+        UserDetailsService userDetailsService() {
+            return new InMemoryUserDetailsManager(User.withUsername(INTERNAL_ADMIN_USERNAME)
+                .password("{noop}" + INTERNAL_ADMIN_PASSWORD)
+                .roles("ADMIN")
+                .build());
+        }
     }
 }
