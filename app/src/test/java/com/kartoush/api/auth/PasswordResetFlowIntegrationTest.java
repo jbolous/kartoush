@@ -48,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PasswordResetFlowIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String CUSTOMERS_PATH = "/api/customers";
+    private static final String CUSTOMER_DETAILS_PATH = "/api/customers/{customerId}";
     private static final String ACTIVATION_PATH = "/{customerId}/activation";
     private static final String INITIAL_PASSWORD_PATH = "/{customerId}/initial-password";
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
@@ -181,7 +182,7 @@ class PasswordResetFlowIntegrationTest extends PostgresSpringIntegrationTest {
             .hasSize(1)
             .allSatisfy(session -> assertThat(session.getRevokedAt()).isNull());
 
-        mockMvc.perform(get(CUSTOMERS_PATH)
+        mockMvc.perform(get(CUSTOMER_DETAILS_PATH, createdCustomer.customerId())
                 .header("Authorization", "Bearer " + accessToken))
             .andExpect(status().isOk())
             .andExpect(header().doesNotExist("WWW-Authenticate"));
@@ -198,7 +199,7 @@ class PasswordResetFlowIntegrationTest extends PostgresSpringIntegrationTest {
             .hasSize(1)
             .allSatisfy(session -> assertThat(session.getRevokedAt()).isNotNull());
 
-        mockMvc.perform(get(CUSTOMERS_PATH)
+        mockMvc.perform(get(CUSTOMER_DETAILS_PATH, createdCustomer.customerId())
                 .header("Authorization", "Bearer " + accessToken))
             .andExpect(status().isUnauthorized())
             .andExpect(header().string("WWW-Authenticate", "Bearer"))

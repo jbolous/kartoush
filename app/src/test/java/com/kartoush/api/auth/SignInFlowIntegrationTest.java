@@ -44,6 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String CUSTOMERS_PATH = "/api/customers";
+    private static final String CUSTOMER_DETAILS_PATH = "/api/customers/{customerId}";
     private static final String ACTIVATION_PATH = "/{customerId}/activation";
     private static final String INITIAL_PASSWORD_PATH = "/{customerId}/initial-password";
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
@@ -129,7 +130,7 @@ class SignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
     }
 
     @Test
-    void shouldAllowAuthenticatedCustomerListAccessWithIssuedBearerToken() throws Exception {
+    void shouldAllowAuthenticatedCustomerDetailsAccessWithIssuedBearerToken() throws Exception {
         final CreatedCustomer createdCustomer = createActiveCustomerWithPassword();
 
         final String signInResponseBody = mockMvc.perform(post(SIGN_IN_PATH)
@@ -143,11 +144,11 @@ class SignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
 
         final String accessToken = objectMapper.readTree(signInResponseBody).get("accessToken").asText();
 
-        mockMvc.perform(get(CUSTOMERS_PATH)
+        mockMvc.perform(get(CUSTOMER_DETAILS_PATH, createdCustomer.customerId())
                 .header("Authorization", "Bearer " + accessToken))
             .andExpect(status().isOk())
             .andExpect(header().doesNotExist("WWW-Authenticate"))
-            .andExpect(jsonPath("$[*].customerId").isArray());
+            .andExpect(jsonPath("$.customerId").value(createdCustomer.customerId()));
     }
 
     @Test
