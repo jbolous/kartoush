@@ -19,6 +19,7 @@ import java.io.IOException;
 public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
+    private static final String CUSTOMERS_PATH = "/api/customers";
 
     private static final String BASIC_CHALLENGE = "Basic realm=\"Kartoush Internal\"";
 
@@ -69,6 +70,6 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private boolean requiresInternalAdminChallenge(final HttpServletRequest request) {
         return request.getRequestURI().startsWith("/internal/")
-            || "GET".equals(request.getMethod()) && "/api/customers".equals(request.getRequestURI());
+            || "GET".equals(request.getMethod()) && CUSTOMERS_PATH.equals(request.getRequestURI());
     }
 }

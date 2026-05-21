@@ -74,6 +74,8 @@ class SecurityConfigurationTest {
     private static final String CUSTOMER_DETAILS_PATH = "/api/customers/01KQ0CUSTOMER0000000000001";
     private static final String PUBLIC_TERMS_PATH = "/api/terms-of-service/current";
     private static final String INTERNAL_TERMS_DRAFTS_PATH = "/internal/terms-of-service/drafts";
+    private static final String ACCESS_TOKEN = "opaque-token";
+    private static final String TOKEN_TYPE = "Bearer";
     private static final String BEARER_CHALLENGE = "Bearer";
     private static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
     private static final String BASIC_CHALLENGE = "Basic realm=\"Kartoush Internal\"";
@@ -119,7 +121,7 @@ class SecurityConfigurationTest {
     @Test
     void shouldAllowAnonymousSignIn() throws Exception {
         final SignInRequest request = new SignInRequest("jack@kartoush.com", "Password123!");
-        final SignInView response = new SignInView("opaque-token", "Bearer");
+        final SignInView response = new SignInView(ACCESS_TOKEN, TOKEN_TYPE);
 
         when(authenticationService.signIn(eq(request.email()), eq(request.password())))
             .thenReturn(response);
@@ -128,8 +130,8 @@ class SecurityConfigurationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.accessToken").value("opaque-token"))
-            .andExpect(jsonPath("$.tokenType").value("Bearer"));
+            .andExpect(jsonPath("$.accessToken").value(ACCESS_TOKEN))
+            .andExpect(jsonPath("$.tokenType").value(TOKEN_TYPE));
 
         verify(authenticationService).signIn(request.email(), request.password());
     }
