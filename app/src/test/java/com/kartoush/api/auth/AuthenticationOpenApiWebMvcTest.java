@@ -50,10 +50,10 @@ class AuthenticationOpenApiWebMvcTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AuthenticationService customerAuthenticationApplicationService;
+    private AuthenticationService authenticationService;
 
     @MockitoBean
-    private PasswordResetService customerPasswordResetApplicationService;
+    private PasswordResetService passwordResetService;
 
     @MockitoBean
     private ApiProblemFactory apiProblemFactory;

@@ -41,4 +41,30 @@ class CustomerAuthSessionRepositoryTest extends PostgresDataJpaTest {
             .extracting(CustomerAuthSessionEntity::getCustomerId, CustomerAuthSessionEntity::getTokenHash)
             .containsExactly(CUSTOMER_ID, TOKEN_HASH);
     }
+
+    @Test
+    void shouldFindActiveSessionByTokenHash() {
+        final CustomerAuthSessionEntity activeSession =
+            CustomerAuthSessionEntity.create(SESSION_ID, CUSTOMER_ID, TOKEN_HASH, ISSUED_AT, null);
+        final CustomerAuthSessionEntity revokedSession =
+            CustomerAuthSessionEntity.create(
+                "01KQ0REVOKED000000000001",
+                CUSTOMER_ID,
+                "revoked-token-hash",
+                ISSUED_AT,
+                ISSUED_AT.plusSeconds(60)
+            );
+
+        customerAuthSessionRepository.saveAndFlush(activeSession);
+        customerAuthSessionRepository.saveAndFlush(revokedSession);
+
+        assertThat(customerAuthSessionRepository.findByTokenHashAndRevokedAtIsNull(TOKEN_HASH))
+            .isPresent()
+            .get()
+            .extracting(CustomerAuthSessionEntity::getId)
+            .isEqualTo(SESSION_ID);
+
+        assertThat(customerAuthSessionRepository.findByTokenHashAndRevokedAtIsNull("revoked-token-hash"))
+            .isEmpty();
+    }
 }

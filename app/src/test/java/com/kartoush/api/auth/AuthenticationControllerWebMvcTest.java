@@ -45,17 +45,17 @@ class AuthenticationControllerWebMvcTest {
     private ApiProblemFactory apiProblemFactory;
 
     @MockitoBean
-    private AuthenticationService customerAuthenticationApplicationService;
+    private AuthenticationService authenticationService;
 
     @MockitoBean
-    private PasswordResetService customerPasswordResetApplicationService;
+    private PasswordResetService passwordResetService;
 
     @Test
     void shouldSignInCustomer() throws Exception {
         final SignInRequest request = new SignInRequest("jack@kartoush.com", "Password123!");
         final SignInView response = new SignInView("opaque-token", "Bearer");
 
-        when(customerAuthenticationApplicationService.signIn(eq(request.email()), eq(request.password())))
+        when(authenticationService.signIn(eq(request.email()), eq(request.password())))
             .thenReturn(response);
 
         mockMvc.perform(post(SIGN_IN_PATH)
@@ -65,7 +65,7 @@ class AuthenticationControllerWebMvcTest {
             .andExpect(jsonPath("$.accessToken").value("opaque-token"))
             .andExpect(jsonPath("$.tokenType").value("Bearer"));
 
-        verify(customerAuthenticationApplicationService).signIn(request.email(), request.password());
+        verify(authenticationService).signIn(request.email(), request.password());
     }
 
     @Test
@@ -77,7 +77,7 @@ class AuthenticationControllerWebMvcTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNoContent());
 
-        verify(customerPasswordResetApplicationService).requestPasswordReset(request.email());
+        verify(passwordResetService).requestPasswordReset(request.email());
     }
 
     @Test
@@ -90,6 +90,6 @@ class AuthenticationControllerWebMvcTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNoContent());
 
-        verify(customerPasswordResetApplicationService).resetPassword(request);
+        verify(passwordResetService).resetPassword(request);
     }
 }

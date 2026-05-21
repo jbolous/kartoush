@@ -48,7 +48,7 @@ class DevEmailActionControllerWebMvcTest {
     private CustomerFacade customerFacade;
 
     @MockitoBean
-    private PasswordResetService customerPasswordResetApplicationService;
+    private PasswordResetService passwordResetService;
 
     @Test
     void shouldRenderActivationPage() throws Exception {
@@ -93,6 +93,6 @@ class DevEmailActionControllerWebMvcTest {
             .andExpect(status().isOk())
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Password reset complete")));
 
-        verify(customerPasswordResetApplicationService).resetPassword(any());
+        verify(passwordResetService).resetPassword(any());
     }
 }

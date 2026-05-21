@@ -2,6 +2,7 @@ package com.kartoush.api.customer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kartoush.api.support.UrlQueryParams;
 import com.kartoush.config.jobs.ActivationEmailJobHandler;
 import com.kartoush.config.jobs.WelcomeEmailJobHandler;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
@@ -39,14 +40,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.Instant;
-import java.net.URI;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -135,7 +131,7 @@ class ActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegratio
             if (email.type() == EmailMessageType.CUSTOMER_ACTIVATION) {
                 capturedActivationEmails.add(new CapturedActivationEmail(
                     email.recipient(),
-                    queryParam(email.actionUrl(), "token")
+                    UrlQueryParams.queryParam(email.actionUrl(), "token")
                 ));
             } else if (email.type() == EmailMessageType.CUSTOMER_WELCOME) {
                 capturedWelcomeEmails.add(email.recipient());
@@ -467,16 +463,4 @@ class ActivationAndPasswordSetupIntegrationTest extends PostgresSpringIntegratio
     private record CapturedActivationEmail(Email email, String rawToken) {
     }
 
-    private String queryParam(final String url, final String name) {
-        return queryParams(url).get(name);
-    }
-
-    private Map<String, String> queryParams(final String url) {
-        return List.of(URI.create(url).getQuery().split("&")).stream()
-            .map(part -> part.split("=", 2))
-            .collect(Collectors.toMap(
-                pair -> URLDecoder.decode(pair[0], StandardCharsets.UTF_8),
-                pair -> pair.length > 1 ? URLDecoder.decode(pair[1], StandardCharsets.UTF_8) : ""
-            ));
-    }
 }

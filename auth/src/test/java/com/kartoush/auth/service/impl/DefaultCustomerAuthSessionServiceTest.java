@@ -1,9 +1,10 @@
 package com.kartoush.auth.service.impl;
 
+import com.kartoush.auth.domain.ActiveSession;
 import com.kartoush.auth.domain.IssuedCustomerAccessToken;
 import com.kartoush.auth.persistence.entity.CustomerAuthSessionEntity;
 import com.kartoush.auth.persistence.repository.CustomerAuthSessionRepository;
-import com.kartoush.auth.service.CustomerAccessTokenGenerator;
+import com.kartoush.auth.service.SecureTokenGenerator;
 import com.kartoush.auth.service.CustomerAccessTokenHasher;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.ulid.UlidGenerator;
@@ -16,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,7 +38,7 @@ class DefaultCustomerAuthSessionServiceTest {
     private CustomerAuthSessionRepository customerAuthSessionRepository;
 
     @Mock
-    private CustomerAccessTokenGenerator customerAccessTokenGenerator;
+    private SecureTokenGenerator secureTokenGenerator;
 
     @Mock
     private CustomerAccessTokenHasher customerAccessTokenHasher;
@@ -53,7 +55,7 @@ class DefaultCustomerAuthSessionServiceTest {
     @Test
     void shouldIssueCustomerAccessTokenAndPersistSession() {
         when(clock.instant()).thenReturn(FIXED_INSTANT);
-        when(customerAccessTokenGenerator.generate()).thenReturn(RAW_TOKEN);
+        when(secureTokenGenerator.generate()).thenReturn(RAW_TOKEN);
         when(customerAccessTokenHasher.hash(RAW_TOKEN)).thenReturn(TOKEN_HASH);
         when(ulidGenerator.next()).thenReturn(SESSION_ID);
         when(customerAuthSessionRepository.save(any(CustomerAuthSessionEntity.class)))
@@ -65,6 +67,25 @@ class DefaultCustomerAuthSessionServiceTest {
         assertThat(issued.accessToken()).isEqualTo(RAW_TOKEN);
         assertThat(issued.tokenType()).isEqualTo("Bearer");
         verify(customerAuthSessionRepository).save(any(CustomerAuthSessionEntity.class));
+    }
+
+    @Test
+    void shouldFindActiveSessionByRawAccessToken() {
+        final CustomerAuthSessionEntity activeSession =
+            CustomerAuthSessionEntity.create(
+                SESSION_ID,
+                CUSTOMER_ID.value(),
+                TOKEN_HASH,
+                FIXED_INSTANT.minusSeconds(300),
+                null
+            );
+
+        when(customerAccessTokenHasher.hash(RAW_TOKEN)).thenReturn(TOKEN_HASH);
+        when(customerAuthSessionRepository.findByTokenHashAndRevokedAtIsNull(TOKEN_HASH))
+            .thenReturn(Optional.of(activeSession));
+
+        assertThat(customerAuthSessionService.findActiveCustomerByAccessToken(RAW_TOKEN))
+            .contains(new ActiveSession(SESSION_ID, CUSTOMER_ID.value()));
     }
 
     @Test

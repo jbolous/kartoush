@@ -2,7 +2,7 @@ package com.kartoush.customer.internal.facade;
 
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
-import com.kartoush.customer.facade.model.CustomerAuthCandidateView;
+import com.kartoush.customer.facade.model.AuthCandidateView;
 import com.kartoush.customer.service.CustomerService;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
@@ -23,6 +23,9 @@ import static org.mockito.Mockito.when;
 class DefaultCustomerAuthenticationFacadeTest {
 
     private static final String CUSTOMER_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+    private static final String FIRST_NAME = "Jack";
+    private static final String LAST_NAME = "Kartoush";
+    private static final String PHONE_NUMBER = "+13125550100";
     private static final Email EMAIL = new Email("jack@kartoush.com");
 
     @Mock
@@ -35,7 +38,7 @@ class DefaultCustomerAuthenticationFacadeTest {
     void shouldReturnAuthenticationCandidateWhenCustomerExists() {
         final Customer customer = Customer.fromPersistence(
             CustomerId.of(CUSTOMER_ID),
-            CustomerProfile.of("Jack", "Kartoush", "+13125550100"),
+            CustomerProfile.of(FIRST_NAME, LAST_NAME, PHONE_NUMBER),
             EMAIL,
             CustomerStatus.ACTIVE,
             java.util.List.of()
@@ -43,10 +46,10 @@ class DefaultCustomerAuthenticationFacadeTest {
 
         when(customerService.findCustomerByEmail(EMAIL)).thenReturn(Optional.of(customer));
 
-        final Optional<CustomerAuthCandidateView> result =
+        final Optional<AuthCandidateView> result =
             customerAuthenticationFacade.findAuthCandidateByEmail(EMAIL);
 
-        assertThat(result).contains(new CustomerAuthCandidateView(
+        assertThat(result).contains(new AuthCandidateView(
             CUSTOMER_ID,
             EMAIL.value(),
             CustomerStatus.ACTIVE
@@ -58,10 +61,44 @@ class DefaultCustomerAuthenticationFacadeTest {
     void shouldReturnEmptyWhenCustomerDoesNotExist() {
         when(customerService.findCustomerByEmail(EMAIL)).thenReturn(Optional.empty());
 
-        final Optional<CustomerAuthCandidateView> result =
+        final Optional<AuthCandidateView> result =
             customerAuthenticationFacade.findAuthCandidateByEmail(EMAIL);
 
         assertThat(result).isEmpty();
         verify(customerService).findCustomerByEmail(EMAIL);
+    }
+
+    @Test
+    void shouldReturnAuthenticationCandidateWhenCustomerExistsById() {
+        final Customer customer = Customer.fromPersistence(
+            CustomerId.of(CUSTOMER_ID),
+            CustomerProfile.of(FIRST_NAME, LAST_NAME, PHONE_NUMBER),
+            EMAIL,
+            CustomerStatus.ACTIVE,
+            java.util.List.of()
+        );
+
+        when(customerService.getCustomerById(CUSTOMER_ID)).thenReturn(Optional.of(customer));
+
+        final Optional<AuthCandidateView> result =
+            customerAuthenticationFacade.findAuthCandidateById(CUSTOMER_ID);
+
+        assertThat(result).contains(new AuthCandidateView(
+            CUSTOMER_ID,
+            EMAIL.value(),
+            CustomerStatus.ACTIVE
+        ));
+        verify(customerService).getCustomerById(CUSTOMER_ID);
+    }
+
+    @Test
+    void shouldReturnEmptyWhenCustomerDoesNotExistById() {
+        when(customerService.getCustomerById(CUSTOMER_ID)).thenReturn(Optional.empty());
+
+        final Optional<AuthCandidateView> result =
+            customerAuthenticationFacade.findAuthCandidateById(CUSTOMER_ID);
+
+        assertThat(result).isEmpty();
+        verify(customerService).getCustomerById(CUSTOMER_ID);
     }
 }

@@ -6,6 +6,8 @@ import com.kartoush.api.auth.AuthenticationController;
 import com.kartoush.api.auth.PasswordResetService;
 import com.kartoush.api.auth.SignInRequest;
 import com.kartoush.api.auth.SignInView;
+import com.kartoush.auth.domain.ActiveSession;
+import com.kartoush.auth.service.CustomerAuthSessionService;
 import com.kartoush.api.customer.CustomerController;
 import com.kartoush.api.error.ApiExceptionHandler;
 import com.kartoush.api.error.ApiProblemFactory;
@@ -13,12 +15,16 @@ import com.kartoush.api.terms.InternalTermsOfServiceManagementController;
 import com.kartoush.api.terms.TermsOfServiceController;
 import com.kartoush.config.security.ApiAccessDeniedHandler;
 import com.kartoush.config.security.ApiAuthenticationEntryPoint;
+import com.kartoush.config.security.BearerAuthenticationFilter;
 import com.kartoush.config.security.SecurityConfiguration;
+import com.kartoush.customer.facade.CustomerAuthenticationFacade;
 import com.kartoush.customer.facade.CustomerFacade;
+import com.kartoush.customer.facade.model.AuthCandidateView;
 import com.kartoush.customer.facade.TermsOfServiceFacade;
 import com.kartoush.customer.facade.TermsOfServiceManagementFacade;
 import com.kartoush.customer.facade.model.TermsOfServiceManagementView;
 import com.kartoush.customer.facade.model.TermsOfServiceView;
+import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.customer.termsofservice.TermsOfServiceContentType;
 import com.kartoush.customer.termsofservice.TermsOfServiceStatus;
 import org.junit.jupiter.api.Test;
@@ -36,6 +42,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -60,6 +68,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     ApiProblemFactory.class,
     ApiAuthenticationEntryPoint.class,
     ApiAccessDeniedHandler.class,
+    BearerAuthenticationFilter.class,
     SecurityConfiguration.class,
     SecurityConfigurationTest.TestSecurityUsers.class
 })
@@ -69,6 +78,11 @@ class SecurityConfigurationTest {
     private static final String CUSTOMER_LIST_PATH = "/api/customers";
     private static final String PUBLIC_TERMS_PATH = "/api/terms-of-service/current";
     private static final String INTERNAL_TERMS_DRAFTS_PATH = "/internal/terms-of-service/drafts";
+    private static final String CUSTOMER_ACCESS_TOKEN = "opaque-token";
+    private static final String BEARER_CHALLENGE = "Bearer";
+    private static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
+    private static final String CUSTOMER_ID = "01KQ0CUSTOMER0000000000001";
+    private static final String CUSTOMER_EMAIL = "jack@kartoush.com";
     private static final String INTERNAL_ADMIN_USERNAME = "internal-admin";
     private static final String INTERNAL_ADMIN_PASSWORD = "test-internal-admin-password";
     private static final String INTERNAL_TERMS_DRAFT_REQUEST = """
@@ -85,10 +99,16 @@ class SecurityConfigurationTest {
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @MockitoBean
-    private AuthenticationService customerAuthenticationApplicationService;
+    private AuthenticationService authenticationService;
 
     @MockitoBean
-    private PasswordResetService customerPasswordResetApplicationService;
+    private PasswordResetService passwordResetService;
+
+    @MockitoBean
+    private CustomerAuthSessionService customerAuthSessionService;
+
+    @MockitoBean
+    private CustomerAuthenticationFacade customerAuthenticationFacade;
 
     @MockitoBean
     private CustomerFacade customerFacade;
@@ -104,7 +124,7 @@ class SecurityConfigurationTest {
         final SignInRequest request = new SignInRequest("jack@kartoush.com", "Password123!");
         final SignInView response = new SignInView("opaque-token", "Bearer");
 
-        when(customerAuthenticationApplicationService.signIn(eq(request.email()), eq(request.password())))
+        when(authenticationService.signIn(eq(request.email()), eq(request.password())))
             .thenReturn(response);
 
         mockMvc.perform(post(SIGN_IN_PATH)
@@ -114,7 +134,7 @@ class SecurityConfigurationTest {
             .andExpect(jsonPath("$.accessToken").value("opaque-token"))
             .andExpect(jsonPath("$.tokenType").value("Bearer"));
 
-        verify(customerAuthenticationApplicationService).signIn(request.email(), request.password());
+        verify(authenticationService).signIn(request.email(), request.password());
     }
 
     @Test
@@ -140,9 +160,11 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void shouldAllowAnonymousCustomerListAccess() throws Exception {
+    void shouldRejectAnonymousCustomerListAccess() throws Exception {
         mockMvc.perform(get(CUSTOMER_LIST_PATH))
             .andExpect(status().isUnauthorized())
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                .string(WWW_AUTHENTICATE_HEADER, BEARER_CHALLENGE))
             .andExpect(jsonPath("$.errorCode").value("AUTHENTICATION_REQUIRED"))
             .andExpect(jsonPath("$.title").value("Authentication Required"));
     }
@@ -153,8 +175,41 @@ class SecurityConfigurationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(INTERNAL_TERMS_DRAFT_REQUEST))
             .andExpect(status().isUnauthorized())
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                .string("WWW-Authenticate", "Basic realm=\"Kartoush Internal\""))
             .andExpect(jsonPath("$.errorCode").value("AUTHENTICATION_REQUIRED"))
             .andExpect(jsonPath("$.title").value("Authentication Required"));
+    }
+
+    @Test
+    void shouldAllowAuthenticatedCustomerListAccessUsingBearerToken() throws Exception {
+        when(customerAuthSessionService.findActiveCustomerByAccessToken(CUSTOMER_ACCESS_TOKEN))
+            .thenReturn(Optional.of(new ActiveSession("01KQ0SESSION0000000000001", CUSTOMER_ID)));
+        when(customerAuthenticationFacade.findAuthCandidateById(CUSTOMER_ID))
+            .thenReturn(Optional.of(new AuthCandidateView(
+                CUSTOMER_ID,
+                CUSTOMER_EMAIL,
+                CustomerStatus.ACTIVE
+            )));
+        when(customerFacade.getCustomers()).thenReturn(List.of());
+
+        mockMvc.perform(get(CUSTOMER_LIST_PATH)
+                .header("Authorization", "Bearer " + CUSTOMER_ACCESS_TOKEN))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    void shouldRejectUnknownBearerTokenForCustomerListAccess() throws Exception {
+        when(customerAuthSessionService.findActiveCustomerByAccessToken(CUSTOMER_ACCESS_TOKEN))
+            .thenReturn(Optional.empty());
+
+        mockMvc.perform(get(CUSTOMER_LIST_PATH)
+                .header("Authorization", "Bearer " + CUSTOMER_ACCESS_TOKEN))
+            .andExpect(status().isUnauthorized())
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                .string(WWW_AUTHENTICATE_HEADER, BEARER_CHALLENGE))
+            .andExpect(jsonPath("$.errorCode").value("AUTHENTICATION_REQUIRED"));
     }
 
     @Test

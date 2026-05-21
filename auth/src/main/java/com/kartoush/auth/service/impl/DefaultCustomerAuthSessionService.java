@@ -1,9 +1,10 @@
 package com.kartoush.auth.service.impl;
 
+import com.kartoush.auth.domain.ActiveSession;
 import com.kartoush.auth.domain.IssuedCustomerAccessToken;
 import com.kartoush.auth.persistence.entity.CustomerAuthSessionEntity;
 import com.kartoush.auth.persistence.repository.CustomerAuthSessionRepository;
-import com.kartoush.auth.service.CustomerAccessTokenGenerator;
+import com.kartoush.auth.service.SecureTokenGenerator;
 import com.kartoush.auth.service.CustomerAccessTokenHasher;
 import com.kartoush.auth.service.CustomerAuthSessionService;
 import com.kartoush.platform.types.CustomerId;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Optional;
 
 @Service
 public class DefaultCustomerAuthSessionService implements CustomerAuthSessionService {
@@ -21,7 +23,7 @@ public class DefaultCustomerAuthSessionService implements CustomerAuthSessionSer
 
     private final CustomerAuthSessionRepository customerAuthSessionRepository;
 
-    private final CustomerAccessTokenGenerator customerAccessTokenGenerator;
+    private final SecureTokenGenerator secureTokenGenerator;
 
     private final CustomerAccessTokenHasher customerAccessTokenHasher;
 
@@ -31,13 +33,13 @@ public class DefaultCustomerAuthSessionService implements CustomerAuthSessionSer
 
     public DefaultCustomerAuthSessionService(
         final CustomerAuthSessionRepository customerAuthSessionRepository,
-        final CustomerAccessTokenGenerator customerAccessTokenGenerator,
+        final SecureTokenGenerator secureTokenGenerator,
         final CustomerAccessTokenHasher customerAccessTokenHasher,
         final UlidGenerator ulidGenerator,
         final Clock clock
     ) {
         this.customerAuthSessionRepository = customerAuthSessionRepository;
-        this.customerAccessTokenGenerator = customerAccessTokenGenerator;
+        this.secureTokenGenerator = secureTokenGenerator;
         this.customerAccessTokenHasher = customerAccessTokenHasher;
         this.ulidGenerator = ulidGenerator;
         this.clock = clock;
@@ -47,7 +49,7 @@ public class DefaultCustomerAuthSessionService implements CustomerAuthSessionSer
     @Transactional
     public IssuedCustomerAccessToken issueFor(final CustomerId customerId) {
         final Instant issuedAt = Instant.now(clock);
-        final String rawToken = customerAccessTokenGenerator.generate();
+        final String rawToken = secureTokenGenerator.generate();
         final String tokenHash = customerAccessTokenHasher.hash(rawToken);
 
         customerAuthSessionRepository.save(
@@ -61,6 +63,15 @@ public class DefaultCustomerAuthSessionService implements CustomerAuthSessionSer
         );
 
         return new IssuedCustomerAccessToken(rawToken, TOKEN_TYPE);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ActiveSession> findActiveCustomerByAccessToken(final String accessToken) {
+        final String tokenHash = customerAccessTokenHasher.hash(accessToken);
+
+        return customerAuthSessionRepository.findByTokenHashAndRevokedAtIsNull(tokenHash)
+            .map(session -> new ActiveSession(session.getId(), session.getCustomerId()));
     }
 
     @Override

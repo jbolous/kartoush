@@ -18,7 +18,9 @@ import java.io.IOException;
 @Component
 public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
+    private static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
     private static final String BASIC_CHALLENGE = "Basic realm=\"Kartoush Internal\"";
+    private static final String BEARER_CHALLENGE = "Bearer";
 
     private final ApiProblemFactory apiProblemFactory;
 
@@ -45,16 +47,21 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
             request
         );
 
-        writeProblem(response, problem, HttpStatus.UNAUTHORIZED);
+        writeProblem(request, response, problem, HttpStatus.UNAUTHORIZED);
     }
 
     private void writeProblem(
+        final HttpServletRequest request,
         final HttpServletResponse response,
         final ProblemDetail problem,
         final HttpStatus status) throws IOException {
         response.setStatus(status.value());
-        response.setHeader("WWW-Authenticate", BASIC_CHALLENGE);
+        response.setHeader(WWW_AUTHENTICATE_HEADER, authenticationChallengeFor(request));
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         objectMapper.writeValue(response.getOutputStream(), problem);
+    }
+
+    private String authenticationChallengeFor(final HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/internal/") ? BASIC_CHALLENGE : BEARER_CHALLENGE;
     }
 }

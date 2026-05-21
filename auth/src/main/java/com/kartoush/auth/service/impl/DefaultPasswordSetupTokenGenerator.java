@@ -1,25 +1,20 @@
 package com.kartoush.auth.service.impl;
 
 import com.kartoush.auth.service.PasswordSetupTokenGenerator;
+import com.kartoush.auth.service.SecureTokenGenerator;
 import org.springframework.stereotype.Component;
-
-import java.security.SecureRandom;
-import java.util.Base64;
 
 @Component
 public class DefaultPasswordSetupTokenGenerator implements PasswordSetupTokenGenerator {
 
-    private static final int TOKEN_BYTE_LENGTH = 32;
+    private final SecureTokenGenerator secureTokenGenerator;
 
-    private final SecureRandom secureRandom = new SecureRandom();
+    public DefaultPasswordSetupTokenGenerator(final SecureTokenGenerator secureTokenGenerator) {
+        this.secureTokenGenerator = secureTokenGenerator;
+    }
 
     @Override
     public String generate() {
-        final byte[] tokenBytes = new byte[TOKEN_BYTE_LENGTH];
-        secureRandom.nextBytes(tokenBytes);
-
-        return Base64.getUrlEncoder()
-            .withoutPadding()
-            .encodeToString(tokenBytes);
+        return secureTokenGenerator.generate();
     }
 }

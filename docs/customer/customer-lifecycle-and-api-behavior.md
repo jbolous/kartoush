@@ -163,6 +163,8 @@ new customer into the `PENDING` lifecycle state.
 
 Returns a list of customers. Only active customers are returned.
 
+This route currently requires an authenticated customer bearer token.
+
 ---
 
 #### Get customer by ID
@@ -170,6 +172,8 @@ Returns a list of customers. Only active customers are returned.
 `GET /api/customers/{customerId}`
 
 Returns a single customer. Returns 404 if the customer does not exist.
+
+This route currently requires an authenticated customer bearer token.
 
 ---
 
@@ -293,6 +297,8 @@ Updates customer profile fields such as first name, last name, and phone number.
 
 The operation does not update the email address and does not change the customer lifecycle state. The request is intended to be idempotent.
 
+This route currently requires an authenticated customer bearer token.
+
 Error scenarios:
 
 - 400 Bad Request for validation failures
@@ -329,6 +335,8 @@ Error scenarios:
 Performs a soft delete and returns 204 No Content.
 
 The customer status is set to DELETED, and the record is not physically removed.
+
+This route currently requires an authenticated customer bearer token.
 
 ---
 
