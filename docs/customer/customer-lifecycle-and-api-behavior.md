@@ -163,7 +163,9 @@ new customer into the `PENDING` lifecycle state.
 
 Returns a list of customers. Only active customers are returned.
 
-This route currently requires an authenticated customer bearer token.
+This route is intended for internal and administrative use. It currently
+requires administrative authentication and is not available to normal
+customer bearer-token clients.
 
 ---
 

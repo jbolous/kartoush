@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -38,7 +38,7 @@ public class SecurityConfiguration {
             .httpBasic(Customizer.withDefaults())
             .logout(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(bearerAuthenticationFilter, BasicAuthenticationFilter.class)
+            .addFilterBefore(bearerAuthenticationFilter, AnonymousAuthenticationFilter.class)
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler))
@@ -62,7 +62,8 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/auth/sign-in").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/password-reset").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/password-reset/confirm").permitAll()
-                .requestMatchers("/api/customers/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/customers").hasRole("ADMIN")
+                .requestMatchers("/api/customers/**").hasRole("CUSTOMER")
                 .requestMatchers("/internal/**").hasRole("ADMIN")
                 .requestMatchers("/api/**").denyAll()
                 .anyRequest().permitAll())

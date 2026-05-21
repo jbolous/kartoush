@@ -22,7 +22,9 @@ import java.util.Optional;
 public class BearerAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
+
     private static final String BEARER_PREFIX = "Bearer ";
+
     private static final String CUSTOMER_ROLE = "ROLE_CUSTOMER";
 
     private final CustomerAuthSessionService customerAuthSessionService;

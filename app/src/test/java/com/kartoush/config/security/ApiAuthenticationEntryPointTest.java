@@ -13,7 +13,6 @@ class ApiAuthenticationEntryPointTest {
 
     private static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
     private static final String BASIC_CHALLENGE = "Basic realm=\"Kartoush Internal\"";
-    private static final String BEARER_CHALLENGE = "Bearer";
 
     @Test
     void shouldWriteBasicChallengeForInternalRoutes() throws Exception {
@@ -33,7 +32,7 @@ class ApiAuthenticationEntryPointTest {
     }
 
     @Test
-    void shouldWriteBearerChallengeForCustomerApiRoutes() throws Exception {
+    void shouldWriteBasicChallengeForAdminCustomerListRoute() throws Exception {
         final ApiAuthenticationEntryPoint entryPoint =
             new ApiAuthenticationEntryPoint(new ApiProblemFactory(), new ObjectMapper().findAndRegisterModules());
         final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/customers");
@@ -42,7 +41,7 @@ class ApiAuthenticationEntryPointTest {
         entryPoint.commence(request, response, new BadCredentialsException("bad credentials"));
 
         assertThat(response.getStatus()).isEqualTo(401);
-        assertThat(response.getHeader(WWW_AUTHENTICATE_HEADER)).isEqualTo(BEARER_CHALLENGE);
+        assertThat(response.getHeader(WWW_AUTHENTICATE_HEADER)).isEqualTo(BASIC_CHALLENGE);
         assertThat(response.getContentAsString()).contains("\"instance\":\"/api/customers\"");
     }
 }

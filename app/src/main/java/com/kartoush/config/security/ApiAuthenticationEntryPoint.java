@@ -19,7 +19,9 @@ import java.io.IOException;
 public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
+
     private static final String BASIC_CHALLENGE = "Basic realm=\"Kartoush Internal\"";
+
     private static final String BEARER_CHALLENGE = "Bearer";
 
     private final ApiProblemFactory apiProblemFactory;
@@ -62,6 +64,11 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
     }
 
     private String authenticationChallengeFor(final HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/internal/") ? BASIC_CHALLENGE : BEARER_CHALLENGE;
+        return requiresInternalAdminChallenge(request) ? BASIC_CHALLENGE : BEARER_CHALLENGE;
+    }
+
+    private boolean requiresInternalAdminChallenge(final HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/internal/")
+            || "GET".equals(request.getMethod()) && "/api/customers".equals(request.getRequestURI());
     }
 }
