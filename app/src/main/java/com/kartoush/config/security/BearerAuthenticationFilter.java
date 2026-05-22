@@ -54,7 +54,7 @@ public class BearerAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(final HttpServletRequest request) {
+    protected boolean shouldNotFilter(final @NonNull HttpServletRequest request) {
         return !requestPath(request).startsWith("/api/");
     }
 
