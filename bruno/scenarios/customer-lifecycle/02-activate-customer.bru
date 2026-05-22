@@ -1,7 +1,7 @@
 meta {
   name: Activate customer
   type: http
-  seq: 7
+  seq: 2
 }
 
 post {
@@ -20,14 +20,14 @@ body {
   }
 }
 
-tests {
-  test("should return 200 when a valid activation token is supplied", function() {
-    expect(res.status).to.equal(200);
-  });
-}
-
 script:post-response {
   if (res.status === 200 && res.body && res.body.passwordSetupToken) {
     bru.setEnvVar("passwordSetupToken", res.body.passwordSetupToken);
   }
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.status).to.equal(200);
+  });
 }

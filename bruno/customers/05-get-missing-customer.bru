@@ -1,17 +1,17 @@
 meta {
-  name: Get missing customer
+  name: Get customer without bearer token
   type: http
   seq: 5
 }
 
 get {
-  url: {{host}}/api/customers/{{missingCustomerId}}
+  url: {{host}}/api/customers/{{customerId}}
   body: none
   auth: none
 }
 
 tests {
-  test("should return 404", function() {
-    expect(res.status).to.equal(404);
+  test("should return 401", function() {
+    expect(res.status).to.equal(401);
   });
 }
