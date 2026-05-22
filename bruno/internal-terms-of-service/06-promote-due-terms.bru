@@ -10,6 +10,10 @@ post {
   auth: none
 }
 
+headers {
+  authorization: Basic {{internalAdminBasicToken}}
+}
+
 tests {
   test("should return 200 or 409", function() {
     expect([200, 409]).to.include(res.status);

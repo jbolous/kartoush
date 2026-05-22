@@ -10,6 +10,10 @@ get {
   auth: none
 }
 
+headers {
+  authorization: {{tokenType}} {{accessToken}}
+}
+
 tests {
   test("should return 200", function() {
     expect(res.status).to.equal(200);

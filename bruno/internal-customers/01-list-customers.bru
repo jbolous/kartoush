@@ -5,9 +5,13 @@ meta {
 }
 
 get {
-  url: {{host}}/api/customers
+  url: {{host}}/internal/customers
   body: none
   auth: none
+}
+
+headers {
+  authorization: Basic {{internalAdminBasicToken}}
 }
 
 tests {
