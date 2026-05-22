@@ -55,7 +55,7 @@ public class BearerAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(final HttpServletRequest request) {
-        return !request.getServletPath().startsWith("/api/");
+        return !requestPath(request).startsWith("/api/");
     }
 
     private Optional<UsernamePasswordAuthenticationToken> resolveAuthentication(final HttpServletRequest request) {
@@ -97,5 +97,13 @@ public class BearerAuthenticationFilter extends OncePerRequestFilter {
 
         final String accessToken = headerValue.substring(BEARER_PREFIX.length()).trim();
         return accessToken.isEmpty() ? null : accessToken;
+    }
+
+    private String requestPath(final HttpServletRequest request) {
+        final String requestUri = request.getRequestURI();
+        final String contextPath = request.getContextPath();
+        return contextPath != null && !contextPath.isEmpty() && requestUri.startsWith(contextPath)
+            ? requestUri.substring(contextPath.length())
+            : requestUri;
     }
 }
