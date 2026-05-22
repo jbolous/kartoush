@@ -11,8 +11,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ApiAuthenticationEntryPointTest {
 
+    private static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
+    private static final String BASIC_CHALLENGE = "Basic realm=\"Kartoush Internal\"";
+
     @Test
-    void shouldWriteAuthenticationRequiredProblem() throws Exception {
+    void shouldWriteBasicChallengeForInternalRoutes() throws Exception {
         final ApiAuthenticationEntryPoint entryPoint =
             new ApiAuthenticationEntryPoint(new ApiProblemFactory(), new ObjectMapper().findAndRegisterModules());
         final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/internal/terms-of-service/drafts");
@@ -21,10 +24,24 @@ class ApiAuthenticationEntryPointTest {
         entryPoint.commence(request, response, new BadCredentialsException("bad credentials"));
 
         assertThat(response.getStatus()).isEqualTo(401);
-        assertThat(response.getHeader("WWW-Authenticate")).isEqualTo("Basic realm=\"Kartoush Internal\"");
+        assertThat(response.getHeader(WWW_AUTHENTICATE_HEADER)).isEqualTo(BASIC_CHALLENGE);
         assertThat(response.getContentType()).isEqualTo("application/problem+json");
         assertThat(response.getContentAsString()).contains("\"errorCode\":\"AUTHENTICATION_REQUIRED\"");
         assertThat(response.getContentAsString()).contains("\"title\":\"Authentication Required\"");
         assertThat(response.getContentAsString()).contains("\"instance\":\"/internal/terms-of-service/drafts\"");
+    }
+
+    @Test
+    void shouldWriteBasicChallengeForAdminCustomerListRoute() throws Exception {
+        final ApiAuthenticationEntryPoint entryPoint =
+            new ApiAuthenticationEntryPoint(new ApiProblemFactory(), new ObjectMapper().findAndRegisterModules());
+        final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/internal/customers");
+        final MockHttpServletResponse response = new MockHttpServletResponse();
+
+        entryPoint.commence(request, response, new BadCredentialsException("bad credentials"));
+
+        assertThat(response.getStatus()).isEqualTo(401);
+        assertThat(response.getHeader(WWW_AUTHENTICATE_HEADER)).isEqualTo(BASIC_CHALLENGE);
+        assertThat(response.getContentAsString()).contains("\"instance\":\"/internal/customers\"");
     }
 }

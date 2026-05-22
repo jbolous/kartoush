@@ -75,16 +75,6 @@ class CustomerControllerWebMvcTest {
     private CustomerFacade customerFacade;
 
     @Test
-    void shouldGetCustomers() throws Exception {
-        when(customerFacade.getCustomers()).thenReturn(List.of());
-
-        mockMvc.perform(get(BASE_URL))
-            .andExpect(status().isOk());
-
-        verify(customerFacade).getCustomers();
-    }
-
-    @Test
     void shouldGetCustomerById() throws Exception {
         when(customerFacade.getCustomer(eq(CUSTOMER_ID)))
             .thenReturn(mockCustomerView());

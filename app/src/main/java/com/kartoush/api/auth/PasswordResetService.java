@@ -5,7 +5,7 @@ import com.kartoush.auth.exception.InvalidPasswordResetException;
 import com.kartoush.auth.exception.PasswordResetTokenNotFoundException;
 import com.kartoush.auth.facade.CustomerPasswordFacade;
 import com.kartoush.customer.facade.CustomerAuthenticationFacade;
-import com.kartoush.customer.facade.model.CustomerAuthCandidateView;
+import com.kartoush.customer.facade.model.AuthCandidateView;
 import com.kartoush.notification.email.customer.CustomerEmailFactory;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.platform.types.CustomerId;
@@ -49,13 +49,13 @@ public class PasswordResetService {
     public void requestPasswordReset(final String emailAddress) {
         final Email email = parseEmail(emailAddress);
 
-        final Optional<CustomerAuthCandidateView> candidate = customerAuthenticationFacade.findAuthCandidateByEmail(email);
+        final Optional<AuthCandidateView> candidate = customerAuthenticationFacade.findAuthCandidateByEmail(email);
 
         if (candidate.isEmpty()) {
             return;
         }
 
-        final CustomerAuthCandidateView authCandidate = candidate.orElseThrow();
+        final AuthCandidateView authCandidate = candidate.orElseThrow();
 
         if (authCandidate.status() != CustomerStatus.ACTIVE) {
             return;
@@ -77,7 +77,7 @@ public class PasswordResetService {
         resetPasswordRequestValidator.validate(request);
 
         final Email email = parseEmail(request.email());
-        final CustomerAuthCandidateView candidate = customerAuthenticationFacade.findAuthCandidateByEmail(email)
+        final AuthCandidateView candidate = customerAuthenticationFacade.findAuthCandidateByEmail(email)
             .orElseThrow(() -> new PasswordResetTokenNotFoundException(email.value()));
 
         if (candidate.status() != CustomerStatus.ACTIVE) {

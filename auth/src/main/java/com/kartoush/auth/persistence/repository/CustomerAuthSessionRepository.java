@@ -6,8 +6,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CustomerAuthSessionRepository extends JpaRepository<CustomerAuthSessionEntity, String> {
+
+    Optional<CustomerAuthSessionEntity> findByTokenHashAndRevokedAtIsNull(String tokenHash);
 
     @Query("""
         select session

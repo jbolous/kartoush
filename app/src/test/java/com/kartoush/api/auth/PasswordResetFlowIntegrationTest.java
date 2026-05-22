@@ -2,6 +2,7 @@ package com.kartoush.api.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kartoush.api.support.UrlQueryParams;
 import com.kartoush.config.jobs.ActivationEmailJobHandler;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.notification.email.EmailMessage;
@@ -29,19 +30,16 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
-import java.net.URI;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PasswordResetFlowIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String CUSTOMERS_PATH = "/api/customers";
+    private static final String CUSTOMER_DETAILS_PATH = "/api/customers/{customerId}";
     private static final String ACTIVATION_PATH = "/{customerId}/activation";
     private static final String INITIAL_PASSWORD_PATH = "/{customerId}/initial-password";
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
@@ -115,12 +114,12 @@ class PasswordResetFlowIntegrationTest extends PostgresSpringIntegrationTest {
             if (email.type() == EmailMessageType.CUSTOMER_ACTIVATION) {
                 capturedActivationEmails.add(new CapturedActivationEmail(
                     email.recipient(),
-                    queryParam(email.actionUrl(), "token")
+                    UrlQueryParams.queryParam(email.actionUrl(), "token")
                 ));
             } else if (email.type() == EmailMessageType.CUSTOMER_PASSWORD_RESET) {
                 capturedPasswordResetEmails.add(new CapturedPasswordResetEmail(
                     email.recipient(),
-                    queryParam(email.actionUrl(), "token")
+                    UrlQueryParams.queryParam(email.actionUrl(), "token")
                 ));
             }
             return null;
@@ -167,16 +166,26 @@ class PasswordResetFlowIntegrationTest extends PostgresSpringIntegrationTest {
     @Test
     void shouldResetPasswordWithValidResetToken() throws Exception {
         final CreatedCustomer createdCustomer = createActiveCustomerWithPassword();
-        mockMvc.perform(post(SIGN_IN_PATH)
+        final String signInResponseBody = mockMvc.perform(post(SIGN_IN_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(
                     new SignInRequest(createdCustomer.email(), ORIGINAL_PASSWORD))))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.accessToken").isNotEmpty());
+            .andExpect(jsonPath("$.accessToken").isNotEmpty())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        final String accessToken = objectMapper.readTree(signInResponseBody).get("accessToken").asText();
 
         assertThat(customerAuthSessionRepository.findAll())
             .hasSize(1)
             .allSatisfy(session -> assertThat(session.getRevokedAt()).isNull());
+
+        mockMvc.perform(get(CUSTOMER_DETAILS_PATH, createdCustomer.customerId())
+                .header("Authorization", "Bearer " + accessToken))
+            .andExpect(status().isOk())
+            .andExpect(header().doesNotExist("WWW-Authenticate"));
 
         final String resetToken = requestPasswordResetAndCaptureToken(createdCustomer.email());
 
@@ -189,6 +198,12 @@ class PasswordResetFlowIntegrationTest extends PostgresSpringIntegrationTest {
         assertThat(customerAuthSessionRepository.findAll())
             .hasSize(1)
             .allSatisfy(session -> assertThat(session.getRevokedAt()).isNotNull());
+
+        mockMvc.perform(get(CUSTOMER_DETAILS_PATH, createdCustomer.customerId())
+                .header("Authorization", "Bearer " + accessToken))
+            .andExpect(status().isUnauthorized())
+            .andExpect(header().string("WWW-Authenticate", "Bearer"))
+            .andExpect(jsonPath("$.errorCode").value(ErrorCode.AUTHENTICATION_REQUIRED.name()));
 
         mockMvc.perform(post(SIGN_IN_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -387,16 +402,4 @@ class PasswordResetFlowIntegrationTest extends PostgresSpringIntegrationTest {
     private record CapturedPasswordResetEmail(Email email, String rawToken) {
     }
 
-    private String queryParam(final String url, final String name) {
-        return queryParams(url).get(name);
-    }
-
-    private Map<String, String> queryParams(final String url) {
-        return List.of(URI.create(url).getQuery().split("&")).stream()
-            .map(part -> part.split("=", 2))
-            .collect(Collectors.toMap(
-                pair -> URLDecoder.decode(pair[0], StandardCharsets.UTF_8),
-                pair -> pair.length > 1 ? URLDecoder.decode(pair[1], StandardCharsets.UTF_8) : ""
-            ));
-    }
 }

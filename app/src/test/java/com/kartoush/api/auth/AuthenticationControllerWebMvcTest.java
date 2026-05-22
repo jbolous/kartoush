@@ -35,6 +35,8 @@ class AuthenticationControllerWebMvcTest {
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
     private static final String PASSWORD_RESET_PATH = "/api/auth/password-reset";
     private static final String PASSWORD_RESET_CONFIRM_PATH = "/api/auth/password-reset/confirm";
+    private static final String ACCESS_TOKEN = "opaque-token";
+    private static final String TOKEN_TYPE = "Bearer";
 
     @Autowired
     private MockMvc mockMvc;
@@ -45,27 +47,27 @@ class AuthenticationControllerWebMvcTest {
     private ApiProblemFactory apiProblemFactory;
 
     @MockitoBean
-    private AuthenticationService customerAuthenticationApplicationService;
+    private AuthenticationService authenticationService;
 
     @MockitoBean
-    private PasswordResetService customerPasswordResetApplicationService;
+    private PasswordResetService passwordResetService;
 
     @Test
     void shouldSignInCustomer() throws Exception {
         final SignInRequest request = new SignInRequest("jack@kartoush.com", "Password123!");
-        final SignInView response = new SignInView("opaque-token", "Bearer");
+        final SignInView response = new SignInView(ACCESS_TOKEN, TOKEN_TYPE);
 
-        when(customerAuthenticationApplicationService.signIn(eq(request.email()), eq(request.password())))
+        when(authenticationService.signIn(eq(request.email()), eq(request.password())))
             .thenReturn(response);
 
         mockMvc.perform(post(SIGN_IN_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.accessToken").value("opaque-token"))
-            .andExpect(jsonPath("$.tokenType").value("Bearer"));
+            .andExpect(jsonPath("$.accessToken").value(ACCESS_TOKEN))
+            .andExpect(jsonPath("$.tokenType").value(TOKEN_TYPE));
 
-        verify(customerAuthenticationApplicationService).signIn(request.email(), request.password());
+        verify(authenticationService).signIn(request.email(), request.password());
     }
 
     @Test
@@ -77,7 +79,7 @@ class AuthenticationControllerWebMvcTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNoContent());
 
-        verify(customerPasswordResetApplicationService).requestPasswordReset(request.email());
+        verify(passwordResetService).requestPasswordReset(request.email());
     }
 
     @Test
@@ -90,6 +92,6 @@ class AuthenticationControllerWebMvcTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNoContent());
 
-        verify(customerPasswordResetApplicationService).resetPassword(request);
+        verify(passwordResetService).resetPassword(request);
     }
 }

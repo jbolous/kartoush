@@ -1,7 +1,7 @@
 package com.kartoush.customer.internal.facade;
 
 import com.kartoush.customer.facade.CustomerAuthenticationFacade;
-import com.kartoush.customer.facade.model.CustomerAuthCandidateView;
+import com.kartoush.customer.facade.model.AuthCandidateView;
 import com.kartoush.customer.service.CustomerService;
 import com.kartoush.platform.types.Email;
 import org.springframework.stereotype.Service;
@@ -18,9 +18,19 @@ public class DefaultCustomerAuthenticationFacade implements CustomerAuthenticati
     }
 
     @Override
-    public Optional<CustomerAuthCandidateView> findAuthCandidateByEmail(final Email email) {
+    public Optional<AuthCandidateView> findAuthCandidateByEmail(final Email email) {
         return customerService.findCustomerByEmail(email)
-            .map(customer -> new CustomerAuthCandidateView(
+            .map(customer -> new AuthCandidateView(
+                customer.getId().value(),
+                customer.getEmail().value(),
+                customer.getStatus()
+            ));
+    }
+
+    @Override
+    public Optional<AuthCandidateView> findAuthCandidateById(final String customerId) {
+        return customerService.getCustomerById(customerId)
+            .map(customer -> new AuthCandidateView(
                 customer.getId().value(),
                 customer.getEmail().value(),
                 customer.getStatus()

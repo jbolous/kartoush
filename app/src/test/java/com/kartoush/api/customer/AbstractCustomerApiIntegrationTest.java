@@ -1,5 +1,6 @@
 package com.kartoush.api.customer;
 
+import com.kartoush.api.support.UrlQueryParams;
 import com.kartoush.config.jobs.ActivationEmailJobHandler;
 import com.kartoush.customer.service.job.ActivationEmailJobRequest;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
@@ -14,13 +15,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -68,7 +64,7 @@ abstract class AbstractCustomerApiIntegrationTest extends PostgresRestAssuredInt
             if (email.type() == EmailMessageType.CUSTOMER_ACTIVATION) {
                 capturedActivationEmails.add(new CapturedActivationEmail(
                     email.recipient(),
-                    queryParam(email.actionUrl(), "token")
+                    UrlQueryParams.queryParam(email.actionUrl(), "token")
                 ));
             }
             return null;
@@ -82,28 +78,6 @@ abstract class AbstractCustomerApiIntegrationTest extends PostgresRestAssuredInt
     protected CapturedActivationEmail latestCapturedActivationEmail() {
         assertThat(capturedActivationEmails).isNotEmpty();
         return capturedActivationEmails.getLast();
-    }
-
-    private String queryParam(final String url, final String name) {
-        return queryParams(url).get(name);
-    }
-
-    private Map<String, String> queryParams(final String url) {
-        final String query = URI.create(url).getQuery();
-        if (query == null || query.isBlank()) {
-            return Map.of();
-        }
-
-        return List.of(query.split("&")).stream()
-            .map(part -> part.split("=", 2))
-            .collect(Collectors.toMap(
-                pair -> decode(pair[0]),
-                pair -> pair.length > 1 ? decode(pair[1]) : ""
-            ));
-    }
-
-    private String decode(final String value) {
-        return URLDecoder.decode(value, StandardCharsets.UTF_8);
     }
 
     protected record CapturedActivationEmail(Email email, String rawToken) {

@@ -1,6 +1,6 @@
 package com.kartoush.auth.service;
 
-public interface CustomerAccessTokenGenerator {
+public interface SecureTokenGenerator {
 
     String generate();
 }

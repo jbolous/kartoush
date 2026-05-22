@@ -2,6 +2,7 @@ package com.kartoush.api.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kartoush.api.support.UrlQueryParams;
 import com.kartoush.config.jobs.ActivationEmailJobHandler;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.notification.email.EmailMessage;
@@ -27,17 +28,14 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -46,6 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
 
     private static final String CUSTOMERS_PATH = "/api/customers";
+    private static final String CUSTOMER_DETAILS_PATH = "/api/customers/{customerId}";
     private static final String ACTIVATION_PATH = "/{customerId}/activation";
     private static final String INITIAL_PASSWORD_PATH = "/{customerId}/initial-password";
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
@@ -96,7 +95,7 @@ class SignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
             if (email.type() == EmailMessageType.CUSTOMER_ACTIVATION) {
                 capturedActivationEmails.add(new CapturedActivationEmail(
                     email.recipient(),
-                    queryParam(email.actionUrl(), "token")
+                    UrlQueryParams.queryParam(email.actionUrl(), "token")
                 ));
             }
             return null;
@@ -128,6 +127,50 @@ class SignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
         assertThat(customerAuthSessionRepository.findAll()).hasSize(1);
         assertThat(customerAuthSessionRepository.findAll().getFirst().getCustomerId())
             .isEqualTo(createdCustomer.customerId());
+    }
+
+    @Test
+    void shouldAllowAuthenticatedCustomerDetailsAccessWithIssuedBearerToken() throws Exception {
+        final CreatedCustomer createdCustomer = createActiveCustomerWithPassword();
+
+        final String signInResponseBody = mockMvc.perform(post(SIGN_IN_PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new SignInRequest(createdCustomer.email(), PASSWORD))))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        final String accessToken = objectMapper.readTree(signInResponseBody).get("accessToken").asText();
+
+        mockMvc.perform(get(CUSTOMER_DETAILS_PATH, createdCustomer.customerId())
+                .header("Authorization", "Bearer " + accessToken))
+            .andExpect(status().isOk())
+            .andExpect(header().doesNotExist("WWW-Authenticate"))
+            .andExpect(jsonPath("$.customerId").value(createdCustomer.customerId()));
+    }
+
+    @Test
+    void shouldRejectAuthenticatedCustomerDetailsAccessForDifferentCustomer() throws Exception {
+        final CreatedCustomer createdCustomer = createActiveCustomerWithPassword();
+        final CreatedCustomer otherCustomer = createActiveCustomerWithPassword();
+
+        final String signInResponseBody = mockMvc.perform(post(SIGN_IN_PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new SignInRequest(createdCustomer.email(), PASSWORD))))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        final String accessToken = objectMapper.readTree(signInResponseBody).get("accessToken").asText();
+
+        mockMvc.perform(get(CUSTOMER_DETAILS_PATH, otherCustomer.customerId())
+                .header("Authorization", "Bearer " + accessToken))
+            .andExpect(status().isForbidden())
+            .andExpect(header().doesNotExist("WWW-Authenticate"));
     }
 
     @Test
@@ -240,16 +283,4 @@ class SignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
     private record CapturedActivationEmail(Email email, String rawToken) {
     }
 
-    private String queryParam(final String url, final String name) {
-        return queryParams(url).get(name);
-    }
-
-    private Map<String, String> queryParams(final String url) {
-        return List.of(URI.create(url).getQuery().split("&")).stream()
-            .map(part -> part.split("=", 2))
-            .collect(Collectors.toMap(
-                pair -> URLDecoder.decode(pair[0], StandardCharsets.UTF_8),
-                pair -> pair.length > 1 ? URLDecoder.decode(pair[1], StandardCharsets.UTF_8) : ""
-            ));
-    }
 }

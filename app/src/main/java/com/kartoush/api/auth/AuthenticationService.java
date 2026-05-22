@@ -4,7 +4,7 @@ import com.kartoush.auth.domain.IssuedCustomerAccessToken;
 import com.kartoush.auth.exception.InvalidCustomerCredentialsException;
 import com.kartoush.auth.facade.CustomerSignInFacade;
 import com.kartoush.customer.facade.CustomerAuthenticationFacade;
-import com.kartoush.customer.facade.model.CustomerAuthCandidateView;
+import com.kartoush.customer.facade.model.AuthCandidateView;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.CustomerStatus;
 import com.kartoush.platform.types.Email;
@@ -35,7 +35,7 @@ public class AuthenticationService {
             throw new InvalidCustomerCredentialsException();
         }
 
-        final CustomerAuthCandidateView candidate = customerAuthenticationFacade.findAuthCandidateByEmail(email)
+        final AuthCandidateView candidate = customerAuthenticationFacade.findAuthCandidateByEmail(email)
             .orElseThrow(InvalidCustomerCredentialsException::new);
 
         if (candidate.status() != CustomerStatus.ACTIVE) {

@@ -6,7 +6,10 @@ import com.kartoush.api.auth.AuthenticationController;
 import com.kartoush.api.auth.PasswordResetService;
 import com.kartoush.api.auth.SignInRequest;
 import com.kartoush.api.auth.SignInView;
+import com.kartoush.config.security.AuthenticatedPrincipal;
+import com.kartoush.auth.service.CustomerAuthSessionService;
 import com.kartoush.api.customer.CustomerController;
+import com.kartoush.api.customer.InternalCustomerManagementController;
 import com.kartoush.api.error.ApiExceptionHandler;
 import com.kartoush.api.error.ApiProblemFactory;
 import com.kartoush.api.terms.InternalTermsOfServiceManagementController;
@@ -14,13 +17,16 @@ import com.kartoush.api.terms.TermsOfServiceController;
 import com.kartoush.config.security.ApiAccessDeniedHandler;
 import com.kartoush.config.security.ApiAuthenticationEntryPoint;
 import com.kartoush.config.security.SecurityConfiguration;
+import com.kartoush.customer.facade.CustomerAuthenticationFacade;
 import com.kartoush.customer.facade.CustomerFacade;
 import com.kartoush.customer.facade.TermsOfServiceFacade;
 import com.kartoush.customer.facade.TermsOfServiceManagementFacade;
+import com.kartoush.customer.facade.model.CustomerView;
 import com.kartoush.customer.facade.model.TermsOfServiceManagementView;
 import com.kartoush.customer.facade.model.TermsOfServiceView;
 import com.kartoush.customer.termsofservice.TermsOfServiceContentType;
 import com.kartoush.customer.termsofservice.TermsOfServiceStatus;
+import com.kartoush.platform.types.CustomerStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -36,21 +42,28 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.authentication.UsernamePasswordAuthenticationToken.authenticated;
+import static org.springframework.security.core.authority.AuthorityUtils.createAuthorityList;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest({
     AuthenticationController.class,
     CustomerController.class,
+    InternalCustomerManagementController.class,
     TermsOfServiceController.class,
     InternalTermsOfServiceManagementController.class
 })
@@ -66,9 +79,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SecurityConfigurationTest {
 
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
-    private static final String CUSTOMER_LIST_PATH = "/api/customers";
+    private static final String INTERNAL_CUSTOMER_LIST_PATH = "/internal/customers";
+    private static final String CUSTOMER_DETAILS_PATH = "/api/customers/01KQ0CUSTOMER0000000000001";
+    private static final String OTHER_CUSTOMER_DETAILS_PATH = "/api/customers/01KQ0CUSTOMER0000000000002";
     private static final String PUBLIC_TERMS_PATH = "/api/terms-of-service/current";
     private static final String INTERNAL_TERMS_DRAFTS_PATH = "/internal/terms-of-service/drafts";
+    private static final String ACCESS_TOKEN = "opaque-token";
+    private static final String TOKEN_TYPE = "Bearer";
+    private static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
+    private static final String BASIC_CHALLENGE = "Basic realm=\"Kartoush Internal\"";
+    private static final String AUTHENTICATION_REQUIRED = "AUTHENTICATION_REQUIRED";
+    private static final String AUTHENTICATION_REQUIRED_TITLE = "Authentication Required";
+    private static final String CUSTOMER_ROLE = "CUSTOMER";
+    private static final String CUSTOMER_FIRST_NAME = "Jack";
+    private static final String CUSTOMER_LAST_NAME = "Kartoush";
+    private static final String CUSTOMER_EMAIL = "jack@kartoush.com";
+    private static final String CUSTOMER_ID = "01KQ0CUSTOMER0000000000001";
+    private static final String CUSTOMER_PHONE_NUMBER = "+13125550100";
     private static final String INTERNAL_ADMIN_USERNAME = "internal-admin";
     private static final String INTERNAL_ADMIN_PASSWORD = "test-internal-admin-password";
     private static final String INTERNAL_TERMS_DRAFT_REQUEST = """
@@ -85,10 +112,16 @@ class SecurityConfigurationTest {
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @MockitoBean
-    private AuthenticationService customerAuthenticationApplicationService;
+    private AuthenticationService authenticationService;
 
     @MockitoBean
-    private PasswordResetService customerPasswordResetApplicationService;
+    private PasswordResetService passwordResetService;
+
+    @MockitoBean
+    private CustomerAuthSessionService customerAuthSessionService;
+
+    @MockitoBean
+    private CustomerAuthenticationFacade customerAuthenticationFacade;
 
     @MockitoBean
     private CustomerFacade customerFacade;
@@ -102,19 +135,19 @@ class SecurityConfigurationTest {
     @Test
     void shouldAllowAnonymousSignIn() throws Exception {
         final SignInRequest request = new SignInRequest("jack@kartoush.com", "Password123!");
-        final SignInView response = new SignInView("opaque-token", "Bearer");
+        final SignInView response = new SignInView(ACCESS_TOKEN, TOKEN_TYPE);
 
-        when(customerAuthenticationApplicationService.signIn(eq(request.email()), eq(request.password())))
+        when(authenticationService.signIn(eq(request.email()), eq(request.password())))
             .thenReturn(response);
 
         mockMvc.perform(post(SIGN_IN_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.accessToken").value("opaque-token"))
-            .andExpect(jsonPath("$.tokenType").value("Bearer"));
+            .andExpect(jsonPath("$.accessToken").value(ACCESS_TOKEN))
+            .andExpect(jsonPath("$.tokenType").value(TOKEN_TYPE));
 
-        verify(customerAuthenticationApplicationService).signIn(request.email(), request.password());
+        verify(authenticationService).signIn(request.email(), request.password());
     }
 
     @Test
@@ -140,11 +173,12 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void shouldAllowAnonymousCustomerListAccess() throws Exception {
-        mockMvc.perform(get(CUSTOMER_LIST_PATH))
+    void shouldRejectAnonymousInternalCustomerListAccess() throws Exception {
+        mockMvc.perform(get(INTERNAL_CUSTOMER_LIST_PATH))
             .andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.errorCode").value("AUTHENTICATION_REQUIRED"))
-            .andExpect(jsonPath("$.title").value("Authentication Required"));
+            .andExpect(header().string(WWW_AUTHENTICATE_HEADER, BASIC_CHALLENGE))
+            .andExpect(jsonPath("$.errorCode").value(AUTHENTICATION_REQUIRED))
+            .andExpect(jsonPath("$.title").value(AUTHENTICATION_REQUIRED_TITLE));
     }
 
     @Test
@@ -153,8 +187,74 @@ class SecurityConfigurationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(INTERNAL_TERMS_DRAFT_REQUEST))
             .andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.errorCode").value("AUTHENTICATION_REQUIRED"))
-            .andExpect(jsonPath("$.title").value("Authentication Required"));
+            .andExpect(header().string(WWW_AUTHENTICATE_HEADER, BASIC_CHALLENGE))
+            .andExpect(jsonPath("$.errorCode").value(AUTHENTICATION_REQUIRED))
+            .andExpect(jsonPath("$.title").value(AUTHENTICATION_REQUIRED_TITLE));
+    }
+
+    @Test
+    void shouldRejectCustomerAccessToInternalCustomerList() throws Exception {
+        when(customerFacade.getCustomers()).thenReturn(List.of());
+
+        mockMvc.perform(get(INTERNAL_CUSTOMER_LIST_PATH)
+                .with(user(CUSTOMER_EMAIL).roles(CUSTOMER_ROLE)))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectCustomerHeadAccessToInternalCustomerList() throws Exception {
+        mockMvc.perform(head(INTERNAL_CUSTOMER_LIST_PATH)
+                .with(user(CUSTOMER_EMAIL).roles(CUSTOMER_ROLE)))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectAdminAccessToCustomerDetailsUsingHttpBasic() throws Exception {
+        mockMvc.perform(get(CUSTOMER_DETAILS_PATH)
+                .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD)))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowCustomerAccessToOwnCustomerDetails() throws Exception {
+        when(customerFacade.getCustomer(CUSTOMER_ID)).thenReturn(new CustomerView(
+            CUSTOMER_ID,
+            CUSTOMER_FIRST_NAME,
+            CUSTOMER_LAST_NAME,
+            CUSTOMER_EMAIL,
+            CUSTOMER_PHONE_NUMBER,
+            CustomerStatus.ACTIVE
+        ));
+
+        mockMvc.perform(get(CUSTOMER_DETAILS_PATH)
+                .with(authentication(authenticated(
+                    new AuthenticatedPrincipal(CUSTOMER_ID, CUSTOMER_EMAIL),
+                    null,
+                    createAuthorityList("ROLE_" + CUSTOMER_ROLE)))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.customerId").value(CUSTOMER_ID));
+    }
+
+    @Test
+    void shouldRejectCustomerAccessToOtherCustomerDetails() throws Exception {
+        mockMvc.perform(get(OTHER_CUSTOMER_DETAILS_PATH)
+                .with(authentication(authenticated(
+                    new AuthenticatedPrincipal(CUSTOMER_ID, CUSTOMER_EMAIL),
+                    null,
+                    createAuthorityList("ROLE_" + CUSTOMER_ROLE)))))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowAdminCustomerListAccessUsingHttpBasic() throws Exception {
+        when(customerFacade.getCustomers()).thenReturn(List.of());
+
+        mockMvc.perform(get(INTERNAL_CUSTOMER_LIST_PATH)
+                .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray());
+
+        verify(customerFacade).getCustomers();
     }
 
     @Test
