@@ -35,13 +35,13 @@ class ApiAuthenticationEntryPointTest {
     void shouldWriteBasicChallengeForAdminCustomerListRoute() throws Exception {
         final ApiAuthenticationEntryPoint entryPoint =
             new ApiAuthenticationEntryPoint(new ApiProblemFactory(), new ObjectMapper().findAndRegisterModules());
-        final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/customers");
+        final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/internal/customers");
         final MockHttpServletResponse response = new MockHttpServletResponse();
 
         entryPoint.commence(request, response, new BadCredentialsException("bad credentials"));
 
         assertThat(response.getStatus()).isEqualTo(401);
         assertThat(response.getHeader(WWW_AUTHENTICATE_HEADER)).isEqualTo(BASIC_CHALLENGE);
-        assertThat(response.getContentAsString()).contains("\"instance\":\"/api/customers\"");
+        assertThat(response.getContentAsString()).contains("\"instance\":\"/internal/customers\"");
     }
 }

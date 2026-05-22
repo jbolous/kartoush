@@ -12,7 +12,6 @@ import com.kartoush.customer.facade.model.CustomerView;
 import com.kartoush.customer.facade.model.InitialCustomerPasswordInput;
 import com.kartoush.customer.facade.model.UpdateCustomerInput;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -45,26 +43,6 @@ public class CustomerController {
 
     public CustomerController(final CustomerFacade customerFacade) {
         this.customerFacade = customerFacade;
-    }
-
-    @Operation(
-        summary = "List customers",
-        description = "Returns all customers currently visible through the customer API."
-    )
-    @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "Customers retrieved successfully",
-            content = @Content(
-                mediaType = "application/json",
-                array = @ArraySchema(schema = @Schema(implementation = CustomerView.class))
-            )
-        )
-    })
-    @InternalServerErrorApiResponse
-    @GetMapping
-    public ResponseEntity<List<CustomerView>> getCustomers() {
-        return ResponseEntity.ok(customerFacade.getCustomers());
     }
 
     @Operation(

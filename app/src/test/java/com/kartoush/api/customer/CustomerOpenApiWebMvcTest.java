@@ -71,6 +71,7 @@ class CustomerOpenApiWebMvcTest {
         mockMvc.perform(get(API_DOCS_PATH))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.info.title").value("Kartoush API"))
+            .andExpect(jsonPath("$.paths['/api/customers'].get").doesNotExist())
             .andExpect(jsonPath(operationPath(CUSTOMER_PATH, "post", "summary")).value("Create a customer"))
             .andExpect(jsonPath(problemSchemaRefPath(
                 CUSTOMER_PATH,

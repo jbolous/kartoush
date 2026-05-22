@@ -20,8 +20,6 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
 
-    private static final String CUSTOMERS_PATH = "/api/customers";
-
     private static final String BASIC_CHALLENGE = "Basic realm=\"Kartoush Internal\"";
 
     private static final String BEARER_CHALLENGE = "Bearer";
@@ -71,8 +69,7 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private boolean requiresInternalAdminChallenge(final HttpServletRequest request) {
         final String requestPath = requestPath(request);
-        return requestPath.startsWith("/internal/")
-            || "GET".equals(request.getMethod()) && CUSTOMERS_PATH.equals(requestPath);
+        return requestPath.startsWith("/internal/");
     }
 
     private String requestPath(final HttpServletRequest request) {

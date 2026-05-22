@@ -8,6 +8,7 @@ import com.kartoush.api.auth.SignInRequest;
 import com.kartoush.api.auth.SignInView;
 import com.kartoush.auth.service.CustomerAuthSessionService;
 import com.kartoush.api.customer.CustomerController;
+import com.kartoush.api.customer.InternalCustomerManagementController;
 import com.kartoush.api.error.ApiExceptionHandler;
 import com.kartoush.api.error.ApiProblemFactory;
 import com.kartoush.api.terms.InternalTermsOfServiceManagementController;
@@ -55,6 +56,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({
     AuthenticationController.class,
     CustomerController.class,
+    InternalCustomerManagementController.class,
     TermsOfServiceController.class,
     InternalTermsOfServiceManagementController.class
 })
@@ -70,7 +72,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SecurityConfigurationTest {
 
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
-    private static final String CUSTOMER_LIST_PATH = "/api/customers";
+    private static final String INTERNAL_CUSTOMER_LIST_PATH = "/internal/customers";
     private static final String CUSTOMER_DETAILS_PATH = "/api/customers/01KQ0CUSTOMER0000000000001";
     private static final String PUBLIC_TERMS_PATH = "/api/terms-of-service/current";
     private static final String INTERNAL_TERMS_DRAFTS_PATH = "/internal/terms-of-service/drafts";
@@ -159,8 +161,8 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void shouldRejectAnonymousCustomerListAccess() throws Exception {
-        mockMvc.perform(get(CUSTOMER_LIST_PATH))
+    void shouldRejectAnonymousInternalCustomerListAccess() throws Exception {
+        mockMvc.perform(get(INTERNAL_CUSTOMER_LIST_PATH))
             .andExpect(status().isUnauthorized())
             .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
                 .string(WWW_AUTHENTICATE_HEADER, BASIC_CHALLENGE))
@@ -181,17 +183,17 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void shouldRejectCustomerAccessToCustomerList() throws Exception {
+    void shouldRejectCustomerAccessToInternalCustomerList() throws Exception {
         when(customerFacade.getCustomers()).thenReturn(List.of());
 
-        mockMvc.perform(get(CUSTOMER_LIST_PATH)
+        mockMvc.perform(get(INTERNAL_CUSTOMER_LIST_PATH)
                 .with(user(CUSTOMER_EMAIL).roles("CUSTOMER")))
             .andExpect(status().isForbidden());
     }
 
     @Test
-    void shouldRejectCustomerHeadAccessToCustomerList() throws Exception {
-        mockMvc.perform(head(CUSTOMER_LIST_PATH)
+    void shouldRejectCustomerHeadAccessToInternalCustomerList() throws Exception {
+        mockMvc.perform(head(INTERNAL_CUSTOMER_LIST_PATH)
                 .with(user(CUSTOMER_EMAIL).roles("CUSTOMER")))
             .andExpect(status().isForbidden());
     }
@@ -207,7 +209,7 @@ class SecurityConfigurationTest {
     void shouldAllowAdminCustomerListAccessUsingHttpBasic() throws Exception {
         when(customerFacade.getCustomers()).thenReturn(List.of());
 
-        mockMvc.perform(get(CUSTOMER_LIST_PATH)
+        mockMvc.perform(get(INTERNAL_CUSTOMER_LIST_PATH)
                 .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isArray());
