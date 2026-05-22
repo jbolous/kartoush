@@ -6,6 +6,7 @@ import com.kartoush.api.auth.AuthenticationController;
 import com.kartoush.api.auth.PasswordResetService;
 import com.kartoush.api.auth.SignInRequest;
 import com.kartoush.api.auth.SignInView;
+import com.kartoush.config.security.AuthenticatedPrincipal;
 import com.kartoush.auth.service.CustomerAuthSessionService;
 import com.kartoush.api.customer.CustomerController;
 import com.kartoush.api.customer.InternalCustomerManagementController;
@@ -45,6 +46,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.authentication.UsernamePasswordAuthenticationToken.authenticated;
+import static org.springframework.security.core.authority.AuthorityUtils.createAuthorityList;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
@@ -74,6 +78,7 @@ class SecurityConfigurationTest {
     private static final String SIGN_IN_PATH = "/api/auth/sign-in";
     private static final String INTERNAL_CUSTOMER_LIST_PATH = "/internal/customers";
     private static final String CUSTOMER_DETAILS_PATH = "/api/customers/01KQ0CUSTOMER0000000000001";
+    private static final String OTHER_CUSTOMER_DETAILS_PATH = "/api/customers/01KQ0CUSTOMER0000000000002";
     private static final String PUBLIC_TERMS_PATH = "/api/terms-of-service/current";
     private static final String INTERNAL_TERMS_DRAFTS_PATH = "/internal/terms-of-service/drafts";
     private static final String ACCESS_TOKEN = "opaque-token";
@@ -84,6 +89,8 @@ class SecurityConfigurationTest {
     private static final String AUTHENTICATION_REQUIRED = "AUTHENTICATION_REQUIRED";
     private static final String AUTHENTICATION_REQUIRED_TITLE = "Authentication Required";
     private static final String CUSTOMER_EMAIL = "jack@kartoush.com";
+    private static final String CUSTOMER_ID = "01KQ0CUSTOMER0000000000001";
+    private static final String OTHER_CUSTOMER_ID = "01KQ0CUSTOMER0000000000002";
     private static final String INTERNAL_ADMIN_USERNAME = "internal-admin";
     private static final String INTERNAL_ADMIN_PASSWORD = "test-internal-admin-password";
     private static final String INTERNAL_TERMS_DRAFT_REQUEST = """
@@ -202,6 +209,36 @@ class SecurityConfigurationTest {
     void shouldRejectAdminAccessToCustomerDetailsUsingHttpBasic() throws Exception {
         mockMvc.perform(get(CUSTOMER_DETAILS_PATH)
                 .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD)))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowCustomerAccessToOwnCustomerDetails() throws Exception {
+        when(customerFacade.getCustomer(CUSTOMER_ID)).thenReturn(new com.kartoush.customer.facade.model.CustomerView(
+            CUSTOMER_ID,
+            "Jack",
+            "Kartoush",
+            CUSTOMER_EMAIL,
+            "+13125550100",
+            com.kartoush.platform.types.CustomerStatus.ACTIVE
+        ));
+
+        mockMvc.perform(get(CUSTOMER_DETAILS_PATH)
+                .with(authentication(authenticated(
+                    new AuthenticatedPrincipal(CUSTOMER_ID, CUSTOMER_EMAIL),
+                    null,
+                    createAuthorityList("ROLE_CUSTOMER")))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.customerId").value(CUSTOMER_ID));
+    }
+
+    @Test
+    void shouldRejectCustomerAccessToOtherCustomerDetails() throws Exception {
+        mockMvc.perform(get(OTHER_CUSTOMER_DETAILS_PATH)
+                .with(authentication(authenticated(
+                    new AuthenticatedPrincipal(CUSTOMER_ID, CUSTOMER_EMAIL),
+                    null,
+                    createAuthorityList("ROLE_CUSTOMER")))))
             .andExpect(status().isForbidden());
     }
 

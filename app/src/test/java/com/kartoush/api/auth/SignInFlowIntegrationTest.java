@@ -152,6 +152,28 @@ class SignInFlowIntegrationTest extends PostgresSpringIntegrationTest {
     }
 
     @Test
+    void shouldRejectAuthenticatedCustomerDetailsAccessForDifferentCustomer() throws Exception {
+        final CreatedCustomer createdCustomer = createActiveCustomerWithPassword();
+        final CreatedCustomer otherCustomer = createActiveCustomerWithPassword();
+
+        final String signInResponseBody = mockMvc.perform(post(SIGN_IN_PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new SignInRequest(createdCustomer.email(), PASSWORD))))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        final String accessToken = objectMapper.readTree(signInResponseBody).get("accessToken").asText();
+
+        mockMvc.perform(get(CUSTOMER_DETAILS_PATH, otherCustomer.customerId())
+                .header("Authorization", "Bearer " + accessToken))
+            .andExpect(status().isForbidden())
+            .andExpect(header().doesNotExist("WWW-Authenticate"));
+    }
+
+    @Test
     void shouldRejectSignInWhenPasswordIsInvalid() throws Exception {
         final CreatedCustomer createdCustomer = createActiveCustomerWithPassword();
 
