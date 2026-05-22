@@ -63,6 +63,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/auth/password-reset").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/password-reset/confirm").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/customers").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.HEAD, "/api/customers").hasRole("ADMIN")
                 .requestMatchers("/api/customers/**").hasRole("CUSTOMER")
                 .requestMatchers("/internal/**").hasRole("ADMIN")
                 .requestMatchers("/api/**").denyAll()

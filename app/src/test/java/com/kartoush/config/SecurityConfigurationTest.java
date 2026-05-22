@@ -190,6 +190,13 @@ class SecurityConfigurationTest {
     }
 
     @Test
+    void shouldRejectCustomerHeadAccessToCustomerList() throws Exception {
+        mockMvc.perform(head(CUSTOMER_LIST_PATH)
+                .with(user(CUSTOMER_EMAIL).roles("CUSTOMER")))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
     void shouldRejectAdminAccessToCustomerDetailsUsingHttpBasic() throws Exception {
         mockMvc.perform(get(CUSTOMER_DETAILS_PATH)
                 .with(httpBasic(INTERNAL_ADMIN_USERNAME, INTERNAL_ADMIN_PASSWORD)))
