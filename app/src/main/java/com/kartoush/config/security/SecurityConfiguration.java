@@ -83,10 +83,9 @@ public class SecurityConfiguration {
     }
 
     private AuthorizationManager<RequestAuthorizationContext> customerOwnsRequestedRecord() {
-        return (authenticationSupplier, context) -> new AuthorizationDecision(isAuthorizedCustomerForRequest(
-            authenticationSupplier,
-            context.getRequest()
-        ));
+        return (authenticationSupplier, context) -> new AuthorizationDecision(
+            context != null && isAuthorizedCustomerForRequest(authenticationSupplier, context.getRequest())
+        );
     }
 
     private boolean isAuthorizedCustomerForRequest(
