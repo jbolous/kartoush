@@ -6,7 +6,6 @@ import com.kartoush.notification.email.config.CustomerEmailProperties;
 import com.kartoush.notification.email.template.ThymeleafEmailTemplateRenderer;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.types.Email;
-import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Component;
 
 import java.net.URLEncoder;
@@ -36,9 +35,7 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
 
     private static final String ACTION_URL = "actionUrl";
 
-    private static final String ESCAPED_ACTION_URL = "escapedActionUrl";
-
-    private static final String ACTION_LINK_HTML = "actionLinkHtml";
+    private static final String ACTION_LINK_LABEL = "actionLinkLabel";
 
     private static final String FIRST_NAME = "firstName";
 
@@ -57,11 +54,9 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
     public EmailMessage newActivationEmail(final Email recipient, final CustomerId customerId, final String rawActivationToken) {
         final String actionUrl = properties.getActivationBaseUrl() + "?customerId=" + encode(customerId.value()) + "&token=" + encode(
             rawActivationToken);
-        final String escapedActionUrl = escapeHtml(actionUrl);
         final Map<String, Object> variables = Map.of(
             ACTION_URL, actionUrl,
-            ESCAPED_ACTION_URL, escapedActionUrl,
-            ACTION_LINK_HTML, "<a href=\"" + escapedActionUrl + "\">" + ACTIVATION_LINK_LABEL + "</a>"
+            ACTION_LINK_LABEL, ACTIVATION_LINK_LABEL
         );
         final String activationBody = templateRenderer.renderText(ACTIVATION_TEMPLATE, variables);
         final String activationHtmlBody = templateRenderer.renderHtml(ACTIVATION_TEMPLATE, variables);
@@ -74,11 +69,9 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
     public EmailMessage newPasswordResetEmail(final Email recipient, final String rawResetToken) {
         final String actionUrl = properties.getPasswordResetBaseUrl() + "?email=" + encode(recipient.value()) + "&token=" + encode(
             rawResetToken);
-        final String escapedActionUrl = escapeHtml(actionUrl);
         final Map<String, Object> variables = Map.of(
             ACTION_URL, actionUrl,
-            ESCAPED_ACTION_URL, escapedActionUrl,
-            ACTION_LINK_HTML, "<a href=\"" + escapedActionUrl + "\">" + PASSWORD_RESET_LINK_LABEL + "</a>"
+            ACTION_LINK_LABEL, PASSWORD_RESET_LINK_LABEL
         );
         final String passwordResetBody = templateRenderer.renderText(PASSWORD_RESET_TEMPLATE, variables);
         final String passwordResetHtmlBody = templateRenderer.renderHtml(PASSWORD_RESET_TEMPLATE, variables);
@@ -93,8 +86,7 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
         final Map<String, Object> variables = Map.of(
             FIRST_NAME, firstName,
             ACTION_URL, actionUrl,
-            ESCAPED_ACTION_URL, escapeHtml(actionUrl),
-            ACTION_LINK_HTML, "<a href=\"" + escapeHtml(actionUrl) + "\">" + WELCOME_LINK_LABEL + "</a>"
+            ACTION_LINK_LABEL, WELCOME_LINK_LABEL
         );
         final String welcomeBody = templateRenderer.renderText(WELCOME_TEMPLATE, variables);
         final String welcomeHtmlBody = templateRenderer.renderHtml(WELCOME_TEMPLATE, variables);
@@ -115,7 +107,4 @@ public class DefaultCustomerEmailFactory implements CustomerEmailFactory {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
-    private String escapeHtml(final String value) {
-        return StringEscapeUtils.escapeHtml4(value);
-    }
 }
