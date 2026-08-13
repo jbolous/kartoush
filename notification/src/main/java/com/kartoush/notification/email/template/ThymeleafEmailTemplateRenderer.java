@@ -16,7 +16,7 @@ public class ThymeleafEmailTemplateRenderer {
     private final TemplateEngine textTemplateEngine;
 
     public ThymeleafEmailTemplateRenderer() {
-        this.htmlTemplateEngine = templateEngine(TemplateMode.TEXT, ".html");
+        this.htmlTemplateEngine = templateEngine(TemplateMode.HTML, ".html");
         this.textTemplateEngine = templateEngine(TemplateMode.TEXT, ".txt");
     }
 
