@@ -51,15 +51,18 @@ class DefaultCustomerEmailFactoryTest {
         final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties(), templateRenderer);
 
         final EmailMessage email = factory.newActivationEmail(RECIPIENT, CUSTOMER_ID, ACTIVATION_TOKEN);
+        final String expectedActionUrl = ACTIVATION_BASE_URL
+            + "?customerId=" + CUSTOMER_ID_VALUE
+            + "&token=" + ACTIVATION_TOKEN;
 
         assertThat(email.type()).isEqualTo(EmailMessageType.CUSTOMER_ACTIVATION);
         assertThat(email.recipient()).isEqualTo(RECIPIENT);
         assertThat(email.subject()).isEqualTo(ACTIVATE_ACCOUNT_MSG);
-        assertThat(email.actionUrl())
-            .isEqualTo(ACTIVATION_BASE_URL + "?customerId=" + CUSTOMER_ID_VALUE + "&token=" + ACTIVATION_TOKEN);
+        assertThat(email.actionUrl()).isEqualTo(expectedActionUrl);
         assertThat(email.htmlBody())
-            .contains("<a href=\"" + ACTIVATION_BASE_URL + "?customerId=" + CUSTOMER_ID_VALUE + "&amp;token=" + ACTIVATION_TOKEN + "\">")
-            .contains(ACTIVATE_ACCOUNT_MSG);
+            .contains("<a href=\"" + expectedActionUrl.replace("&", "&amp;") + "\">")
+            .contains(ACTIVATE_ACCOUNT_MSG)
+            .doesNotContain("th:href", "th:text");
     }
 
     @Test
@@ -67,15 +70,29 @@ class DefaultCustomerEmailFactoryTest {
         final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties(), templateRenderer);
 
         final EmailMessage email = factory.newPasswordResetEmail(RECIPIENT, RESET_TOKEN);
+        final String expectedActionUrl = PASSWORD_RESET_BASE_URL
+            + "?email=jack%40kartoush.com"
+            + "&token=" + RESET_TOKEN;
 
         assertThat(email.type()).isEqualTo(EmailMessageType.CUSTOMER_PASSWORD_RESET);
         assertThat(email.recipient()).isEqualTo(RECIPIENT);
         assertThat(email.subject()).isEqualTo(RESET_PASSWORD_MSG);
-        assertThat(email.actionUrl())
-            .isEqualTo(PASSWORD_RESET_BASE_URL + "?email=jack%40kartoush.com&token=" + RESET_TOKEN);
+        assertThat(email.actionUrl()).isEqualTo(expectedActionUrl);
         assertThat(email.htmlBody())
-            .contains("<a href=\"" + PASSWORD_RESET_BASE_URL + "?email=jack%40kartoush.com&amp;token=" + RESET_TOKEN + "\">")
-            .contains(RESET_PASSWORD_MSG);
+            .contains("<a href=\"" + expectedActionUrl.replace("&", "&amp;") + "\">")
+            .contains(RESET_PASSWORD_MSG)
+            .doesNotContain("th:href", "th:text");
+    }
+
+    @Test
+    void shouldEncodePasswordResetTokenInActionUrl() {
+        final DefaultCustomerEmailFactory factory = new DefaultCustomerEmailFactory(emailProperties(), templateRenderer);
+
+        final EmailMessage email = factory.newPasswordResetEmail(RECIPIENT, "reset token&value");
+
+        assertThat(email.actionUrl()).isEqualTo(
+            PASSWORD_RESET_BASE_URL + "?email=jack%40kartoush.com&token=reset+token%26value"
+        );
     }
 
     @Test
@@ -91,7 +108,8 @@ class DefaultCustomerEmailFactoryTest {
         assertThat(email.textBody()).contains(WELCOME_MSG + ", " + FIRST_NAME + ".");
         assertThat(email.htmlBody())
             .contains("<a href=\"" + WELCOME_BASE_URL + "\">")
-            .contains(CONTINUE_TO_KARTOUSH_MSG);
+            .contains(CONTINUE_TO_KARTOUSH_MSG)
+            .doesNotContain("th:href", "th:text");
     }
 
     @Test
