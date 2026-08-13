@@ -1,5 +1,6 @@
 package com.kartoush.customer.service.impl;
 
+import static com.kartoush.customer.exception.InvalidTermsOfServiceScheduleException.MESSAGE_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -171,7 +172,7 @@ class DefaultTermsOfServiceManagementServiceTest {
         // when / then
         assertThatThrownBy(() -> termsOfServiceManagementService.schedule(TERMS_ID, NOW))
             .isInstanceOf(InvalidTermsOfServiceScheduleException.class)
-            .hasMessage("Terms of Service can only be scheduled for a future effectiveAt: " + NOW);
+            .hasMessage(MESSAGE_PREFIX + NOW);
     }
 
     @Test
