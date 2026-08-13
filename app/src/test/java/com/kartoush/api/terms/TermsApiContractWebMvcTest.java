@@ -27,8 +27,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Duration;
 import java.time.Instant;
 
+import static com.kartoush.customer.exception.InvalidTermsOfServiceScheduleException.MESSAGE_PREFIX;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.http.MediaType.APPLICATION_PROBLEM_JSON;
@@ -63,6 +65,12 @@ class TermsApiContractWebMvcTest {
     private static final String VERSION = "2026.04.01";
 
     private static final String TERMS_ID = "01KQ0INTERNALTERMS000000001";
+
+    private static final String TERMS_CONTENT = "Terms content";
+
+    private static final Instant EFFECTIVE_AT = Instant.parse("2026-04-01T00:00:00Z");
+
+    private static final Duration SCHEDULE_TIME_OFFSET = Duration.ofHours(1);
 
     private static final String TERMS_BY_VERSION_PATH = "/api/terms-of-service/{version}";
 
@@ -104,11 +112,20 @@ class TermsApiContractWebMvcTest {
     private static final String INVALID_SCHEDULE_TITLE =
         "Invalid Terms of Service Schedule";
 
-    private static final String INVALID_SCHEDULE_DETAIL =
-        "Terms of Service can only be scheduled for a future effectiveAt: 2026-04-01T00:00:00Z";
+    private static final String TERMS_BY_VERSION_RESPONSE_PATH =
+        "$.paths['" + TERMS_BY_VERSION_PATH + "'].get.responses";
+
+    private static final String TERMS_SUCCESS_SCHEMA_REF_PATH =
+        TERMS_BY_VERSION_RESPONSE_PATH + "['" + HttpStatus.OK.value() + "'].content['"
+            + APPLICATION_JSON + "'].schema['$ref']";
+
+    private static final String TERMS_NOT_FOUND_SCHEMA_REF_PATH =
+        TERMS_BY_VERSION_RESPONSE_PATH + "['" + HttpStatus.NOT_FOUND.value() + "'].content['"
+            + APPLICATION_PROBLEM_JSON_VALUE + "'].schema['$ref']";
 
     private static final String SCHEDULE_BAD_REQUEST_SCHEMA_PATH =
-        problemSchemaPath(SCHEDULE_PATH, "post", HttpStatus.BAD_REQUEST.value());
+        "$.paths['" + SCHEDULE_PATH + "'].post.responses['" + HttpStatus.BAD_REQUEST.value() + "'].content['"
+            + APPLICATION_PROBLEM_JSON_VALUE + "'].schema";
 
     private static final String SCHEDULE_BAD_REQUEST_VALIDATION_REF_PATH =
         SCHEDULE_BAD_REQUEST_SCHEMA_PATH + ".oneOf[0]['$ref']";
@@ -132,20 +149,16 @@ class TermsApiContractWebMvcTest {
 
         mockMvc.perform(get(API_DOCS_PATH))
             .andExpect(status().isOk())
-            .andExpect(jsonPath(schemaRefPath(
-                TERMS_BY_VERSION_PATH,
-                "get",
-                HttpStatus.OK.value()
-            )).value(TERMS_OF_SERVICE_VIEW_REF));
+            .andExpect(jsonPath(TERMS_SUCCESS_SCHEMA_REF_PATH).value(TERMS_OF_SERVICE_VIEW_REF));
 
         mockMvc.perform(get(TERMS_BY_VERSION_PATH, VERSION))
             .andExpect(status().isOk())
             .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
             .andExpect(jsonPath("$.version").value(VERSION))
-            .andExpect(jsonPath("$.content").value("Terms content"))
+            .andExpect(jsonPath("$.content").value(TERMS_CONTENT))
             .andExpect(jsonPath("$.contentType").value(TermsOfServiceContentType.PLAIN_TEXT.name()))
             .andExpect(jsonPath("$.status").value(TermsOfServiceStatus.ACTIVE.name()))
-            .andExpect(jsonPath("$.effectiveAt").value("2026-04-01T00:00:00Z"));
+            .andExpect(jsonPath("$.effectiveAt").value(EFFECTIVE_AT.toString()));
     }
 
     @Test
@@ -155,11 +168,7 @@ class TermsApiContractWebMvcTest {
 
         mockMvc.perform(get(API_DOCS_PATH))
             .andExpect(status().isOk())
-            .andExpect(jsonPath(problemSchemaRefPath(
-                TERMS_BY_VERSION_PATH,
-                "get",
-                HttpStatus.NOT_FOUND.value()
-            )).value(API_PROBLEM_RESPONSE_REF));
+            .andExpect(jsonPath(TERMS_NOT_FOUND_SCHEMA_REF_PATH).value(API_PROBLEM_RESPONSE_REF));
 
         mockMvc.perform(get(TERMS_BY_VERSION_PATH, VERSION))
             .andExpect(status().isNotFound())
@@ -199,8 +208,9 @@ class TermsApiContractWebMvcTest {
 
     @Test
     void shouldMatchDocumentedApiProblemForInvalidSchedule() throws Exception {
-        when(termsOfServiceManagementFacade.schedule(TERMS_ID, Instant.parse("2026-04-01T00:00:00Z")))
-            .thenThrow(new InvalidTermsOfServiceScheduleException(Instant.parse("2026-04-01T00:00:00Z")));
+        final Instant effectiveAt = Instant.now().plus(SCHEDULE_TIME_OFFSET);
+        when(termsOfServiceManagementFacade.schedule(TERMS_ID, effectiveAt))
+            .thenThrow(new InvalidTermsOfServiceScheduleException(effectiveAt));
 
         mockMvc.perform(get(API_DOCS_PATH))
             .andExpect(status().isOk())
@@ -209,73 +219,27 @@ class TermsApiContractWebMvcTest {
 
         mockMvc.perform(post(SCHEDULE_PATH, TERMS_ID)
                 .contentType(APPLICATION_JSON)
-                .content("""
-                    {
-                      "effectiveAt": "2026-04-01T00:00:00Z"
-                    }
-                    """))
+                .content("{\"effectiveAt\":\"" + effectiveAt + "\"}"))
             .andExpect(status().isBadRequest())
             .andExpect(content().contentTypeCompatibleWith(APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.type").value(INVALID_SCHEDULE_TYPE))
             .andExpect(jsonPath("$.title").value(INVALID_SCHEDULE_TITLE))
             .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.value()))
-            .andExpect(jsonPath("$.detail").value(INVALID_SCHEDULE_DETAIL))
+            .andExpect(jsonPath("$.detail").value(
+                MESSAGE_PREFIX + effectiveAt
+            ))
             .andExpect(jsonPath("$.instance").value(SCHEDULE_RUNTIME_PATH))
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.INVALID_TERMS_OF_SERVICE_SCHEDULE.name()))
             .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
 
-    private static String problemSchemaRefPath(
-        final String endpoint,
-        final String method,
-        final int statusCode
-    ) {
-        return problemSchemaPath(endpoint, method, statusCode) + "['$ref']";
-    }
-
-    private static String schemaRefPath(
-        final String endpoint,
-        final String method,
-        final int statusCode
-    ) {
-        return operationPath(
-            endpoint,
-            method,
-            "responses['" + statusCode + "']"
-                + ".content['application/json']"
-                + ".schema['$ref']"
-        );
-    }
-
-    private static String problemSchemaPath(
-        final String endpoint,
-        final String method,
-        final int statusCode
-    ) {
-        return operationPath(
-            endpoint,
-            method,
-            "responses['" + statusCode + "']"
-                + ".content['" + APPLICATION_PROBLEM_JSON_VALUE + "']"
-                + ".schema"
-        );
-    }
-
-    private static String operationPath(
-        final String endpoint,
-        final String method,
-        final String suffix
-    ) {
-        return "$.paths['" + endpoint + "']." + method + "." + suffix;
-    }
-
     private static TermsOfServiceView termsOfServiceView() {
         return new TermsOfServiceView(
             VERSION,
-            "Terms content",
+            TERMS_CONTENT,
             TermsOfServiceContentType.PLAIN_TEXT,
             TermsOfServiceStatus.ACTIVE,
-            Instant.parse("2026-04-01T00:00:00Z"),
+            EFFECTIVE_AT,
             null
         );
     }

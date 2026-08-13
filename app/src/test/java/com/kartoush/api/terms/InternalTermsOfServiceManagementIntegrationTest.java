@@ -15,6 +15,7 @@ import com.kartoush.customer.termsofservice.TermsOfServiceStatus;
 import com.kartoush.platform.ulid.UlidGenerator;
 import com.kartoush.testsupport.PostgresSpringIntegrationTest;
 import com.kartoush.testsupport.SpringIntegrationTest;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,6 +28,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringIntegrationTest
 @AutoConfigureMockMvc
 class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringIntegrationTest {
+
+    private static final Duration SCHEDULE_TIME_OFFSET = Duration.ofHours(1);
 
     private static final String BASE_URL = "/internal/terms-of-service";
     private static final String INTERNAL_ADMIN_USERNAME = "internal-admin";
@@ -117,7 +120,7 @@ class InternalTermsOfServiceManagementIntegrationTest extends PostgresSpringInte
             TermsOfServiceContentType.PLAIN_TEXT
         ));
         final ScheduleTermsOfServiceRequest scheduleRequest = new ScheduleTermsOfServiceRequest(
-            Instant.parse("2026-06-10T00:00:00Z")
+            Instant.now().plus(SCHEDULE_TIME_OFFSET)
         );
 
         mockMvc.perform(post(BASE_URL + "/{termsOfServiceId}/schedule", draft.getId())
