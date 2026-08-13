@@ -1,6 +1,7 @@
 package com.kartoush.api.terms;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -20,6 +21,7 @@ import com.kartoush.customer.facade.TermsOfServiceManagementFacade;
 import com.kartoush.customer.facade.model.TermsOfServiceManagementView;
 import com.kartoush.customer.termsofservice.TermsOfServiceContentType;
 import com.kartoush.customer.termsofservice.TermsOfServiceStatus;
+import java.time.Duration;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +50,8 @@ class InternalTermsOfServiceManagementControllerWebMvcTest {
     private static final String BASE_URL = "/internal/terms-of-service";
     private static final String TERMS_ID = "01KQ0INTERNALTERMS000000001";
     private static final String VERSION = "2026.05.01";
+
+    private static final Duration SCHEDULE_TIME_OFFSET = Duration.ofHours(1);
 
     @Autowired
     private MockMvc mockMvc;
@@ -112,7 +116,7 @@ class InternalTermsOfServiceManagementControllerWebMvcTest {
     @Test
     void shouldScheduleTerms() throws Exception {
         final ScheduleTermsOfServiceRequest request = new ScheduleTermsOfServiceRequest(
-            Instant.parse("2026-05-01T00:00:00Z")
+            Instant.now().plus(SCHEDULE_TIME_OFFSET)
         );
 
         when(termsOfServiceManagementFacade.schedule(TERMS_ID, request.effectiveAt()))
@@ -123,6 +127,20 @@ class InternalTermsOfServiceManagementControllerWebMvcTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value(TermsOfServiceStatus.SCHEDULED.name()));
+    }
+
+    @Test
+    void shouldRejectScheduleInThePast() throws Exception {
+        final ScheduleTermsOfServiceRequest request = new ScheduleTermsOfServiceRequest(
+            Instant.now().minus(SCHEDULE_TIME_OFFSET)
+        );
+
+        mockMvc.perform(post(BASE_URL + "/{termsOfServiceId}/schedule", TERMS_ID)
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+
+        verify(termsOfServiceManagementFacade, never()).schedule(any(), any());
     }
 
     @Test
@@ -166,7 +184,7 @@ class InternalTermsOfServiceManagementControllerWebMvcTest {
     @Test
     void shouldReturnBadRequestForInvalidSchedule() throws Exception {
         final ScheduleTermsOfServiceRequest request = new ScheduleTermsOfServiceRequest(
-            Instant.parse("2026-04-01T00:00:00Z")
+            Instant.now().plus(SCHEDULE_TIME_OFFSET)
         );
         final ProblemDetail problemDetail = problemDetail(
             HttpStatus.BAD_REQUEST,
