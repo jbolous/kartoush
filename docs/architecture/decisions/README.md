@@ -137,6 +137,7 @@ Numbers indicate chronological order and do not imply priority.
 - [0031 - Transactional Email Provider and Sending Domain Strategy](./0031-transactional-email-provider-and-sending-domain-strategy.md)
 - [0032 - Durable Background Job Execution Strategy](./0032-durable-background-job-execution-strategy.md)
 - [0033 - Thin Commerce Backend Slice Architecture](./0033-thin-commerce-backend-slice-architecture.md)
+- [0034 - AWS Phase 1 Compute Strategy](./0034-aws-phase-1-compute-strategy.md)
 
 ---
 
