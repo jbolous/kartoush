@@ -37,6 +37,10 @@ services:
       KARTOUSH_EMAIL_DELIVERY_PROVIDER: noop
       KARTOUSH_EMAIL_DELIVERY_ENABLED: 'false'
       KARTOUSH_JOBRUNR_DASHBOARD_ENABLED: 'false'
+    # Reserve 256 MiB of the 1 GiB task budget for proxy and operational overhead.
+    cpus: 0.25
+    mem_limit: 768m
+    memswap_limit: 768m
     stop_grace_period: 30s
 
 volumes:
