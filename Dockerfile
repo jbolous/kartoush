@@ -31,6 +31,11 @@ RUN apt-get update \
     && useradd --uid 10001 --gid kartoush --no-create-home --shell /bin/sh kartoush
 WORKDIR /app
 COPY --from=build --chown=10001:10001 /workspace/kartoush.jar ./kartoush.jar
+# Public CA certificates for verified PostgreSQL TLS in the selected AWS Region.
+RUN curl --fail --silent --show-error \
+    https://truststore.pki.rds.amazonaws.com/us-east-2/us-east-2-bundle.pem \
+    --output /app/rds-ca-bundle.pem \
+    && chmod 0444 /app/rds-ca-bundle.pem
 ENV SPRING_PROFILES_ACTIVE=prod \
     LOGGING_LEVEL_COM_KARTOUSH=INFO \
     LOGGING_LEVEL_ORG_HIBERNATE_SQL=WARN \

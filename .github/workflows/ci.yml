@@ -42,6 +42,7 @@ jobs:
               - 'gradlew'
               - 'gradlew.bat'
               - 'gradle/**'
+              - '.github/workflows/ci.yml'
               - '!**/*.md'
             container_changes:
               - 'app/**'
@@ -98,7 +99,7 @@ jobs:
         run: |
           docker compose --env-file .env.container -f compose.container.yaml up -d --no-build --wait --wait-timeout 180
           curl --fail http://127.0.0.1:18080/actuator/health
-          docker compose --env-file .env.container -f compose.container.yaml exec -T app sh -c 'test "$(id -u)" = 10001 && command -v script && command -v cat'
+          docker compose --env-file .env.container -f compose.container.yaml exec -T app sh -c 'test "$(id -u)" = 10001 && command -v script && command -v cat && test -r /app/rds-ca-bundle.pem'
 
       - name: Remove disposable stack
         if: ${{ always() }}

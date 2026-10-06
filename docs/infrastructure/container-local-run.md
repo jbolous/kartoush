@@ -60,4 +60,14 @@ The image was built and run locally on ARM64 with Java 25. The production-profil
 
 ## CI Checks
 
-Application/module and Gradle changes run the Java unit and integration suites. Container packaging and Docker source/build input changes run a dedicated image-build and Compose startup check with generated disposable credentials and non-default ports. Markdown documentation, Bruno collections, and IAM policy artifacts do not trigger the Java suites. The required verification job checks that each selected job succeeds and each unselected job is skipped; container failures therefore block merging. Qodana watches application/build paths as well as its own configuration and workflow.
+Application/module, Gradle, and CI workflow changes run the Java unit and integration suites. Container packaging and Docker source/build input changes run a dedicated image-build and Compose startup check with generated disposable credentials and non-default ports. Markdown documentation, Bruno collections, and IAM policy artifacts do not trigger the Java suites. The required verification job checks that each selected job succeeds and each unselected job is skipped; container failures therefore block merging. Qodana watches application/build paths as well as its own configuration and workflow.
+
+## RDS Certificate Bundle
+
+The runtime image downloads the public Ohio RDS CA bundle from AWS over verified HTTPS at build time and stores it read-only at `/app/rds-ca-bundle.pem`, readable by the non-root application user. Supply the RDS endpoint hostname and the bundled certificate path in the runtime JDBC URL:
+
+```text
+jdbc:postgresql://RDS_ENDPOINT:5432/kartoush?sslmode=verify-full&sslrootcert=/app/rds-ca-bundle.pem
+```
+
+The bundle is a public trust artifact, not a database credential or private key. The JDBC settings remain externalized; the local Compose database does not use RDS certificates. Rebuild the runtime stage without cache when refreshing the bundle for CA changes and republish the new image digest. Do not replace `verify-full` with a mode that permits plaintext fallback. See [AWS PostgreSQL TLS guidance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html). Verified connections to the actual RDS database remain part of #180.
