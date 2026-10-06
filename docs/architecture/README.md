@@ -46,6 +46,8 @@ See: `docs/architecture/decisions/` for the complete set of ADRs
 
 ## Scope of This Directory
 
+The [AWS Phase 1 target architecture](./aws-phase-1-target-architecture.md) defines the initial cloud deployment topology, access flows, complete cost model, and implementation sequence.
+
 This directory contains documentation related to:
 
 - architectural principles
