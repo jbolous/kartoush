@@ -11,7 +11,7 @@ Phase 1 is one on-demand portfolio environment in Ohio (`us-east-2`). Applicatio
 - One ECS service using Fargate, normally at desired count zero
 - One running task containing Spring Boot and an Nginx HTTPS reverse proxy
 - A public subnet and one task public IPv4 address for ingress and outbound access while running
-- Route 53 DNS for `api.demo.kartoush.dev`, updated to the current task address
+- Route 53 DNS for `api.kartoush.dev`, updated to the current task address
 - One exportable, DNS-validated ACM certificate for that exact hostname
 - Private ECR repositories for the application and pinned proxy image
 - One private Single-AZ RDS PostgreSQL instance with 20 GiB gp3 storage
@@ -27,7 +27,7 @@ The direct task address is an intentional availability tradeoff. There is no sta
 
 ```mermaid
 flowchart LR
-    Viewer[Public HTTPS client] --> DNS[Route 53: api.demo.kartoush.dev]
+    Viewer[Public HTTPS client] --> DNS[Route 53: api.kartoush.dev]
     DNS -. Current task IPv4 .-> Proxy
     Viewer -->|TCP 443 through Internet Gateway| Proxy
     Owner[Owner with MFA and temporary credentials] -->|AWS APIs| ECS[ECS service: desired count 0 or 1]
@@ -85,7 +85,7 @@ Binding Spring Boot to `127.0.0.1:8080` adds a second boundary: only containers 
 
 ## Ingress and TLS
 
-Use an A record with a 60-second TTL for `api.demo.kartoush.dev` in the Route 53 hosted zone for `kartoush.dev`. The record points to the currently healthy task's public IPv4 address. Keep ACM's separate validation CNAME records while the certificate is retained.
+Use an A record with a 60-second TTL for `api.kartoush.dev` in the Route 53 hosted zone for `kartoush.dev`. The record points to the currently healthy task's public IPv4 address. Keep ACM's separate validation CNAME records while the certificate is retained.
 
 Nginx terminates TLS on 443 using an exported ACM public certificate and key. Configure TLS 1.2 or newer. Port 80 stays closed, so clients must use HTTPS. The proxy forwards accepted requests to Spring Boot over task loopback; there is no plaintext application hop across the public internet.
 
