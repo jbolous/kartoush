@@ -1,6 +1,6 @@
 # Demo Image Storage
 
-Private ECR repositories `kartoush-demo-app` and `kartoush-demo-proxy` live in Ohio (`us-east-2`) in project `790873128308`. They match the existing execution-role pull permissions. Both use AES256 encryption and immutable tags. Runtime deployment uses image digests, not floating tags. This work stores images; it does not start ECS or provision RDS.
+Private ECR repositories `kartoush-demo-app` and `kartoush-demo-proxy` live in Ohio (`us-east-2`) in project `790873128308`. They match the existing execution-role pull permissions. Both use AES256 encryption, immutable tags, and the baseline `Project`, `Environment`, and `Name` tags. Runtime deployment uses image digests, not floating tags. This work stores images; it does not start ECS or provision RDS.
 
 The project is on the active Free plan. The local `kartoush` profile selects Ohio; confirm the project's selected Region in AWS Settings > View all projects > Overview > Additional Info > Region before recreating resources.
 
@@ -13,7 +13,7 @@ for repository in kartoush-demo-app kartoush-demo-proxy; do
   aws ecr create-repository --profile kartoush --region us-east-2 \
     --repository-name "$repository" --image-tag-mutability IMMUTABLE \
     --encryption-configuration encryptionType=AES256 \
-    --tags Key=Project,Value=kartoush Key=Environment,Value=demo
+    --tags Key=Project,Value=kartoush Key=Environment,Value=demo "Key=Name,Value=$repository"
 done
 ```
 
