@@ -1,0 +1,27 @@
+{
+  "validatedAt": "2026-10-06T18:18:45.726888+00:00",
+  "region": "us-east-2",
+  "clusterArn": "arn:aws:ecs:us-east-2:790873128308:cluster/kartoush-demo-cluster",
+  "serviceArn": "arn:aws:ecs:us-east-2:790873128308:service/kartoush-demo-cluster/kartoush-demo-app",
+  "taskDefinitionArn": "arn:aws:ecs:us-east-2:790873128308:task-definition/kartoush-demo-app:1",
+  "applicationImage": "790873128308.dkr.ecr.us-east-2.amazonaws.com/kartoush-demo-app@sha256:f29b648df23208ee53b6d0f6f867307d3bd710f5701d5579f5dad45e4aebd756",
+  "validation": {
+    "taskArn": "arn:aws:ecs:us-east-2:790873128308:task/kartoush-demo-cluster/f0f8e65b8ce643ce850be3c176b2402e",
+    "desiredCount": 1,
+    "runningCount": 1,
+    "pendingCount": 0,
+    "healthStatus": "HEALTHY",
+    "rolloutState": "COMPLETED",
+    "failedTasks": 0
+  },
+  "scope": "Application-only service; no public HTTP endpoint. Proxy and combined-task acceptance remain #341.",
+  "shutdown": {
+    "verifiedAt": "2026-10-06T18:19:56.814396+00:00",
+    "desiredCount": 0,
+    "runningCount": 0,
+    "pendingCount": 0,
+    "taskStatus": "STOPPED",
+    "networkInterfaceDeleted": true,
+    "taskPublicAddressReleased": true
+  }
+}

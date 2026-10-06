@@ -73,6 +73,12 @@ After #341 supplies the proxy, manual startup must verify both containers before
 
 Inactive service deployments must preserve desired count zero. The chosen 0%/100% replacement configuration accepts downtime and limits deployments to one normal task. Fargate compute and task IPv4 charges accrue while a task exists; retained RDS storage/compute, secrets, and logs have their own costs. Nightly lifecycle automation remains a later task.
 
+## Live validation
+
+On 2026-10-06, the service ran one application task using revision `kartoush-demo-app:1`. ECS reported container health `HEALTHY`, deployment state `COMPLETED`, and steady state with zero failed tasks. Startup logs confirmed the RDS connection and successful application startup. See [provisioning evidence](../../infrastructure/aws/ecs/provisioning-evidence.json) for non-secret resource metadata and final shutdown state.
+
+This validates the application-only service. It does not establish public HTTPS availability, proxy behavior, combined-task memory headroom, ECS Exec transcripts, or nightly lifecycle automation. Those acceptance checks remain in the linked follow-up tasks.
+
 ## AWS references
 
 - [Fargate task networking](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html)
