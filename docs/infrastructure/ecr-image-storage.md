@@ -56,6 +56,13 @@ A count policy does not understand deployed or working images. Before publishing
 Build from a clean checkout of the selected committed application source. Linux/amd64 matches the planned Linux/x86 Fargate task; an Apple Silicon default image does not. Set the immutable tag from that checkout's full commit SHA:
 
 ```bash
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+worktree_status=$(git status --porcelain --untracked-files=all)
+if [ -n "$worktree_status" ]; then
+  echo 'Commit or remove staged, unstaged, and untracked changes before publishing.' >&2
+  exit 1
+fi
 release_tag="sha-$(git rev-parse HEAD)"
 registry=790873128308.dkr.ecr.us-east-2.amazonaws.com
 image_uri="$registry/kartoush-demo-app:$release_tag"
