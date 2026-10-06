@@ -13,7 +13,14 @@ COPY platform ./platform
 COPY test-support ./test-support
 RUN --mount=type=cache,target=/root/.gradle \
     chmod +x gradlew && ./gradlew --no-daemon :app:bootJar
-RUN cp app/build/libs/*-SNAPSHOT.jar /workspace/kartoush.jar
+RUN set -eu; \
+    for jar in app/build/libs/*.jar; do \
+        case "$jar" in *-plain.jar) continue ;; esac; \
+        test -z "${boot_jar:-}"; \
+        boot_jar="$jar"; \
+    done; \
+    test -f "$boot_jar"; \
+    cp "$boot_jar" /workspace/kartoush.jar
 
 FROM ${RUNTIME_IMAGE} AS runtime
 # script and cat are required for subsequent ECS Exec transcript delivery.
