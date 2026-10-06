@@ -31,6 +31,8 @@ jobs:
             non_docs:
               - '**'
               - '!docs/**'
+              - '!**/*.md'
+              - '!infrastructure/aws/iam/**/*.json'
 
   unit-tests:
     needs: changes
@@ -129,7 +131,7 @@ jobs:
               exit 1
             fi
 
-            echo "Only docs/** files changed; application test jobs were intentionally skipped."
+            echo "Only documentation or IAM policy files changed; application test jobs were intentionally skipped."
             exit 0
           fi
 
