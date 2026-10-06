@@ -42,3 +42,6 @@ nbdist/
 
 # Local Codex runtime config
 .codex/config.toml
+
+# Local container credentials
+.env.container

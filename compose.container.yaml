@@ -1,0 +1,43 @@
+name: kartoush-container
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${KARTOUSH_DB_NAME:-kartoush}
+      POSTGRES_USER: ${KARTOUSH_DB_USERNAME:-kartoush}
+      POSTGRES_PASSWORD: ${KARTOUSH_DB_PASSWORD:?Set KARTOUSH_DB_PASSWORD}
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - container_pgdata:/var/lib/postgresql/data
+
+  app:
+    image: kartoush-app:local
+    build:
+      context: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:${KARTOUSH_HTTP_PORT:-8080}:${SERVER_PORT:-8080}'
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${KARTOUSH_DB_NAME:-kartoush}
+      SPRING_DATASOURCE_USERNAME: ${KARTOUSH_DB_USERNAME:-kartoush}
+      SPRING_DATASOURCE_PASSWORD: ${KARTOUSH_DB_PASSWORD:?Set KARTOUSH_DB_PASSWORD}
+      SERVER_ADDRESS: 0.0.0.0
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      KARTOUSH_INTERNAL_ADMIN_USERNAME: ${KARTOUSH_INTERNAL_ADMIN_USERNAME:?Set KARTOUSH_INTERNAL_ADMIN_USERNAME}
+      KARTOUSH_INTERNAL_ADMIN_PASSWORD: ${KARTOUSH_INTERNAL_ADMIN_PASSWORD:?Set KARTOUSH_INTERNAL_ADMIN_PASSWORD}
+      KARTOUSH_JOBS_ACTIVATION_EMAIL_ENCRYPTION_KEY: ${KARTOUSH_JOBS_ACTIVATION_EMAIL_ENCRYPTION_KEY:?Set KARTOUSH_JOBS_ACTIVATION_EMAIL_ENCRYPTION_KEY}
+      KARTOUSH_EMAIL_DELIVERY_PROVIDER: noop
+      KARTOUSH_EMAIL_DELIVERY_ENABLED: 'false'
+      KARTOUSH_JOBRUNR_DASHBOARD_ENABLED: 'false'
+    stop_grace_period: 30s
+
+volumes:
+  container_pgdata:
