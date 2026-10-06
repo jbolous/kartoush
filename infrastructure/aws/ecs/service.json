@@ -1,0 +1,44 @@
+{
+  "cluster": "kartoush-demo-cluster",
+  "serviceName": "kartoush-demo-app",
+  "taskDefinition": "kartoush-demo-app:1",
+  "desiredCount": 0,
+  "launchType": "FARGATE",
+  "platformVersion": "1.4.0",
+  "deploymentConfiguration": {
+    "minimumHealthyPercent": 0,
+    "maximumPercent": 100,
+    "deploymentCircuitBreaker": {
+      "enable": true,
+      "rollback": true
+    }
+  },
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": [
+        "subnet-0109a6127c7a44ecb"
+      ],
+      "securityGroups": [
+        "sg-05304aaebf6d0ea53"
+      ],
+      "assignPublicIp": "ENABLED"
+    }
+  },
+  "enableECSManagedTags": true,
+  "propagateTags": "SERVICE",
+  "enableExecuteCommand": false,
+  "tags": [
+    {
+      "key": "Project",
+      "value": "kartoush"
+    },
+    {
+      "key": "Environment",
+      "value": "demo"
+    },
+    {
+      "key": "Name",
+      "value": "kartoush-demo-app"
+    }
+  ]
+}
