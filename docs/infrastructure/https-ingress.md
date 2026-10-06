@@ -4,7 +4,9 @@ This implementation follows the [Phase 1 architecture](../architecture/aws-phase
 
 ## Hostname and DNS prerequisite
 
-The selected hostname is `api.kartoush.dev`. On 2026-10-06, the project had no Route 53 hosted zone or ACM certificate. Public nameservers for `kartoush.dev` were registrar-managed. Domain ownership and DNS control must be confirmed before requesting a certificate or publishing records. Do not purchase a domain, change its nameservers, migrate unrelated records, or substitute a different hostname implicitly.
+The selected hostname is `api.kartoush.dev`. The owner confirmed ownership of both `kartoush.dev` and `kartoush.com`, purchased through Namecheap. On 2026-10-06, the project had no Route 53 hosted zone or ACM certificate; public nameservers for `kartoush.dev` were registrar-managed. The recommended DNS setup delegates only `api.kartoush.dev` to Route 53, keeping the parent domain and other records at Namecheap. This delegation choice is pending confirmation. Do not purchase a domain, change its nameservers, migrate unrelated records, or substitute a different hostname implicitly.
+
+The exact-hostname, export-enabled ACM request was rejected with `ValidationException: This feature is not allowed for free accounts.` No certificate was created. `GetAccountPlanState` confirmed an active Free plan. AWS [documents that exportable ACM public certificates are unavailable on the Free plan](https://docs.aws.amazon.com/accounts/latest/reference/supported-services-sign-up-new.html#supported-services-free-tier). The owner must choose a billing-plan upgrade before retrying the approved ACM design; do not upgrade billing or change certificate providers implicitly.
 
 Use Ohio (`us-east-2`), profile `kartoush`, and project `790873128308`. Confirm the selected Region in AWS Settings > View all projects > Overview > Additional Info > Region. The service remains at desired count zero until certificate material and deployment checks are ready.
 
@@ -17,6 +19,8 @@ Build from `infrastructure/aws/ingress/proxy/` for Linux amd64. The base is dige
 The tested image is published in the private Ohio ECR repository. Its immutable release tag, digest, source commit, and size are recorded in [image-publication.json](../../infrastructure/aws/ingress/image-publication.json). Live combined-task validation and public DNS publication remain pending domain ownership and DNS confirmation.
 
 ECR BASIC scanning of the Linux image manifest (`sha256:4d8c81ebc6656619fa3648a5df85f8e4119c8c9f82425aaa0598ecf6b2ea71a7`) completed on 2026-10-06 with 2 critical, 12 high, 3 medium, and 1 low findings. These dependency findings remain unresolved; assess applicability and available package fixes before public deployment. Local route/TLS checks do not establish that the image is vulnerability-free.
+
+A temporary container refreshed the configured Debian repositories and checked the affected package candidates: no upgrades were available. The upstream [CVE-2026-8927 advisory](https://curl.se/docs/CVE-2026-8927.html) excludes the curl command-line tool. [CVE-2026-8924](https://curl.se/docs/CVE-2026-8924.html) requires cookie handling and trailing-dot hosts, which the fixed local health-check URLs do not use. These observations narrow applicability of the two critical scanner findings; they do not close the other findings or establish vendor patch status. Public deployment remains pending assessment.
 
 The proxy checks the original request target against exact method/path patterns. It does not normalize an encoded or ambiguous path into an allowed endpoint. Default routes, encoded paths, repeated slashes, dot-segments, unknown hosts, and direct-IP requests are rejected. TLS 1.2 and 1.3 are supported. Unknown SNI is rejected during the handshake.
 
