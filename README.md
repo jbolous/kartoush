@@ -138,6 +138,12 @@ Build the project and run the full test suite locally:
 
 ---
 
+## Run Locally in a Container
+
+For a standalone application and PostgreSQL stack, follow the [container run guide](docs/infrastructure/container-local-run.md). It uses runtime credentials, the production profile, and a loopback-only HTTP port.
+
+---
+
 ## Build
 
 To build the project:
