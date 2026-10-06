@@ -44,9 +44,9 @@ The preconditions are the existing ECR image, RDS database and application role,
 
 ## Deliberate validation and shutdown
 
-For the initial app-only service, a deliberate desired-count-one check may verify startup and container health. It must not publish DNS or claim a public API endpoint. ECS will replace an unhealthy task while desired count is one; a deployment circuit breaker stops repeated failed deployments, but it is not a spending limit or nightly shutdown mechanism. An initial failed deployment has no previous completed deployment to roll back to.
+For the initial app-only service, a deliberate desired-count-one check may verify startup and container health. It must not publish DNS or claim a public API endpoint. ECS will replace an unhealthy task while desired count is one. Changing desired count alone does not trigger a new deployment, so the deployment circuit breaker does not bound this validation flow. It is not a spending limit or nightly shutdown mechanism. An initial failed deployment has no previous completed deployment to roll back to.
 
-After the service reaches a completed deployment with one healthy task, return desired count to zero. Verify running and pending counts are zero and the task network interface is deleted. Stopping an individual task alone is insufficient: the service will replace it if desired count remains one.
+Return desired count to zero after every validation attempt, including failed startup or timeout. Verify running and pending counts are zero and the task network interface is deleted. Stopping an individual task alone is insufficient: the service will replace it if desired count remains one.
 
 Inspect service state:
 
@@ -55,14 +55,15 @@ aws ecs describe-services --profile kartoush --region us-east-2 \
   --cluster kartoush-demo-cluster --services kartoush-demo-app
 ```
 
-Deliberately start one application task for validation:
+Run the bounded startup check from the repository root:
 
 ```sh
-aws ecs update-service --profile kartoush --region us-east-2 \
-  --cluster kartoush-demo-cluster --service kartoush-demo-app --desired-count 1
+bash infrastructure/aws/ecs/validate-service.sh
 ```
 
-Return the service to its normal inactive state:
+The script requires an initially inactive service, starts one task, and checks both completed deployment and task health for up to ten minutes of polling. Its exit trap attempts to restore desired count zero on success, timeout, API failure, Ctrl-C, or termination. API request/retry time may extend the polling window. If cleanup fails, the script exits nonzero and reports the immediate manual shutdown command below. A killed shell or disconnected machine cannot guarantee cleanup; verify shutdown in AWS rather than assuming an exit trap is a spending cap.
+
+For manual shutdown or recovery after a reported cleanup failure:
 
 ```sh
 aws ecs update-service --profile kartoush --region us-east-2 \
@@ -82,4 +83,5 @@ This validates the application-only service. It does not establish public HTTPS 
 ## AWS references
 
 - [Fargate task networking](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html)
+- [UpdateService and desired-count behavior](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_UpdateService.html)
 - [Deployment circuit breaker](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-circuit-breaker.html)
