@@ -24,7 +24,12 @@ RUN apt-get update \
     && useradd --uid 10001 --gid kartoush --no-create-home --shell /bin/sh kartoush
 WORKDIR /app
 COPY --from=build --chown=10001:10001 /workspace/kartoush.jar ./kartoush.jar
-ENV SPRING_PROFILES_ACTIVE=prod
+ENV SPRING_PROFILES_ACTIVE=prod \
+    LOGGING_LEVEL_COM_KARTOUSH=INFO \
+    LOGGING_LEVEL_ORG_HIBERNATE_SQL=WARN \
+    LOGGING_LEVEL_ORG_HIBERNATE_ORM_JDBC_BIND=WARN \
+    LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_TRANSACTION=INFO \
+    LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_ORM_JPA=INFO
 USER 10001:10001
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \

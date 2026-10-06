@@ -57,3 +57,7 @@ The last command deletes the Compose database volume. It does not remove the app
 ## Validation
 
 The image was built and run locally on ARM64 with Java 25. The production-profile application passed its health check with host port `18080` and container port `18081`, and Flyway applied all 16 current migrations. Smoke checks exercised authenticated Terms of Service creation/activation, public terms retrieval, customer registration, and duplicate rejection. Terms and customer state survived an application restart. The runtime user was `10001`; `script` and `cat` were present, while the JDK/compiler and build workspace were absent. Compose configuration and documentation style checks passed. The disposable smoke stack and its database volume were removed after verification. AWS transcript delivery and task sizing remain deployment acceptance checks.
+
+## CI Checks
+
+Application/module and Gradle changes run the Java unit and integration suites. Container packaging changes run a dedicated image-build and Compose startup check with generated disposable credentials and non-default ports. Markdown documentation, Bruno collections, and IAM policy artifacts do not trigger the Java suites. The required verification job checks that each selected job succeeds and each unselected job is skipped; container failures therefore block merging. Qodana uses the application/build paths rather than treating all non-documentation files as Java changes.

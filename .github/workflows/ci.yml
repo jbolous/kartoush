@@ -16,27 +16,89 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      non_docs: ${{ steps.filter.outputs.non_docs }}
+      application_changes: ${{ steps.filter.outputs.application_changes }}
+      container_changes: ${{ steps.filter.outputs.container_changes }}
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
 
-      - name: Detect non-documentation changes
+      - name: Detect application and container changes
         id: filter
         uses: dorny/paths-filter@v4
         with:
           predicate-quantifier: some-with-excludes
           filters: |
-            non_docs:
-              - '**'
-              - '!docs/**'
+            application_changes:
+              - 'app/**'
+              - 'auth/**'
+              - 'customer/**'
+              - 'notification/**'
+              - 'platform/**'
+              - 'test-support/**'
+              - 'build.gradle'
+              - 'settings.gradle'
+              - 'gradle.properties'
+              - 'gradlew'
+              - 'gradlew.bat'
+              - 'gradle/**'
               - '!**/*.md'
-              - '!infrastructure/aws/iam/**/*.json'
+            container_changes:
+              - 'Dockerfile'
+              - '.dockerignore'
+              - 'compose.container.yaml'
+              - '.env.container.example'
+              - '.github/workflows/ci.yml'
+
+  container-check:
+    needs: changes
+    if: ${{ needs.changes.outputs.container_changes == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Prepare disposable runtime configuration
+        run: |
+          python3 - <<'PYTHON'
+          import base64, os, secrets
+          from pathlib import Path
+          values = {
+              "KARTOUSH_DB_PASSWORD": secrets.token_urlsafe(24),
+              "KARTOUSH_INTERNAL_ADMIN_USERNAME": "container-check-admin",
+              "KARTOUSH_INTERNAL_ADMIN_PASSWORD": secrets.token_urlsafe(24),
+              "KARTOUSH_JOBS_ACTIVATION_EMAIL_ENCRYPTION_KEY": base64.b64encode(secrets.token_bytes(32)).decode(),
+              "KARTOUSH_HTTP_PORT": "18080",
+              "SERVER_PORT": "18081",
+          }
+          path = Path(".env.container")
+          path.write_text("".join(f"{key}={value}\n" for key, value in values.items()))
+          os.chmod(path, 0o600)
+          PYTHON
+
+      - name: Validate configuration and build image
+        run: |
+          docker compose --env-file .env.container -f compose.container.yaml config --quiet
+          docker build -t kartoush-app:local .
+
+      - name: Verify container startup and runtime
+        run: |
+          docker compose --env-file .env.container -f compose.container.yaml up -d --no-build --wait --wait-timeout 180
+          curl --fail http://127.0.0.1:18080/actuator/health
+          docker compose --env-file .env.container -f compose.container.yaml exec -T app sh -c 'test "$(id -u)" = 10001 && command -v script && command -v cat'
+
+      - name: Remove disposable stack
+        if: ${{ always() }}
+        run: |
+          if [ -f .env.container ]; then
+            docker compose --env-file .env.container -f compose.container.yaml down --volumes
+            rm -f .env.container
+          fi
 
   unit-tests:
     needs: changes
-    if: ${{ needs.changes.outputs.non_docs == 'true' }}
+    if: ${{ needs.changes.outputs.application_changes == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -59,7 +121,7 @@ jobs:
 
   integration-tests:
     needs: changes
-    if: ${{ needs.changes.outputs.non_docs == 'true' }}
+    if: ${{ needs.changes.outputs.application_changes == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -112,6 +174,7 @@ jobs:
       - changes
       - unit-tests
       - integration-tests
+      - container-check
     if: ${{ always() }}
 
     steps:
@@ -123,7 +186,22 @@ jobs:
             exit 1
           fi
 
-          if [ "${{ needs.changes.outputs.non_docs }}" = "false" ]; then
+          if [ "${{ needs.changes.outputs.container_changes }}" = "true" ]; then
+            if [ "${{ needs.container-check.result }}" != "success" ]; then
+              echo "Container verification did not succeed."
+              exit 1
+            fi
+          elif [ "${{ needs.changes.outputs.container_changes }}" = "false" ]; then
+            if [ "${{ needs.container-check.result }}" != "skipped" ]; then
+              echo "Container verification was not intentionally skipped."
+              exit 1
+            fi
+          else
+            echo "Container change detection returned an unexpected result."
+            exit 1
+          fi
+
+          if [ "${{ needs.changes.outputs.application_changes }}" = "false" ]; then
             if [ "${{ needs.unit-tests.result }}" != "skipped" ] || [ "${{ needs.integration-tests.result }}" != "skipped" ]; then
               echo "One or more application test jobs were not intentionally skipped."
               echo "unit-tests=${{ needs.unit-tests.result }}"
@@ -131,13 +209,13 @@ jobs:
               exit 1
             fi
 
-            echo "Only documentation or IAM policy files changed; application test jobs were intentionally skipped."
+            echo "No application or Gradle changes; application test jobs were intentionally skipped."
             exit 0
           fi
 
-          if [ "${{ needs.changes.outputs.non_docs }}" != "true" ]; then
+          if [ "${{ needs.changes.outputs.application_changes }}" != "true" ]; then
             echo "Change detection returned an unexpected result."
-            echo "non_docs=${{ needs.changes.outputs.non_docs }}"
+            echo "application_changes=${{ needs.changes.outputs.application_changes }}"
             exit 1
           fi
 
