@@ -1,0 +1,222 @@
+{
+  "family": "kartoush-demo-app",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::790873128308:role/kartoush-demo-app-execution",
+  "taskRoleArn": "arn:aws:iam::790873128308:role/kartoush-demo-app-task",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "containerDefinitions": [
+    {
+      "name": "app",
+      "image": "790873128308.dkr.ecr.us-east-2.amazonaws.com/kartoush-demo-app@sha256:f29b648df23208ee53b6d0f6f867307d3bd710f5701d5579f5dad45e4aebd756",
+      "essential": true,
+      "memory": 768,
+      "secrets": [
+        {
+          "name": "SPRING_DATASOURCE_USERNAME",
+          "valueFrom": "arn:aws:secretsmanager:us-east-2:790873128308:secret:/kartoush/demo/app-giAB5K:db_username::"
+        },
+        {
+          "name": "SPRING_DATASOURCE_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:us-east-2:790873128308:secret:/kartoush/demo/app-giAB5K:db_password::"
+        },
+        {
+          "name": "KARTOUSH_INTERNAL_ADMIN_USERNAME",
+          "valueFrom": "arn:aws:secretsmanager:us-east-2:790873128308:secret:/kartoush/demo/app-giAB5K:internal_admin_username::"
+        },
+        {
+          "name": "KARTOUSH_INTERNAL_ADMIN_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:us-east-2:790873128308:secret:/kartoush/demo/app-giAB5K:internal_admin_password::"
+        },
+        {
+          "name": "KARTOUSH_JOBS_ACTIVATION_EMAIL_ENCRYPTION_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-2:790873128308:secret:/kartoush/demo/app-giAB5K:activation_email_encryption_key::"
+        }
+      ],
+      "environment": [
+        {
+          "name": "SPRING_PROFILES_ACTIVE",
+          "value": "prod"
+        },
+        {
+          "name": "SPRING_DATASOURCE_URL",
+          "value": "jdbc:postgresql://kartoush-demo-db.ch6amo0weh68.us-east-2.rds.amazonaws.com:5432/kartoush?currentSchema=kartoush&sslmode=verify-full&sslrootcert=/app/rds-ca-bundle.pem"
+        },
+        {
+          "name": "SERVER_ADDRESS",
+          "value": "127.0.0.1"
+        },
+        {
+          "name": "KARTOUSH_EMAIL_DELIVERY_PROVIDER",
+          "value": "noop"
+        },
+        {
+          "name": "KARTOUSH_EMAIL_DELIVERY_ENABLED",
+          "value": "false"
+        },
+        {
+          "name": "KARTOUSH_JOBRUNR_DASHBOARD_ENABLED",
+          "value": "false"
+        },
+        {
+          "name": "SERVER_FORWARD_HEADERS_STRATEGY",
+          "value": "native"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl --fail --silent http://127.0.0.1:8080/actuator/health || exit 1"
+        ],
+        "interval": 15,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 180
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/kartoush/demo/app",
+          "awslogs-region": "us-east-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "stopTimeout": 60
+    },
+    {
+      "name": "tls-init",
+      "image": "REPLACE_WITH_PINNED_PROXY_ECR_DIGEST",
+      "essential": false,
+      "user": "0",
+      "memory": 64,
+      "readonlyRootFilesystem": true,
+      "entryPoint": [
+        "bash",
+        "/opt/kartoush/materialize-tls.sh"
+      ],
+      "secrets": [
+        {
+          "name": "TLS_CERTIFICATE_PEM",
+          "valueFrom": "REPLACE_WITH_TLS_SECRET_ARN:certificate_pem::"
+        },
+        {
+          "name": "TLS_CERTIFICATE_CHAIN_PEM",
+          "valueFrom": "REPLACE_WITH_TLS_SECRET_ARN:certificate_chain_pem::"
+        },
+        {
+          "name": "TLS_PRIVATE_KEY_PEM",
+          "valueFrom": "REPLACE_WITH_TLS_SECRET_ARN:private_key_pem::"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "tls-material",
+          "containerPath": "/tls",
+          "readOnly": false
+        },
+        {
+          "sourceVolume": "proxy-scratch",
+          "containerPath": "/tmp/nginx",
+          "readOnly": false
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/kartoush/demo/proxy",
+          "awslogs-region": "us-east-2",
+          "awslogs-stream-prefix": "tls-init"
+        }
+      }
+    },
+    {
+      "name": "proxy",
+      "image": "REPLACE_WITH_PINNED_PROXY_ECR_DIGEST",
+      "essential": true,
+      "memory": 128,
+      "readonlyRootFilesystem": true,
+      "portMappings": [
+        {
+          "containerPort": 443,
+          "protocol": "tcp"
+        }
+      ],
+      "dependsOn": [
+        {
+          "containerName": "tls-init",
+          "condition": "SUCCESS"
+        },
+        {
+          "containerName": "app",
+          "condition": "START"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "tls-material",
+          "containerPath": "/tls",
+          "readOnly": true
+        },
+        {
+          "sourceVolume": "proxy-scratch",
+          "containerPath": "/tmp/nginx",
+          "readOnly": false
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl --silent --show-error --max-time 4 --resolve api.kartoush.dev:443:127.0.0.1 https://api.kartoush.dev/api/terms-of-service/current --output /dev/null"
+        ],
+        "interval": 15,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 300
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/kartoush/demo/proxy",
+          "awslogs-region": "us-east-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "stopTimeout": 30,
+      "systemControls": [
+        {
+          "namespace": "net.ipv4.ip_unprivileged_port_start",
+          "value": "0"
+        }
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "key": "Project",
+      "value": "kartoush"
+    },
+    {
+      "key": "Environment",
+      "value": "demo"
+    },
+    {
+      "key": "Name",
+      "value": "kartoush-demo-app"
+    }
+  ],
+  "volumes": [
+    {
+      "name": "tls-material"
+    },
+    {
+      "name": "proxy-scratch"
+    }
+  ]
+}
