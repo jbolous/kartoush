@@ -26,9 +26,27 @@ def provision(session):
     if service["desiredCount"] != 0:
         raise RuntimeError("Provisioning must preserve the inactive baseline")
 
-    existing_cluster = ecs.describe_clusters(clusters=[cluster["clusterName"]])
+    existing_cluster = ecs.describe_clusters(
+        clusters=[cluster["clusterName"]], include=["TAGS", "SETTINGS"]
+    )
+    if any(f["reason"] != "MISSING" for f in existing_cluster.get("failures", [])):
+        raise RuntimeError("Cannot verify existing cluster state")
+    detected = existing_cluster.get("clusters", [])
+    reusable_cluster = None
+    if detected:
+        candidate = detected[0]
+        if candidate["status"] != "INACTIVE":
+            if candidate["status"] != "ACTIVE" or candidate["clusterName"] != cluster["clusterName"]:
+                raise RuntimeError("Existing cluster is not ready for reuse")
+            tags = {t["key"]: t["value"] for t in candidate.get("tags", [])}
+            settings = {s["name"]: s["value"] for s in candidate.get("settings", [])}
+            if any(tags.get(t["key"]) != t["value"] for t in cluster["tags"]):
+                raise RuntimeError("Existing cluster does not match the demo tags")
+            if any(settings.get(s["name"]) != s["value"] for s in cluster["settings"]):
+                raise RuntimeError("Existing cluster does not match the demo settings")
+            reusable_cluster = candidate
     existing = {"services": [], "failures": []}
-    if any(c["status"] == "ACTIVE" for c in existing_cluster.get("clusters", [])):
+    if reusable_cluster is not None:
         existing = ecs.describe_services(
             cluster=cluster["clusterName"], services=[service["serviceName"]]
         )
@@ -64,7 +82,7 @@ def provision(session):
                    for table in tables for r in table["Routes"]):
             raise RuntimeError("Application subnet must have an active Internet Gateway route")
 
-    created = ecs.create_cluster(**cluster)["cluster"]
+    created = reusable_cluster if reusable_cluster is not None else ecs.create_cluster(**cluster)["cluster"]
     definition = ecs.register_task_definition(**task)["taskDefinition"]
     service["taskDefinition"] = definition["taskDefinitionArn"]
     deployed = ecs.create_service(**service)["service"]

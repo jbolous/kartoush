@@ -36,7 +36,7 @@ With Python, boto3, and the AWS login credential dependency available:
 python3 infrastructure/aws/ecs/provision-service.py --profile kartoush
 ```
 
-The helper refuses a different project, a nonzero desired count, an existing active service, or network resources outside the tagged demo VPC. It validates an active Internet Gateway route before provisioning. It registers the task definition and uses the returned revision ARN when creating the service; the historical revision in `service.json` is not assumed to be current.
+The helper refuses a different project, a nonzero desired count, an existing active service, or network resources outside the tagged demo VPC. It validates an active Internet Gateway route before provisioning. On a retry after a partial failure, it reuses an active cluster only when its demo tags and configured settings match. It refuses a cluster in a transitional state or with mismatched configuration. An absent or inactive cluster is created. It registers the task definition and uses the returned revision ARN when creating the service; the historical revision in `service.json` is not assumed to be current.
 
 An expired session requires `aws login --profile kartoush`. Do not use permanent access keys. If provisioning fails, inspect the cluster/task/service state before retrying: creating a cluster or registering a revision can succeed before a later operation fails. The helper does not automatically remove resources or overwrite an existing service.
 
