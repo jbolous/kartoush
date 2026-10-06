@@ -72,15 +72,24 @@ docker buildx build --platform linux/amd64 --provenance=false --load \
 
 Provenance is disabled for this single-platform manual release to avoid auxiliary untagged attestation manifests; the recorded commit and ECR digest identify this artifact. Rebuilding the same source can produce a different digest when upstream dependencies change. Use a new explicit release tag for a rebuild; immutable tags must not be overwritten.
 
-Authenticate through stdin, then push and inspect:
+Authenticate through stdin using a temporary credential directory, then push and inspect. Run this block in the same shell as the build block so the release variables remain available. The subshell cleanup runs on success or failure and leaves the normal Docker credential configuration untouched:
 
 ```bash
-aws ecr get-login-password --profile kartoush --region us-east-2 \
-  | docker login --username AWS --password-stdin "$registry"
-docker push "$image_uri"
-aws ecr describe-images --profile kartoush --region us-east-2 \
-  --repository-name kartoush-demo-app --image-ids imageTag="$release_tag"
-docker logout "$registry"
+(
+  set -euo pipefail
+  docker_endpoint="${DOCKER_HOST:-$(docker context inspect --format '{{.Endpoints.docker.Host}}')}"
+  ecr_docker_config=$(mktemp -d)
+  cleanup_ecr_login() {
+    docker --config "$ecr_docker_config" logout "$registry" >/dev/null 2>&1 || true
+    rm -rf -- "$ecr_docker_config"
+  }
+  trap cleanup_ecr_login EXIT
+  aws ecr get-login-password --profile kartoush --region us-east-2 \
+    | docker --config "$ecr_docker_config" login --username AWS --password-stdin "$registry"
+  docker --config "$ecr_docker_config" --host "$docker_endpoint" push "$image_uri"
+  aws ecr describe-images --profile kartoush --region us-east-2 \
+    --repository-name kartoush-demo-app --image-ids imageTag="$release_tag"
+)
 ```
 
 The login token lasts 12 hours. Never print it or commit Docker credentials. Basic scanning is asynchronous; inspect findings with `describe-image-scan-findings` before deployment acceptance. Basic scanning covers OS packages and does not establish that the application is vulnerability-free. See [AWS basic scanning guidance](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-basic.html).
