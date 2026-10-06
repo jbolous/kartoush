@@ -121,6 +121,8 @@ Start with one Linux/x86 Fargate task using 0.25 vCPU, 1 GiB total task memory, 
 
 Pin both application and proxy images by digest in private Ohio ECR repositories. Use immutable release tags and a bounded retention policy, retaining the current and previous working images. Avoid a dependency on anonymous public-registry pulls at runtime. No build or dependency download runs inside the production task.
 
+Every container image permitted as an ECS Exec target must include the `script` and `cat` utilities in its executable path. This applies to application, proxy, and maintenance images wherever operator Exec access is allowed. Minimal base images must be checked explicitly; IAM and log-driver configuration alone do not guarantee session output delivery.
+
 Set service deployment minimum healthy percent to zero and maximum percent to 100 for one-task replacement. This deliberately allows downtime and avoids paying for two normal application tasks during deployments. An inactive deployment must preserve desired count zero. ECS container health checks use task-local endpoints rather than exposing Actuator publicly.
 
 The AWS `demo` environment runs the application's production profile with externalized configuration. Use normal application logging levels; the verbose TRACE and SQL-binding defaults in the base configuration are unsuitable for the deployed cost and secret-handling assumptions.
@@ -156,6 +158,8 @@ Use ECS Exec through IAM and Session Manager for controlled access to a running 
 For database bootstrap or maintenance, use a short-lived, pinned maintenance task with the app security group and outbound HTTPS access, controlled by the operator. Give it a separate execution role allowed to inject the database credentials required for that operation, then stop it. It must not expose a public listener or leave an extra task running. Account for its task-hours in the operations allowance.
 
 Send application, proxy, and ECS Exec audit output to CloudWatch log groups with seven-day retention. Restrict transcript access and avoid commands that print credentials. Log route/status/timing information without Authorization headers, tokens, TLS material, or sensitive request bodies.
+
+Before operational acceptance, run a harmless ECS Exec command that prints a unique non-secret marker in each permitted target container. Verify its command and output arrive in the configured CloudWatch log group and record the evidence. Confirm `script` and `cat` are available in each image and logging is enabled. A working shell or CloudTrail access event alone does not establish transcript delivery. #179 configures this validation and #181 includes it in end-to-end acceptance.
 
 Use standard ECS CPU/memory and RDS metrics. Do not enable paid Container Insights, detailed dashboards, tracing, or broad log exports by default. Billing alerts and anomaly detection from #185 are prerequisites; the narrower #179 monitoring scope does not override those safeguards. Phase 2 observability remains under #323.
 
@@ -260,7 +264,7 @@ The selected architecture meets the normal target and the documented 24/7 safety
 5. Provision private RDS in #174, configure runtime secret storage in #178, and prepare the ACM/TLS material and DNS access required by #341
 6. Define the ECS service at desired count zero in #177; coordinate #177 and #178 before the first deliberate startup so no working credentials are placed in plaintext
 7. Validate startup and Flyway against RDS in #180, then public HTTPS and route isolation in #341; configure basic logging in #179
-8. Complete #181 end-to-end validation, including start/stop, address replacement, persistent-cost inventory, and the complete cost assessment
+8. Complete #181 end-to-end validation, including ECS Exec transcript delivery for every permitted target, start/stop, address replacement, persistent-cost inventory, and the complete cost assessment
 
 The first implementation may use the console and AWS CLI. This architecture does not introduce Terraform or Phase 2 CI/CD. Produce repeatable operational instructions as each implementation task lands.
 
@@ -273,13 +277,13 @@ The following issues were reviewed against this architecture. This list records 
 | #172 | Distinguish operator, execution, and task roles; use the baseline names and temporary credentials rather than one broad application role |
 | #173 | Remove the required NAT Gateway; public application subnets and isolated private DB subnets have different route tables |
 | #174 | Specify private Single-AZ `db.t4g.micro`, bounded gp3/backup storage, verified TLS, and the cost gate |
-| #175 | Validate constrained memory, loopback binding, externalized production settings, health checks, and the RDS trust bundle |
+| #175 | Validate constrained memory, loopback binding, externalized production settings, health checks, the RDS trust bundle, and `script`/`cat` availability in Exec target images |
 | #176 | Include the pinned proxy image and bounded image retention alongside the application repository |
 | #177 | Replace private-task placement with public subnet placement and explicit public IPv4; retain desired count zero normally; include the proxy and startup ordering |
 | #178 | Use Secrets Manager; coordinate with #177 before first startup; keep TLS material separate from application secrets and preserve the job encryption key |
-| #179 | Apply finite log retention and safe runtime logging; preserve the independent billing-monitoring prerequisite from #185 |
+| #179 | Apply finite log retention and safe runtime logging; verify ECS Exec command/output delivery from every permitted target; preserve the independent billing-monitoring prerequisite from #185 |
 | #180 | Validate the existing startup Flyway behavior using private, verified-TLS RDS connections |
-| #181 | Include #341 ingress validation before public acceptance; add negative access, restart/address-change, and cost checks |
+| #181 | Include #341 ingress validation before public acceptance; verify ECS Exec transcripts; add negative access, restart/address-change, and cost checks |
 | #341 | Implement the task-local HTTPS proxy, exact route allowlist, exportable certificate lifecycle, and DNS reconciliation rather than assuming an ALB |
 | Later lifecycle task | Preserve manual startup, desired count zero, DNS removal, and explicit handling of RDS restart and persistent resources |
 | #323 | Build later CI/CD and observability on this topology while preserving inactive deployment behavior and the complete cost ceiling |
