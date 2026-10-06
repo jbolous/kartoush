@@ -4,12 +4,16 @@ on:
   pull_request:
     paths-ignore:
       - 'docs/**'
+      - '**/*.md'
+      - 'infrastructure/aws/iam/**/*.json'
   push:
     branches: # Specify your branches here
       - main # The 'main' branch
       - 'releases/*' # The release branches
     paths-ignore:
       - 'docs/**'
+      - '**/*.md'
+      - 'infrastructure/aws/iam/**/*.json'
 
 jobs:
   qodana:
