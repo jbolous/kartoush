@@ -1,0 +1,45 @@
+{
+  "cluster": "kartoush-demo-db-validation",
+  "taskDefinition": "kartoush-demo-db-validation",
+  "launchType": "FARGATE",
+  "platformVersion": "1.4.0",
+  "count": 1,
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": [
+        "subnet-0109a6127c7a44ecb"
+      ],
+      "securityGroups": [
+        "sg-05304aaebf6d0ea53"
+      ],
+      "assignPublicIp": "ENABLED"
+    }
+  },
+  "overrides": {
+    "containerOverrides": [
+      {
+        "name": "tls-probe",
+        "environment": [
+          {
+            "name": "DB_HOST",
+            "value": "kartoush-demo-db.ch6amo0weh68.us-east-2.rds.amazonaws.com"
+          }
+        ]
+      }
+    ]
+  },
+  "tags": [
+    {
+      "key": "Project",
+      "value": "kartoush"
+    },
+    {
+      "key": "Environment",
+      "value": "demo"
+    },
+    {
+      "key": "Name",
+      "value": "kartoush-demo-db-validation"
+    }
+  ]
+}

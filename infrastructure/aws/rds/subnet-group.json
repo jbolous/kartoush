@@ -1,0 +1,10 @@
+{
+  "DBSubnetGroupName": "kartoush-demo-db",
+  "DBSubnetGroupDescription": "Isolated Ohio database subnets",
+  "SubnetIds": ["subnet-0306b9414236e9dd0", "subnet-003110dfe19004153"],
+  "Tags": [
+    {"Key": "Project", "Value": "kartoush"},
+    {"Key": "Environment", "Value": "demo"},
+    {"Key": "Name", "Value": "kartoush-demo-db"}
+  ]
+}
