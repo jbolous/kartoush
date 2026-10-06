@@ -1,0 +1,9 @@
+{
+  "scanType": "BASIC",
+  "rules": [
+    {
+      "scanFrequency": "SCAN_ON_PUSH",
+      "repositoryFilters": [{"filter": "kartoush-demo-*", "filterType": "WILDCARD"}]
+    }
+  ]
+}

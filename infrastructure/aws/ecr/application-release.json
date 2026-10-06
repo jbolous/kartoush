@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "4ff92929aa039ffd2d4ac780fe7bf9a8cbe4c8d1",
+  "platform": "linux/amd64",
+  "repository": "790873128308.dkr.ecr.us-east-2.amazonaws.com/kartoush-demo-app",
+  "tag": "sha-4ff92929aa039ffd2d4ac780fe7bf9a8cbe4c8d1",
+  "digest": "sha256:f29b648df23208ee53b6d0f6f867307d3bd710f5701d5579f5dad45e4aebd756",
+  "imageSizeInBytes": 177650747,
+  "proxyImage": null
+}
