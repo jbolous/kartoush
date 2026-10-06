@@ -61,7 +61,7 @@ Run the bounded startup check from the repository root:
 bash infrastructure/aws/ecs/validate-service.sh
 ```
 
-The script requires an initially inactive service, starts one task, and checks both completed deployment and task health for up to ten minutes of polling. Its exit trap attempts to restore desired count zero on success, timeout, API failure, Ctrl-C, or termination. API request/retry time may extend the polling window. If cleanup fails, the script exits nonzero and reports the immediate manual shutdown command below. A killed shell or disconnected machine cannot guarantee cleanup; verify shutdown in AWS rather than assuming an exit trap is a spending cap.
+The script requires desired, running, and pending task counts to all be zero before it starts; reruns during a previous shutdown are refused. It starts one task, and checks both completed deployment and task health for up to ten minutes of polling. Its exit trap attempts to restore desired count zero on success, timeout, API failure, Ctrl-C, or termination. API request/retry time may extend the polling window. If cleanup fails, the script exits nonzero and reports the immediate manual shutdown command below. A killed shell or disconnected machine cannot guarantee cleanup; verify shutdown in AWS rather than assuming an exit trap is a spending cap.
 
 For manual shutdown or recovery after a reported cleanup failure:
 

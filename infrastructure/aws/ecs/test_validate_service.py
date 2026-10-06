@@ -13,8 +13,12 @@ aws() {
   case "$*" in
     *'--desired-count 0'*) [[ "$SCENARIO" != cleanup_failure ]];;
     *'--desired-count 1'*) [[ "$SCENARIO" != start_failure ]];;
-    *'services[0].desiredCount'*)
-      if [[ "$SCENARIO" == already_active ]]; then echo 1; else echo 0; fi;;
+    *'services[0].{inactive:'*)
+      case "$SCENARIO" in
+        already_active|still_running|still_pending) echo False;;
+        missing_service) echo None;;
+        *) echo True;;
+      esac;;
     *'describe-services'*)
       if [[ "$SCENARIO" == api_failure ]]; then return 1; fi
       if [[ "$SCENARIO" == timeout || "$SCENARIO" == interrupted ]]; then echo False; else echo True; fi;;
@@ -57,10 +61,12 @@ class ValidateServiceTest(unittest.TestCase):
         self.assertIn("Shutdown failed", result.stderr)
         self.assertIn("--desired-count 0", calls)
 
-    def test_refuses_an_already_active_service(self):
-        result, calls = self.run_scenario("already_active")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertNotIn("update-service", calls)
+    def test_refuses_active_transitional_or_missing_service(self):
+        for scenario in ("already_active", "still_running", "still_pending", "missing_service"):
+            with self.subTest(scenario=scenario):
+                result, calls = self.run_scenario(scenario)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertNotIn("update-service", calls)
 
 
 if __name__ == "__main__":

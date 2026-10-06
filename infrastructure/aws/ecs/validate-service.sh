@@ -18,9 +18,9 @@ cleanup() {
 }
 
 # Refuse to interrupt an environment somebody intentionally left running.
-initial_count=$(aws_ecs describe-services --cluster kartoush-demo-cluster \
-  --services kartoush-demo-app --query 'services[0].desiredCount' --output text)
-[[ "$initial_count" == 0 ]] || { echo 'Validation requires desired count zero.' >&2; exit 1; }
+initial_state=$(aws_ecs describe-services --cluster kartoush-demo-cluster \
+  --services kartoush-demo-app --query 'services[0].{inactive: desiredCount == `0` && runningCount == `0` && pendingCount == `0`}.inactive' --output text)
+[[ "$initial_state" == True ]] || { echo 'Validation requires desired, running, and pending counts all zero.' >&2; exit 1; }
 
 # Install cleanup before starting: a failed API response may still have changed AWS state.
 trap cleanup EXIT
