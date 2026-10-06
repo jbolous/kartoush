@@ -1,0 +1,23 @@
+{
+  "clusterName": "kartoush-demo-cluster",
+  "settings": [
+    {
+      "name": "containerInsights",
+      "value": "disabled"
+    }
+  ],
+  "tags": [
+    {
+      "key": "Project",
+      "value": "kartoush"
+    },
+    {
+      "key": "Environment",
+      "value": "demo"
+    },
+    {
+      "key": "Name",
+      "value": "kartoush-demo-cluster"
+    }
+  ]
+}
