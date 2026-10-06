@@ -1,0 +1,110 @@
+{
+  "checkedAtUtc": "2026-10-06",
+  "database": {
+    "DBInstanceIdentifier": "kartoush-demo-db",
+    "DBInstanceStatus": "available",
+    "DBName": "kartoush",
+    "Engine": "postgres",
+    "EngineVersion": "16.15",
+    "DBInstanceClass": "db.t4g.micro",
+    "AllocatedStorage": 20,
+    "StorageType": "gp3",
+    "StorageEncrypted": true,
+    "KmsKeyId": "arn:aws:kms:us-east-2:790873128308:key/8d7c06c4-a092-48c7-ac49-c6a76660371e",
+    "MultiAZ": false,
+    "PubliclyAccessible": false,
+    "BackupRetentionPeriod": 1,
+    "DeletionProtection": true,
+    "MonitoringInterval": 0,
+    "PerformanceInsightsEnabled": false,
+    "Endpoint": {
+      "Address": "kartoush-demo-db.ch6amo0weh68.us-east-2.rds.amazonaws.com",
+      "Port": 5432,
+      "HostedZoneId": "Z2XHWR1WZ565X2"
+    },
+    "VpcSecurityGroups": [
+      {
+        "VpcSecurityGroupId": "sg-04aead1737f1d9ceb",
+        "Status": "active"
+      }
+    ],
+    "DBParameterGroups": [
+      {
+        "DBParameterGroupName": "kartoush-demo-postgres16-tls",
+        "ParameterApplyStatus": "in-sync"
+      }
+    ],
+    "MasterUserSecret": {
+      "SecretArn": "arn:aws:secretsmanager:us-east-2:790873128308:secret:rds!db-94c83594-ac1f-4ff0-a08d-734fa8620ef7-wcXxXT",
+      "SecretStatus": "active",
+      "KmsKeyId": "arn:aws:kms:us-east-2:790873128308:key/ba96dbaa-3a25-42ce-acb0-58b687280c4d"
+    },
+    "AvailabilityZone": "us-east-2a",
+    "EngineLifecycleSupport": "open-source-rds-extended-support-disabled",
+    "AutoMinorVersionUpgrade": true,
+    "PreferredBackupWindow": "03:00-03:30",
+    "PreferredMaintenanceWindow": "sun:04:00-sun:04:30",
+    "LatestRestorableTime": "2026-10-06T04:37:16.018000+00:00",
+    "DBInstanceArn": "arn:aws:rds:us-east-2:790873128308:db:kartoush-demo-db",
+    "TagList": [
+      {
+        "Key": "Project",
+        "Value": "kartoush"
+      },
+      {
+        "Key": "Environment",
+        "Value": "demo"
+      },
+      {
+        "Key": "generation_model",
+        "Value": "gpt-6"
+      },
+      {
+        "Key": "created_by",
+        "Value": "rds-oss-skill"
+      },
+      {
+        "Key": "Name",
+        "Value": "kartoush-demo-db"
+      }
+    ],
+    "DBSubnetGroup": {
+      "DBSubnetGroupName": "kartoush-demo-db",
+      "VpcId": "vpc-0f7b8f49822de6526",
+      "SubnetGroupStatus": "Complete",
+      "Subnets": [
+        {
+          "SubnetIdentifier": "subnet-003110dfe19004153",
+          "SubnetAvailabilityZone": {
+            "Name": "us-east-2b"
+          },
+          "SubnetOutpost": {},
+          "SubnetStatus": "Active"
+        },
+        {
+          "SubnetIdentifier": "subnet-0306b9414236e9dd0",
+          "SubnetAvailabilityZone": {
+            "Name": "us-east-2a"
+          },
+          "SubnetOutpost": {},
+          "SubnetStatus": "Active"
+        }
+      ]
+    }
+  },
+  "tlsProbe": {
+    "taskArn": "arn:aws:ecs:us-east-2:790873128308:task/kartoush-demo-db-validation/aa31216b8a8b406b926c932eb5a6bed1",
+    "taskDefinitionArn": "arn:aws:ecs:us-east-2:790873128308:task-definition/kartoush-demo-db-validation:1",
+    "imageDigest": "sha256:f29b648df23208ee53b6d0f6f867307d3bd710f5701d5579f5dad45e4aebd756",
+    "exitCode": 0,
+    "status": "STOPPED",
+    "networkInterfaceStatus": "DELETED",
+    "authenticatesDatabaseUser": false,
+    "runsSql": false
+  },
+  "cleanup": {
+    "validationCluster": "INACTIVE",
+    "validationTaskDefinition": "INACTIVE"
+  },
+  "applicationDatabaseRole": "Pending controlled bootstrap under #178/#180"
+}

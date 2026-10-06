@@ -1,0 +1,4 @@
+{
+  "DBParameterGroupName": "kartoush-demo-postgres16-tls",
+  "Parameters": [{"ParameterName": "rds.force_ssl", "ParameterValue": "1", "ApplyMethod": "pending-reboot"}]
+}
