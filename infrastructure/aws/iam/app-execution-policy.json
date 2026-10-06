@@ -1,0 +1,49 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EcrAuthentication",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "PullImages",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": [
+        "arn:aws:ecr:us-east-2:790873128308:repository/kartoush-demo-app",
+        "arn:aws:ecr:us-east-2:790873128308:repository/kartoush-demo-proxy"
+      ]
+    },
+    {
+      "Sid": "ContainerLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": [
+        "arn:aws:logs:us-east-2:790873128308:log-group:/kartoush/demo/app:*",
+        "arn:aws:logs:us-east-2:790873128308:log-group:/kartoush/demo/proxy:*"
+      ]
+    },
+    {
+      "Sid": "InjectRuntimeSecrets",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue"
+      ],
+      "Resource": [
+        "arn:aws:secretsmanager:us-east-2:790873128308:secret:/kartoush/demo/app-??????",
+        "arn:aws:secretsmanager:us-east-2:790873128308:secret:/kartoush/demo/tls-??????"
+      ]
+    }
+  ]
+}
