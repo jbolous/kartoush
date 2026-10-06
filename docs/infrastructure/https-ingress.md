@@ -16,6 +16,8 @@ Build from `infrastructure/aws/ingress/proxy/` for Linux amd64. The base is dige
 
 The tested image is published in the private Ohio ECR repository. Its immutable release tag, digest, source commit, and size are recorded in [image-publication.json](../../infrastructure/aws/ingress/image-publication.json). Live combined-task validation and public DNS publication remain pending domain ownership and DNS confirmation.
 
+ECR BASIC scanning of the Linux image manifest (`sha256:4d8c81ebc6656619fa3648a5df85f8e4119c8c9f82425aaa0598ecf6b2ea71a7`) completed on 2026-10-06 with 2 critical, 12 high, 3 medium, and 1 low findings. These dependency findings remain unresolved; assess applicability and available package fixes before public deployment. Local route/TLS checks do not establish that the image is vulnerability-free.
+
 The proxy checks the original request target against exact method/path patterns. It does not normalize an encoded or ambiguous path into an allowed endpoint. Default routes, encoded paths, repeated slashes, dot-segments, unknown hosts, and direct-IP requests are rejected. TLS 1.2 and 1.3 are supported. Unknown SNI is rejected during the handshake.
 
 | Public route | Allowed methods |
