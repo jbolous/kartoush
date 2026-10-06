@@ -94,6 +94,7 @@ jobs:
         run: |
           docker compose --env-file .env.container -f compose.container.yaml config --quiet
           docker build -t kartoush-app:local .
+          docker run --rm --network none --entrypoint sh kartoush-app:local -c 'test "$SERVER_ADDRESS" = 127.0.0.1'
 
       - name: Verify container startup and runtime
         run: |
@@ -101,7 +102,7 @@ jobs:
           app_id=$(docker compose --env-file .env.container -f compose.container.yaml ps -q app)
           test "$(docker inspect --format '{{.HostConfig.NanoCpus}} {{.HostConfig.Memory}} {{.HostConfig.MemorySwap}}' "$app_id")" = '250000000 805306368 805306368'
           curl --fail http://127.0.0.1:18080/actuator/health
-          docker compose --env-file .env.container -f compose.container.yaml exec -T app sh -c 'test "$(id -u)" = 10001 && command -v script && command -v cat && test -r /app/rds-ca-bundle.pem'
+          docker compose --env-file .env.container -f compose.container.yaml exec -T app sh -c 'test "$(id -u)" = 10001 && command -v script && command -v cat && test -r /app/rds-ca-bundle.pem && test "$SERVER_ADDRESS" = 0.0.0.0'
 
       - name: Remove disposable stack
         if: ${{ always() }}

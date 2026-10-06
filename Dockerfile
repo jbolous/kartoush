@@ -37,6 +37,7 @@ RUN curl --fail --silent --show-error \
     --output /app/rds-ca-bundle.pem \
     && chmod 0444 /app/rds-ca-bundle.pem
 ENV SPRING_PROFILES_ACTIVE=prod \
+    SERVER_ADDRESS=127.0.0.1 \
     LOGGING_LEVEL_COM_KARTOUSH=INFO \
     LOGGING_LEVEL_ORG_HIBERNATE_SQL=WARN \
     LOGGING_LEVEL_ORG_HIBERNATE_ORM_JDBC_BIND=WARN \
