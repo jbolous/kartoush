@@ -140,7 +140,7 @@ Build the project and run the full test suite locally:
 
 ## Run Locally in a Container
 
-For a standalone application and PostgreSQL stack, follow the [container run guide](docs/infrastructure/container-local-run.md). It uses runtime credentials, the production profile, and a loopback-only HTTP port. For private AWS image publication and retention, follow the [ECR guide](docs/infrastructure/ecr-image-storage.md). Database provisioning and validation are documented in the [RDS guide](docs/infrastructure/rds-postgresql.md).
+For a standalone application and PostgreSQL stack, follow the [container run guide](docs/infrastructure/container-local-run.md). It uses runtime credentials, the production profile, and a loopback-only HTTP port. For private AWS image publication and retention, follow the [ECR guide](docs/infrastructure/ecr-image-storage.md). Database provisioning and validation are documented in the [RDS guide](docs/infrastructure/rds-postgresql.md). Managed credential injection and rotation are documented in the [runtime secrets guide](docs/infrastructure/runtime-secrets.md).
 
 ---
 

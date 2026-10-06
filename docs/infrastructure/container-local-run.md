@@ -67,7 +67,7 @@ Application/module, Gradle, and CI workflow changes run the Java unit and integr
 The runtime image downloads the public Ohio RDS CA bundle from AWS over verified HTTPS at build time and stores it read-only at `/app/rds-ca-bundle.pem`, readable by the non-root application user. Supply the RDS endpoint hostname and the bundled certificate path in the runtime JDBC URL:
 
 ```text
-jdbc:postgresql://RDS_ENDPOINT:5432/kartoush?sslmode=verify-full&sslrootcert=/app/rds-ca-bundle.pem
+jdbc:postgresql://RDS_ENDPOINT:5432/kartoush?currentSchema=kartoush&sslmode=verify-full&sslrootcert=/app/rds-ca-bundle.pem
 ```
 
 The bundle is a public trust artifact, not a database credential or private key. The JDBC settings remain externalized; the local Compose database does not use RDS certificates. Rebuild the runtime stage without cache when refreshing the bundle for CA changes and republish the new image digest. Do not replace `verify-full` with a mode that permits plaintext fallback. See [AWS PostgreSQL TLS guidance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html). Verified connections to the actual RDS database remain part of #180.
