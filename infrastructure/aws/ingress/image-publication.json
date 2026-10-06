@@ -1,0 +1,11 @@
+{
+  "region": "us-east-2",
+  "repository": "kartoush-demo-proxy",
+  "source_commit": "83838172a34ed5f50afe8233ae6500f5ec49b351",
+  "tag": "sha-83838172a34ed5f50afe8233ae6500f5ec49b351",
+  "digest": "sha256:9c599b07fd6c7b01f385720eef4c25ecf38762d26488eaace2cafb6a87225d37",
+  "image": "790873128308.dkr.ecr.us-east-2.amazonaws.com/kartoush-demo-proxy@sha256:9c599b07fd6c7b01f385720eef4c25ecf38762d26488eaace2cafb6a87225d37",
+  "size_bytes": 63631902,
+  "published_at": "2026-10-06T14:19:37.896000-05:00",
+  "live_deployment": "pending domain ownership and DNS confirmation"
+}

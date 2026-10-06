@@ -14,6 +14,8 @@ Once DNS control is available, use the agreed Route 53 public zone. Preserve exi
 
 Build from `infrastructure/aws/ingress/proxy/` for Linux amd64. The base is digest-pinned Nginx 1.30.5 on Debian trixie. The image contains `script` and `cat` for future ECS Exec transcript support. The running proxy uses UID/GID 10001, a read-only root filesystem, and a writable task scratch volume. A task network sysctl permits the non-root proxy to bind 443; the security group still exposes only that port.
 
+The tested image is published in the private Ohio ECR repository. Its immutable release tag, digest, source commit, and size are recorded in [image-publication.json](../../infrastructure/aws/ingress/image-publication.json). Live combined-task validation and public DNS publication remain pending domain ownership and DNS confirmation.
+
 The proxy checks the original request target against exact method/path patterns. It does not normalize an encoded or ambiguous path into an allowed endpoint. Default routes, encoded paths, repeated slashes, dot-segments, unknown hosts, and direct-IP requests are rejected. TLS 1.2 and 1.3 are supported. Unknown SNI is rejected during the handshake.
 
 | Public route | Allowed methods |
