@@ -16,6 +16,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 public class BrevoEmailClient implements EmailClient {
 
@@ -51,10 +52,12 @@ public class BrevoEmailClient implements EmailClient {
         final HttpResponse<String> response = notificationHttpClient.send(request, PROVIDER);
 
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            if (email.idempotencyKey() != null && isIdempotencyDuplicate(response)) {
+                return Optional.empty();
+            }
             LOG.error(
-                "Brevo email delivery failed with status={} body={}",
-                response.statusCode(),
-                response.body()
+                "Brevo email delivery failed with status={}",
+                response.statusCode()
             );
             throw new EmailDeliveryException(PROVIDER, "Brevo email delivery failed with status " + response.statusCode());
         }
@@ -70,7 +73,8 @@ public class BrevoEmailClient implements EmailClient {
                     List.of(new Recipient(email.recipient().value())),
                     email.subject(),
                     email.textBody(),
-                    email.htmlBody()
+                    email.htmlBody(),
+                    email.idempotencyKey() == null ? null : Map.of("idempotencyKey", email.idempotencyKey())
                 )
             );
         } catch (final RuntimeException exception) {
@@ -99,13 +103,27 @@ public class BrevoEmailClient implements EmailClient {
         }
     }
 
+    private boolean isIdempotencyDuplicate(final HttpResponse<String> response) {
+        if (response.statusCode() != 400) {
+            return false;
+        }
+        try {
+            final var error = OBJECT_MAPPER.readTree(response.body());
+            return "duplicate_parameter".equals(error.path("code").asText())
+                && error.path("message").asText().toLowerCase(java.util.Locale.ROOT).contains("idempotency");
+        } catch (final Exception ex) {
+            return false;
+        }
+    }
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private record BrevoSendEmailRequest(
         Sender sender,
         List<Recipient> to,
         String subject,
         String textContent,
-        String htmlContent
+        String htmlContent,
+        Map<String, String> headers
     ) {
     }
 

@@ -153,6 +153,12 @@ jobs:
           - name: terms-api-integration-tests
             gradle_task: :app:integrationTest
             test_filter: com.kartoush.api.terms.*
+          - name: background-job-integration-tests
+            gradle_task: :app:integrationTest
+            test_filter: com.kartoush.config.*
+          - name: email-delivery-integration-tests
+            gradle_task: :app:integrationTest
+            test_filter: com.kartoush.notification.*
           - name: customer-module-integration-tests
             gradle_task: :customer:integrationTest
             test_filter: ''
@@ -175,6 +181,9 @@ jobs:
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
+
+      - name: Verify Docker is available
+        run: docker info
 
       - name: Run filtered integration test group
         if: ${{ matrix.test_filter != '' }}

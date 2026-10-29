@@ -1,4 +1,4 @@
-package com.kartoush.config.jobs;
+package com.kartoush.jobs.handler;
 
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
@@ -56,6 +56,7 @@ class ActivationEmailJobHandlerTest {
             EMAIL
         );
         final EmailMessage emailMessage = mock(EmailMessage.class);
+        when(emailMessage.withIdempotencyKey(any(String.class))).thenReturn(emailMessage);
 
         when(customerService.getCustomerById(CUSTOMER_ID)).thenReturn(Optional.of(customer));
         when(activationEmailJobCipher.decrypt("encrypted-token")).thenReturn(RAW_TOKEN);

@@ -3,6 +3,7 @@ package com.kartoush.notification.email.provider.mailtrap;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.client.EmailClient;
 import com.kartoush.notification.email.delivery.EmailDeliveryException;
+import com.kartoush.notification.email.delivery.EmailDeliveryOutcomeException;
 import io.mailtrap.client.MailtrapClient;
 import io.mailtrap.model.request.emails.Address;
 import io.mailtrap.model.request.emails.MailtrapMail;
@@ -38,7 +39,7 @@ public class MailtrapEmailClient implements EmailClient {
         try {
             final SendResponse response = mailtrapClient.send(mailtrapMail);
             if (!response.isSuccess()) {
-                throw new EmailDeliveryException(PROVIDER, "Mailtrap email delivery failed");
+                throw new EmailDeliveryOutcomeException(PROVIDER, "Mailtrap email delivery failed", false);
             }
 
             return Optional.ofNullable(response.getMessageIds())

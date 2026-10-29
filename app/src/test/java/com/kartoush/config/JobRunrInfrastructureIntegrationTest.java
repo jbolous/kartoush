@@ -42,7 +42,7 @@ class JobRunrInfrastructureIntegrationTest extends PostgresSpringIntegrationTest
         );
 
         final Integer jobCount = jdbcTemplate.queryForObject(
-            "SELECT COUNT(id) FROM jobrunr.jobrunr_jobs",
+            "SELECT COUNT(id) FROM background_job_outbox",
             Integer.class
         );
 
