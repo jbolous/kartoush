@@ -1,4 +1,4 @@
-package com.kartoush.config.jobs;
+package com.kartoush.jobs.handler;
 
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.domain.CustomerProfile;
@@ -46,6 +46,7 @@ class WelcomeEmailJobHandlerTest {
         final WelcomeEmailJobRequest request = new WelcomeEmailJobRequest(CUSTOMER_ID);
         final Customer customer = activeCustomer();
         final EmailMessage emailMessage = mock(EmailMessage.class);
+        when(emailMessage.withIdempotencyKey(any(String.class))).thenReturn(emailMessage);
 
         when(customerService.getCustomerById(CUSTOMER_ID)).thenReturn(Optional.of(customer));
         when(customerEmailFactory.newWelcomeEmail(EMAIL, "Jack")).thenReturn(emailMessage);

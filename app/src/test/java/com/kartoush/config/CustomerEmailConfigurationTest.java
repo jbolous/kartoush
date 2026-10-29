@@ -1,11 +1,13 @@
 package com.kartoush.config;
 
 import com.kartoush.notification.email.config.CustomerEmailProperties;
-import com.kartoush.notification.email.provider.brevo.BrevoEmailDeliveryService;
+import com.kartoush.notification.email.delivery.TrackedEmailDeliveryService;
+import com.kartoush.notification.persistence.repository.EmailDeliveryRepository;
+import org.springframework.transaction.PlatformTransactionManager;
+import java.time.Clock;
 import com.kartoush.notification.email.config.EmailDeliveryConfiguration;
 import com.kartoush.notification.email.config.EmailDeliveryProperties;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
-import com.kartoush.notification.email.provider.mailtrap.MailtrapEmailDeliveryService;
 import com.kartoush.notification.email.provider.mailtrap.MailtrapEmailConfiguration;
 import com.kartoush.notification.email.delivery.NoOpEmailDeliveryService;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAut
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 class CustomerEmailConfigurationTest {
 
@@ -63,6 +66,9 @@ class CustomerEmailConfigurationTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
         .withConfiguration(AutoConfigurations.of(ConfigurationPropertiesAutoConfiguration.class))
+        .withBean(EmailDeliveryRepository.class, () -> mock(EmailDeliveryRepository.class))
+        .withBean(PlatformTransactionManager.class, () -> mock(PlatformTransactionManager.class))
+        .withBean(Clock.class, Clock::systemUTC)
         .withUserConfiguration(
             CustomerEmailProperties.class,
             EmailDeliveryProperties.class,
@@ -87,7 +93,7 @@ class CustomerEmailConfigurationTest {
             .run(context -> {
                 assertThat(context).hasNotFailed();
                 assertThat(context).hasSingleBean(EmailDeliveryService.class);
-                assertThat(context.getBean(EmailDeliveryService.class)).isInstanceOf(MailtrapEmailDeliveryService.class);
+                assertThat(context.getBean(EmailDeliveryService.class)).isInstanceOf(TrackedEmailDeliveryService.class);
             });
     }
 
@@ -98,7 +104,7 @@ class CustomerEmailConfigurationTest {
             .run(context -> {
                 assertThat(context).hasNotFailed();
                 assertThat(context).hasSingleBean(EmailDeliveryService.class);
-                assertThat(context.getBean(EmailDeliveryService.class)).isInstanceOf(BrevoEmailDeliveryService.class);
+                assertThat(context.getBean(EmailDeliveryService.class)).isInstanceOf(TrackedEmailDeliveryService.class);
             });
     }
 

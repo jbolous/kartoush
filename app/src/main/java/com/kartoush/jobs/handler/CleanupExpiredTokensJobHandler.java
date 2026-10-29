@@ -1,5 +1,6 @@
-package com.kartoush.config.jobs;
+package com.kartoush.jobs.handler;
 
+import com.kartoush.config.jobs.CleanupExpiredTokensJobRequest;
 import com.kartoush.auth.service.PasswordTokenCleanupResult;
 import com.kartoush.auth.service.PasswordTokenCleanupService;
 import com.kartoush.customer.service.ActivationTokenCleanupService;

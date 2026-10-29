@@ -1,5 +1,6 @@
 package com.kartoush.config.jobs;
 
+import com.kartoush.jobs.persistence.repository.BackgroundJobOutboxRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kartoush.platform.jobs.BackgroundJobScheduler;
 import com.kartoush.platform.jobs.JobHandler;
@@ -7,8 +8,6 @@ import com.kartoush.platform.jobs.RecurringBackgroundJobScheduler;
 import org.jobrunr.scheduling.JobScheduler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 
@@ -27,12 +26,10 @@ public class BackgroundJobConfiguration {
         final JobScheduler jobScheduler,
         final PlatformJobDispatcher platformJobDispatcher,
         final ObjectMapper objectMapper,
-        final PlatformTransactionManager transactionManager) {
-        final TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-        transactionTemplate.setPropagationBehavior(TransactionTemplate.PROPAGATION_REQUIRES_NEW);
+        final BackgroundJobOutboxRepository outboxRepository) {
         return new TransactionAwareBackgroundJobScheduler(
             jobSchedulerAdapter(jobScheduler, platformJobDispatcher, objectMapper),
-            transactionTemplate
+            outboxRepository
         );
     }
 

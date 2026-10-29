@@ -1,7 +1,7 @@
 package com.kartoush.api.customer;
 
 import com.kartoush.api.support.UrlQueryParams;
-import com.kartoush.config.jobs.ActivationEmailJobHandler;
+import com.kartoush.jobs.handler.ActivationEmailJobHandler;
 import com.kartoush.customer.service.job.ActivationEmailJobRequest;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.notification.email.EmailMessage;

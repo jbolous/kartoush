@@ -62,7 +62,8 @@ class BrevoEmailClientTest {
             "<p><a href=\"https://kartoush.dev/activate?token=abc\">Activate</a></p>"
         );
 
-        final Optional<String> messageId = client.send(email);
+        final String idempotencyKey = "c363629a-70ac-4c9d-aab6-13078dcfa78a";
+        final Optional<String> messageId = client.send(email.withIdempotencyKey(idempotencyKey));
 
         assertThat(messageId).contains("brevo-message-id");
         assertThat(response.request.uri()).isEqualTo(URI.create("https://api.brevo.com/v3/smtp/email"));
@@ -71,6 +72,7 @@ class BrevoEmailClientTest {
         assertThat(response.request.method()).isEqualTo("POST");
         assertThat(response.request.bodyPublisher()).isPresent();
         assertThat(bodyToString(response.request.bodyPublisher().orElseThrow()))
+            .contains("\"headers\":{\"idempotencyKey\":\"" + idempotencyKey + "\"}")
             .contains("\"subject\":\"Activate your Kartoush account\"")
             .contains("\"textContent\":\"Click here\"")
             .contains("\"htmlContent\":\"<p><a href=\\\"https://kartoush.dev/activate?token=abc\\\">Activate</a></p>\"");
@@ -157,6 +159,37 @@ class BrevoEmailClientTest {
                 assertThat(exception.provider()).isEqualTo("brevo");
                 assertThat(exception).hasMessage("Brevo email delivery failed with status 500");
             });
+    }
+
+    @Test
+    void shouldTreatIdempotencyRejectionAsAlreadyAccepted() {
+        final NotificationHttpClient httpClient = mock(NotificationHttpClient.class);
+        final EmailDeliveryProperties.Brevo properties = new EmailDeliveryProperties.Brevo();
+        properties.setApiKey("key");
+        when(httpClient.send(any(), any())).thenReturn(new HttpRequestCapturingResponse(400,
+            "{\"code\":\"duplicate_parameter\",\"message\":\"Email for the idempotency key has already been processed\"}"));
+        final EmailMessage email = new EmailMessage(EmailMessageType.CUSTOMER_WELCOME,
+            new Email("jack@kartoush.com"), new Email("no-reply@kartoush.com"), "Kartoush",
+            "Welcome", "Welcome", "https://kartoush.dev")
+            .withIdempotencyKey("c363629a-70ac-4c9d-aab6-13078dcfa78a");
+
+        assertThat(new BrevoEmailClient(httpClient, properties).send(email)).isEmpty();
+    }
+
+    @Test
+    void shouldNotSuppressUnrelatedDuplicateParameterErrors() {
+        final NotificationHttpClient httpClient = mock(NotificationHttpClient.class);
+        final EmailDeliveryProperties.Brevo properties = new EmailDeliveryProperties.Brevo();
+        properties.setApiKey("key");
+        when(httpClient.send(any(), any())).thenReturn(new HttpRequestCapturingResponse(400,
+            "{\"code\":\"duplicate_parameter\",\"message\":\"Duplicate recipient\"}"));
+        final EmailMessage email = new EmailMessage(EmailMessageType.CUSTOMER_WELCOME,
+            new Email("jack@kartoush.com"), new Email("no-reply@kartoush.com"), "Kartoush",
+            "Welcome", "Welcome", "https://kartoush.dev")
+            .withIdempotencyKey("c363629a-70ac-4c9d-aab6-13078dcfa78a");
+
+        assertThatThrownBy(() -> new BrevoEmailClient(httpClient, properties).send(email))
+            .isInstanceOf(EmailDeliveryException.class);
     }
 
     static class HttpRequestCapturingResponse implements HttpResponse<String> {

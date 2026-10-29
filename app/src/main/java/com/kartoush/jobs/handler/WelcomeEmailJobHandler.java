@@ -1,4 +1,4 @@
-package com.kartoush.config.jobs;
+package com.kartoush.jobs.handler;
 
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.service.CustomerService;
@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.UUID;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class WelcomeEmailJobHandler implements JobHandler<WelcomeEmailJobRequest> {
@@ -67,7 +69,8 @@ public class WelcomeEmailJobHandler implements JobHandler<WelcomeEmailJobRequest
             customerEmailFactory.newWelcomeEmail(
                 activeCustomer.getEmail(),
                 activeCustomer.getProfile().firstName()
-            )
+            ).withIdempotencyKey(UUID.nameUUIDFromBytes(
+                ("welcome:" + request.customerId()).getBytes(StandardCharsets.UTF_8)).toString())
         );
     }
 }

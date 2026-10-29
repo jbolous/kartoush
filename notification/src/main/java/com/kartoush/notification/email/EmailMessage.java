@@ -12,7 +12,8 @@ public record EmailMessage(
     String subject,
     String textBody,
     String actionUrl,
-    String htmlBody
+    String htmlBody,
+    String idempotencyKey
 ) {
 
     public EmailMessage {
@@ -29,6 +30,19 @@ public record EmailMessage(
         if (htmlBody != null) {
             htmlBody = htmlBody.trim();
         }
+        if (idempotencyKey != null) {
+            java.util.UUID.fromString(idempotencyKey);
+        }
+    }
+
+    public EmailMessage(final EmailMessageType type, final Email recipient, final Email senderAddress,
+        final String senderName, final String subject, final String textBody, final String actionUrl,
+        final String htmlBody) {
+        this(type, recipient, senderAddress, senderName, subject, textBody, actionUrl, htmlBody, null);
+    }
+
+    public EmailMessage withIdempotencyKey(final String key) {
+        return new EmailMessage(type, recipient, senderAddress, senderName, subject, textBody, actionUrl, htmlBody, key);
     }
 
     public EmailMessage(

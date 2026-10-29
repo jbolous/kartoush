@@ -42,9 +42,9 @@ class ActivationEmailJobSchedulingIntegrationTest extends PostgresSpringIntegrat
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void shouldPersistActivationEmailJobAfterCustomerRegistration() throws Exception {
+    void shouldPersistActivationEmailOutboxWithCustomerRegistration() throws Exception {
         final Integer jobCountBefore = jdbcTemplate.queryForObject(
-            "SELECT COUNT(id) FROM jobrunr.jobrunr_jobs",
+            "SELECT COUNT(id) FROM background_job_outbox",
             Integer.class
         );
 
@@ -64,7 +64,7 @@ class ActivationEmailJobSchedulingIntegrationTest extends PostgresSpringIntegrat
             .andExpect(jsonPath("$.status").value(CustomerStatus.PENDING.name()));
 
         final Integer jobCountAfter = jdbcTemplate.queryForObject(
-            "SELECT COUNT(id) FROM jobrunr.jobrunr_jobs",
+            "SELECT COUNT(id) FROM background_job_outbox",
             Integer.class
         );
 

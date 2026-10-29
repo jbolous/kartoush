@@ -3,7 +3,7 @@ package com.kartoush.api.auth;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kartoush.api.support.UrlQueryParams;
-import com.kartoush.config.jobs.ActivationEmailJobHandler;
+import com.kartoush.jobs.handler.ActivationEmailJobHandler;
 import com.kartoush.notification.email.delivery.EmailDeliveryService;
 import com.kartoush.notification.email.EmailMessage;
 import com.kartoush.notification.email.EmailMessageType;

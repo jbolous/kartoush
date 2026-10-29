@@ -1,4 +1,4 @@
-package com.kartoush.config.jobs;
+package com.kartoush.jobs.handler;
 
 import com.kartoush.customer.domain.Customer;
 import com.kartoush.customer.exception.ActivationTokenConsumedException;
@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.UUID;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class ActivationEmailJobHandler implements JobHandler<ActivationEmailJobRequest> {
@@ -92,7 +94,9 @@ public class ActivationEmailJobHandler implements JobHandler<ActivationEmailJobR
                 activationEmail.email(),
                 activationEmail.customerId(),
                 activationEmail.rawToken()
-            )
+            ).withIdempotencyKey(UUID.nameUUIDFromBytes(
+                ("activation:" + request.customerId() + ":" + request.encryptedToken())
+                    .getBytes(StandardCharsets.UTF_8)).toString())
         );
     }
 }
