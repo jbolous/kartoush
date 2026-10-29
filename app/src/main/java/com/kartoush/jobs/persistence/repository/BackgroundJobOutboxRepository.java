@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,6 +18,12 @@ public interface BackgroundJobOutboxRepository extends JpaRepository<BackgroundJ
         + "order by available_at, created_at "
         + "limit 1 for update skip locked", nativeQuery = true)
     Optional<BackgroundJobOutboxEntity> lockNextPending();
+
+    long countByQuarantinedAtIsNotNullAndCompletedAtIsNull();
+
+    @Query("select min(j.quarantinedAt) from BackgroundJobOutboxEntity j "
+        + "where j.quarantinedAt is not null and j.completedAt is null")
+    Optional<Instant> oldestQuarantinedAt();
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select j from BackgroundJobOutboxEntity j where j.id = :id")

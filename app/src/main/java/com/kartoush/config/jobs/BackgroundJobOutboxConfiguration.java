@@ -1,11 +1,15 @@
 package com.kartoush.config.jobs;
 
+import com.kartoush.jobs.monitoring.BackgroundJobRecoveryMonitor;
 import com.kartoush.jobs.persistence.repository.BackgroundJobOutboxRepository;
 import org.jobrunr.scheduling.JobScheduler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import java.time.Clock;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.jobrunr.storage.StorageProvider;
+import com.kartoush.notification.email.delivery.EmailDeliveryRecoveryService;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -15,6 +19,13 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableConfigurationProperties(BackgroundJobOutboxProperties.class)
 @ConditionalOnProperty(name = "jobrunr.background-job-server.enabled", havingValue = "true")
 public class BackgroundJobOutboxConfiguration {
+    @Bean
+    BackgroundJobRecoveryMonitor backgroundJobRecoveryMonitor(final EmailDeliveryRecoveryService deliveries,
+        final BackgroundJobOutboxRepository repository, final StorageProvider storage,
+        final Clock clock, final MeterRegistry registry) {
+        return new BackgroundJobRecoveryMonitor(deliveries, repository, storage, clock, registry);
+    }
+
     @Bean
     BackgroundJobOutboxRelay backgroundJobOutboxRelay(final BackgroundJobOutboxRepository repository,
         final JobScheduler scheduler, final OutboxJobExecutor executor,

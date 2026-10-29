@@ -1,9 +1,14 @@
 package com.kartoush.notification;
 
 import com.kartoush.notification.email.EmailMessage;
+import com.kartoush.jobs.monitoring.BackgroundJobRecoveryMonitor;
+import com.kartoush.jobs.persistence.repository.BackgroundJobOutboxRepository;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.jobrunr.storage.StorageProvider;
 import com.kartoush.notification.email.EmailMessageType;
 import com.kartoush.notification.email.client.EmailClient;
 import com.kartoush.notification.email.delivery.EmailDeliveryException;
+import com.kartoush.notification.email.delivery.EmailDeliveryRecoveryService;
 import com.kartoush.notification.email.delivery.EmailDeliveryOutcomeException;
 import com.kartoush.notification.email.delivery.EmailDeliveryReconciliationService;
 import com.kartoush.notification.email.delivery.TrackedEmailDeliveryService;
@@ -29,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.AdditionalAnswers.delegatesTo;
 import static org.mockito.Mockito.*;
 
 @SpringIntegrationTest
@@ -37,6 +43,9 @@ class EmailDeliveryTrackingIntegrationTest extends PostgresSpringIntegrationTest
     @Autowired private PlatformTransactionManager manager;
     @Autowired private EmailDeliveryReconciliationService reconciliation;
     @Autowired private JdbcTemplate jdbc;
+    @Autowired private EmailDeliveryRecoveryService recovery;
+    @Autowired private BackgroundJobOutboxRepository outbox;
+    @Autowired private StorageProvider storage;
 
     @Test
     void shouldKeepAcceptanceWhenCallingTransactionRollsBack() {
@@ -160,7 +169,7 @@ class EmailDeliveryTrackingIntegrationTest extends PostgresSpringIntegrationTest
         final var email = email();
         final var client = mock(EmailClient.class);
         when(client.send(any())).thenReturn(Optional.of("accepted-but-receipt-write-failed"));
-        final var failingRepository = spy(repository);
+        final var failingRepository = mock(EmailDeliveryRepository.class, delegatesTo(repository));
         doThrow(new IllegalStateException("database unavailable"))
             .when(failingRepository).recordOutcome(eq(id(email)), eq(1), eq("ACCEPTED"), any(), any());
         final var service = new TrackedEmailDeliveryService("mailtrap", client, failingRepository,
@@ -185,6 +194,34 @@ class EmailDeliveryTrackingIntegrationTest extends PostgresSpringIntegrationTest
         service.send(email);
         service.send(email);
         verify(client, times(1)).send(any());
+    }
+
+    @Test
+    void shouldMarkOnlyStaleAttemptsUnknownWhenRecoveryRunsWithoutJobRetry() {
+        final var stale = email();
+        final var fresh = email();
+        final var old = Instant.now().minusSeconds(301);
+        new TransactionTemplate(manager).executeWithoutResult(status -> {
+            for (final var email : java.util.List.of(stale, fresh)) {
+                final var startedAt = email == stale ? old : Instant.now();
+                repository.insertIfAbsent(id(email), "mailtrap", startedAt);
+                repository.lockById(id(email)).orElseThrow().startAttempt(startedAt);
+                repository.recordAttempt(id(email), 1, startedAt);
+            }
+        });
+
+        final var metrics = new SimpleMeterRegistry();
+        new BackgroundJobRecoveryMonitor(recovery, outbox, storage, Clock.systemUTC(), metrics).check();
+        assertThat(metrics.get("jobs.recovery.monitor.failures").counter().count()).isZero();
+        assertThat(metrics.get("jobs.recovery.unresolved").tag("kind", "email-unknown").gauge().value())
+            .isGreaterThanOrEqualTo(1);
+        assertThat(status(stale)).isEqualTo("UNKNOWN");
+        assertThat(status(fresh)).isEqualTo("SENDING");
+        assertThat(jdbc.queryForObject("select status from email_delivery_attempt where delivery_id = ?",
+            String.class, id(stale))).isEqualTo("UNKNOWN");
+        final var client = mock(EmailClient.class);
+        assertThatThrownBy(() -> service(client, Clock.systemUTC()).send(stale)).hasMessageContaining("UNKNOWN");
+        verifyNoInteractions(client);
     }
 
     private TrackedEmailDeliveryService service(final EmailClient client, final Clock clock) {

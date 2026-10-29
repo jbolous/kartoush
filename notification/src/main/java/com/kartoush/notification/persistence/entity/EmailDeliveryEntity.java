@@ -33,6 +33,7 @@ public class EmailDeliveryEntity {
 
     protected EmailDeliveryEntity() { }
 
+    public UUID getId() { return id; }
     public String getProvider() { return provider; }
     public EmailDeliveryStatus getStatus() { return status; }
     public Instant getAttemptStartedAt() { return attemptStartedAt; }

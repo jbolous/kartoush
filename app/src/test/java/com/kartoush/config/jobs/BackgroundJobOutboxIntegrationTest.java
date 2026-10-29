@@ -52,7 +52,7 @@ class BackgroundJobOutboxIntegrationTest extends PostgresSpringIntegrationTest {
     void shouldRecoverCommittedIntentAndSuppressDuplicateExecution() {
         final String marker = UUID.randomUUID().toString();
         new TransactionTemplate(transactionManager).executeWithoutResult(status ->
-            scheduler.enqueue(new TestRequest(marker)));
+            scheduler.schedule(new TestRequest(marker), Instant.EPOCH));
         final BackgroundJobOutboxEntity job = repository.findAll().stream()
             .filter(record -> record.getPayload() != null && record.getPayload().contains(marker))
             .findFirst().orElseThrow();

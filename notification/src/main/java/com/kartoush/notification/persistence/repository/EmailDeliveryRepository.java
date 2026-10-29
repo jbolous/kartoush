@@ -1,6 +1,7 @@
 package com.kartoush.notification.persistence.repository;
 
 import com.kartoush.notification.persistence.entity.EmailDeliveryEntity;
+import com.kartoush.notification.email.delivery.EmailDeliveryStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -27,6 +28,15 @@ public interface EmailDeliveryRepository extends JpaRepository<EmailDeliveryEnti
         + "provider_message_id = :receipt where delivery_id = :id and attempt_number = :number", nativeQuery = true)
     void recordOutcome(@Param("id") UUID id, @Param("number") int number, @Param("outcome") String outcome,
                        @Param("receipt") String receipt, @Param("now") Instant now);
+
+    @Query(value = "select * from email_delivery where status = 'SENDING' and attempt_started_at <= :cutoff "
+        + "order by attempt_started_at limit 1 for update skip locked", nativeQuery = true)
+    Optional<EmailDeliveryEntity> lockNextStale(@Param("cutoff") Instant cutoff);
+
+    long countByStatus(EmailDeliveryStatus status);
+
+    @Query("select min(d.updatedAt) from EmailDeliveryEntity d where d.status = :status")
+    Optional<Instant> oldestUpdatedAt(@Param("status") EmailDeliveryStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select d from EmailDeliveryEntity d where d.id = :id")

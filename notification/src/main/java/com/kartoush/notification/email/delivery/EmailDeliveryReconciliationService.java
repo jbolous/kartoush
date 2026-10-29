@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
-import java.time.Duration;
 import java.util.UUID;
 
 @Service
@@ -28,7 +27,7 @@ public class EmailDeliveryReconciliationService {
         final var delivery = repository.lockById(id).orElseThrow();
         final var now = clock.instant();
         if (delivery.getStatus() == EmailDeliveryStatus.SENDING
-            && !delivery.getAttemptStartedAt().plus(Duration.ofMinutes(5)).isAfter(now)) {
+            && !delivery.getAttemptStartedAt().plus(EmailDeliveryRecoveryService.STALE_AFTER).isAfter(now)) {
             delivery.finish(EmailDeliveryStatus.UNKNOWN, null, now);
         }
         if (delivery.getStatus() != EmailDeliveryStatus.UNKNOWN) {

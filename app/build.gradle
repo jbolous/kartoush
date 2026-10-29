@@ -61,6 +61,7 @@ tasks.test {
 }
 
 tasks.register("integrationTest", Test) {
+    systemProperty "kartoush.test.runtime-classpath", sourceSets.test.runtimeClasspath.asPath
     group = "verification"
     description = "Runs integration tests (Docker/Testcontainers)."
     testClassesDirs = sourceSets.test.output.classesDirs

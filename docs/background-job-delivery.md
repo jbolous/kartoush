@@ -71,10 +71,9 @@ transport failures and unclassified provider responses, are conservatively
 an uncertain send is attempted, even inside Brevo's idempotency window.
 
 An in-flight `SENDING` attempt prevents another sender from calling the provider.
-On a subsequent execution or reconciliation, an attempt at least five minutes old
-is treated as uncertain. This threshold permits investigation; it does not prove
-that the remote operation stopped. A crashed attempt that receives no further
-execution remains visibly `SENDING` until investigated. Attempt numbers fence late
+On a subsequent execution, reconciliation, or scheduled recovery sweep, an attempt
+at least five minutes old is treated as uncertain. This threshold permits investigation; it does not prove
+that the remote operation stopped. Worker nodes sweep stale attempts even when JobRunr has exhausted its retries. Attempt numbers fence late
 results so they cannot overwrite a newer attempt or a reconciliation decision.
 
 ### Reconciliation procedure
@@ -153,3 +152,53 @@ There is no public recovery endpoint. Do not delete or recreate the intent: an
 ambiguous enqueue may already exist in JobRunr, and preserving the ID retains the
 executor's duplicate suppression. Quarantine retains the original payload for recovery.
 Apply V17, V18, and V19 before running this application version.
+
+
+## Worker recovery and operational visibility
+
+On worker nodes (`jobrunr.background-job-server.enabled=true`), a recovery monitor
+runs once per minute by default, controlled by `kartoush.jobs.recovery.poll-interval-ms`.
+It processes at most 100 stale deliveries per sweep, each in a separate transaction.
+The notification service locks eligible `SENDING` rows with `SKIP LOCKED` and updates
+both the delivery and its current attempt to `UNKNOWN`. Fresh attempts and accepted
+records are untouched. Multiple worker nodes can sweep safely without waiting on
+each other's locked rows. There is no automatic resend or evidence-free reconciliation.
+Five minutes is an uncertainty threshold, not proof that a remote send stopped.
+
+The monitor records Micrometer gauges from its latest successful snapshot:
+
+| Meter | Tags / meaning |
+|---|---|
+| `jobs.recovery.unresolved` | Count by `kind`: `email-unknown`, `email-failed`, `outbox-quarantined`, `execution-failed` |
+| `jobs.recovery.oldest.age` | Age in seconds of the oldest unresolved item for the same `kind` |
+| `jobs.recovery.snapshot.age` | Seconds since the last successful refresh; NaN before the first refresh |
+| `jobs.recovery.monitor.failures` | Counter of monitor refresh failures |
+
+Email ages start at their latest status update; quarantine age starts when quarantine
+was recorded, and failed-execution age uses JobRunr's job update time. `execution-failed`
+counts jobs currently in JobRunr's `FAILED` state, not every failed attempt; scheduled
+retries are tracked by JobRunr separately. Snapshot queries are approximate operational
+observations rather than an atomic view across all stores. Scraping reads the snapshot,
+not the database. Refresh failures retain the prior snapshot, increment the failure
+counter, and emit an error. Unresolved work emits a warning with counts, and each newly
+stale email logs its delivery ID. No recipient, message content, or token is logged.
+
+These meters use the application's configured MeterRegistry. No new public management
+endpoint, exporter, or paging integration is enabled. Configure alerts in the deployment's
+existing monitoring backend for nonzero unknown/quarantined/failed counts, excessive
+oldest-item age, monitor failures, and a missing/stale snapshot (for example, older than
+three poll intervals). Alert on worker absence as well: no worker means no sweeps.
+Operators should investigate and follow the evidence-based recovery procedures above.
+
+A PostgreSQL integration test now starts a real worker JVM, waits until provider
+acceptance is durably recorded while handler database writes are uncommitted, and kills
+that JVM forcibly. A second worker uses JobRunr's normal orphan recovery to execute the
+same intent. The test checks one committed business result, one simulated provider
+acceptance, and outbox completion. Provider acceptance is simulated without network
+calls. This exercises process death and restart, not a real provider or network partition.
+The test uses five-second JobRunr polls and the supported four-poll server timeout;
+production detection latency continues to depend on its configured JobRunr settings.
+
+CI includes infrastructure/job and notification integration groups and checks Docker
+availability before running integration tests, so the crash/recovery coverage is not
+silently omitted by those groups.

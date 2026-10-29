@@ -11,14 +11,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
 /** Keeps provider acceptance durable independently of the calling business/job transaction. */
 public class TrackedEmailDeliveryService implements EmailDeliveryService {
     private static final Logger LOG = LoggerFactory.getLogger(TrackedEmailDeliveryService.class);
-    private static final Duration STALE_AFTER = Duration.ofMinutes(5);
     private final String provider;
     private final EmailClient client;
     private final EmailDeliveryRepository repository;
@@ -49,7 +47,7 @@ public class TrackedEmailDeliveryService implements EmailDeliveryService {
                 throw new IllegalStateException("Email delivery provider changed for delivery " + id);
             }
             if (delivery.getStatus() == EmailDeliveryStatus.SENDING
-                && !delivery.getAttemptStartedAt().plus(STALE_AFTER).isAfter(now)) {
+                && !delivery.getAttemptStartedAt().plus(EmailDeliveryRecoveryService.STALE_AFTER).isAfter(now)) {
                 delivery.finish(EmailDeliveryStatus.UNKNOWN, null, now);
                 repository.recordOutcome(id, delivery.getAttemptCount(), "UNKNOWN", null, now);
             }
