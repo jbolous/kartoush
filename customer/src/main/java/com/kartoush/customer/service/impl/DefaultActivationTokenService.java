@@ -18,6 +18,7 @@ import com.kartoush.platform.types.ActivationTokenId;
 import com.kartoush.platform.types.CustomerId;
 import com.kartoush.platform.ulid.UlidGenerator;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -70,6 +71,7 @@ public class DefaultActivationTokenService implements ActivationTokenService {
     }
 
     @Override
+    @Transactional
     public IssuedActivationToken resendFor(CustomerId customerId) {
         Instant consumedAt = Instant.now(clock);
         List<ActivationTokenEntity> activeTokens = activationTokenRepository.findAllByCustomerIdAndConsumedAtIsNull(
