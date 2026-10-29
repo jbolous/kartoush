@@ -12,15 +12,21 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.CacheControl;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
+
 @RestController
 @RequestMapping("/api/terms-of-service")
 @Tag(name = "Terms Of Service", description = "Public Terms of Service retrieval endpoints.")
 public class TermsOfServiceController {
+
+    private static final CacheControl CACHE_CONTROL = CacheControl.maxAge(Duration.ofSeconds(60))
+        .cachePublic().mustRevalidate();
 
     private final TermsOfServiceFacade termsOfServiceFacade;
 
@@ -46,7 +52,8 @@ public class TermsOfServiceController {
     @InternalServerErrorApiResponse
     @GetMapping("/current")
     public ResponseEntity<TermsOfServiceView> getCurrentTermsOfService() {
-        return ResponseEntity.ok(termsOfServiceFacade.getCurrentTermsOfService());
+        return ResponseEntity.ok().cacheControl(CACHE_CONTROL)
+            .body(termsOfServiceFacade.getCurrentTermsOfService());
     }
 
     @Operation(
@@ -75,6 +82,7 @@ public class TermsOfServiceController {
     @GetMapping("/{version}")
     public ResponseEntity<TermsOfServiceView> getTermsOfServiceByVersion(
         @TermsVersionParameter @PathVariable final String version) {
-        return ResponseEntity.ok(termsOfServiceFacade.getTermsOfServiceByVersion(version));
+        return ResponseEntity.ok().cacheControl(CACHE_CONTROL)
+            .body(termsOfServiceFacade.getTermsOfServiceByVersion(version));
     }
 }
