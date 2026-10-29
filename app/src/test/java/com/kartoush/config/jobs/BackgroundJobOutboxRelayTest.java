@@ -1,39 +1,28 @@
 package com.kartoush.config.jobs;
 
-import com.kartoush.jobs.persistence.entity.BackgroundJobOutboxEntity;
-import com.kartoush.jobs.persistence.repository.BackgroundJobOutboxRepository;
-import org.jobrunr.jobs.lambdas.JobLambda;
-import org.jobrunr.scheduling.JobScheduler;
 import org.junit.jupiter.api.Test;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.SimpleTransactionStatus;
-
-import java.time.Instant;
-import java.util.Optional;
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BackgroundJobOutboxRelayTest {
     @Test
-    void shouldLeavePendingIntentWhenEnqueueFailsAndRetryOnNextPoll() {
-        final BackgroundJobOutboxRepository repository = mock(BackgroundJobOutboxRepository.class);
-        final JobScheduler scheduler = mock(JobScheduler.class);
-        final OutboxJobExecutor executor = mock(OutboxJobExecutor.class);
-        final PlatformTransactionManager manager = mock(PlatformTransactionManager.class);
-        when(manager.getTransaction(any())).thenAnswer(invocation -> new SimpleTransactionStatus());
-        final BackgroundJobOutboxEntity job = new BackgroundJobOutboxEntity("type", "payload", Instant.now());
-        when(repository.lockNextPending()).thenReturn(Optional.of(job), Optional.of(job), Optional.empty());
-        when(scheduler.enqueue(any(JobLambda.class))).thenThrow(new IllegalStateException("queue unavailable"))
-            .thenReturn(new org.jobrunr.jobs.JobId(java.util.UUID.randomUUID()));
-        final BackgroundJobOutboxRelay relay = new BackgroundJobOutboxRelay(repository, scheduler, executor, manager);
+    void shouldCapExponentialBackoffWhenFailuresAccumulate() {
+        final var properties = new BackgroundJobOutboxProperties(5, Duration.ofSeconds(30), Duration.ofMinutes(2));
+        assertThat(properties.backoffAfter(0)).isEqualTo(Duration.ofSeconds(30));
+        assertThat(properties.backoffAfter(1)).isEqualTo(Duration.ofMinutes(1));
+        assertThat(properties.backoffAfter(2)).isEqualTo(Duration.ofMinutes(2));
+        assertThat(properties.backoffAfter(Integer.MAX_VALUE)).isEqualTo(Duration.ofMinutes(2));
+    }
 
-        relay.publishPending();
-        assertThat(job.getDispatchedAt()).isNull();
-        verify(manager).rollback(any());
-
-        relay.publishPending();
-        assertThat(job.getDispatchedAt()).isNotNull();
-        verify(scheduler, times(2)).enqueue(any(JobLambda.class));
+    @Test
+    void shouldRejectInvalidPolicyWhenConfigurationIsCreated() {
+        assertThatThrownBy(() -> new BackgroundJobOutboxProperties(0, Duration.ofSeconds(1), Duration.ofSeconds(2)))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new BackgroundJobOutboxProperties(5, Duration.ZERO, Duration.ofSeconds(2)))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new BackgroundJobOutboxProperties(5, Duration.ofSeconds(3), Duration.ofSeconds(2)))
+            .isInstanceOf(IllegalArgumentException.class);
     }
 }

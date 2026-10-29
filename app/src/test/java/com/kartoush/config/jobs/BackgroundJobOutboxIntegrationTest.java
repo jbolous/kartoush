@@ -17,6 +17,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CompletableFuture;
@@ -56,7 +58,8 @@ class BackgroundJobOutboxIntegrationTest extends PostgresSpringIntegrationTest {
             .findFirst().orElseThrow();
         assertThat(job.getDispatchedAt()).isNull();
 
-        new BackgroundJobOutboxRelay(repository, jobScheduler, executor, transactionManager).publishPending();
+        new BackgroundJobOutboxRelay(repository, jobScheduler, executor, transactionManager,
+            new BackgroundJobOutboxProperties(5, Duration.ofSeconds(30), Duration.ofHours(1)), Clock.systemUTC()).publishPending();
 
         assertThat(repository.findById(job.getId()).orElseThrow().getDispatchedAt()).isNotNull();
         final int before = handler.executions.get();
@@ -90,7 +93,8 @@ class BackgroundJobOutboxIntegrationTest extends PostgresSpringIntegrationTest {
         new TransactionTemplate(transactionManager).executeWithoutResult(status ->
             scheduler.schedule(new TestRequest(marker), Instant.now().plusSeconds(3600)));
 
-        new BackgroundJobOutboxRelay(repository, jobScheduler, executor, transactionManager).publishPending();
+        new BackgroundJobOutboxRelay(repository, jobScheduler, executor, transactionManager,
+            new BackgroundJobOutboxProperties(5, Duration.ofSeconds(30), Duration.ofHours(1)), Clock.systemUTC()).publishPending();
 
         final BackgroundJobOutboxEntity job = repository.findAll().stream()
             .filter(record -> record.getPayload() != null && record.getPayload().contains(marker))

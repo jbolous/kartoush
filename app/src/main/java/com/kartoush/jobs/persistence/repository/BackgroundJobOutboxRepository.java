@@ -12,7 +12,9 @@ import java.util.UUID;
 
 public interface BackgroundJobOutboxRepository extends JpaRepository<BackgroundJobOutboxEntity, UUID> {
     @Query(value = "select * from background_job_outbox where dispatched_at is null and completed_at is null "
-        + "and available_at <= current_timestamp order by available_at, created_at "
+        + "and quarantined_at is null and available_at <= current_timestamp "
+        + "and (next_publication_at is null or next_publication_at <= current_timestamp) "
+        + "order by available_at, created_at "
         + "limit 1 for update skip locked", nativeQuery = true)
     Optional<BackgroundJobOutboxEntity> lockNextPending();
 

@@ -9,8 +9,9 @@ cannot turn a committed customer registration into a scheduling error response.
 On nodes with `jobrunr.background-job-server.enabled=true`, a relay polls due intents
 every second. `kartoush.jobs.outbox.poll-interval-ms` controls the interval. Each poll
 publishes up to 100 intents. PostgreSQL `FOR UPDATE SKIP LOCKED` coordinates relay
-nodes; each publication has its own transaction. Failed publication leaves the
-intent pending for the next poll. Future intents remain pending until due.
+nodes; each publication has its own transaction. Failed publication records a failure and defers the
+intent with exponential backoff, allowing later due intents to proceed in the same
+poll. Repeated failures quarantine the intent. Future intents remain pending until due.
 
 JobRunr persists an invocation of `OutboxJobExecutor.execute(outboxId)`, rather than
 the sensitive request payload. The executor locks the outbox record, dispatches its
@@ -110,3 +111,45 @@ normal retry budget is exhausted, manual retry is needed following reconciliatio
 The attempt table retains per-attempt outcomes and receipts; the delivery record
 retains the latest reconciliation reference. Restrict operational access to these
 tables and never put message contents or tokens into evidence references.
+
+
+## Outbox publication failure policy
+
+Migration V19 adds persisted publication failure counts, retry times, and quarantine
+timestamps. Publication and failure bookkeeping each use the locked item's transaction.
+A failed enqueue commits the failure count and next retry time instead of aborting the
+poll. Previously published items stay committed, and later eligible items are attempted.
+If claiming a row or committing publication state fails (for example, a database outage),
+the current transaction rolls back and the poll stops; no failure state is invented.
+
+Configuration defaults:
+
+| Property under `kartoush.jobs.outbox` | Default | Meaning |
+|---|---|---|
+| `max-publication-failures` | `5` | Quarantine on this failure count |
+| `initial-backoff` | `30s` | Delay after the first publication failure |
+| `max-backoff` | `1h` | Maximum exponential retry delay |
+
+With defaults, retry delays are 30, 60, 120, and 240 seconds, followed by quarantine
+on the fifth failure. The failure budget applies to enqueue failures, not handler
+execution failures; JobRunr continues to own execution retries. A global queue outage
+can exhaust multiple intents' budgets, so investigate the queue before recovery.
+Logs identify failed/quarantined intents by outbox ID without logging payloads.
+
+Inspect deferred and quarantined work:
+
+```sql
+select id, publication_failures, next_publication_at, quarantined_at
+from background_job_outbox
+where dispatched_at is null and completed_at is null
+  and (publication_failures > 0 or quarantined_at is not null)
+order by created_at;
+```
+
+After fixing the publication cause, an authorized internal operator can call
+`BackgroundJobOutboxRecoveryService.retryPublication(id)`. It locks and resets a
+quarantined, unpublished, incomplete intent; the next poll reuses its original ID.
+There is no public recovery endpoint. Do not delete or recreate the intent: an
+ambiguous enqueue may already exist in JobRunr, and preserving the ID retains the
+executor's duplicate suppression. Quarantine retains the original payload for recovery.
+Apply V17, V18, and V19 before running this application version.
