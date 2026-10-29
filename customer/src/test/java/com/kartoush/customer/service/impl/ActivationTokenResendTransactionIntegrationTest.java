@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -95,8 +96,9 @@ class ActivationTokenResendTransactionIntegrationTest extends PostgresDataJpaTes
     }
 
     private void stubReplacement() {
-        when(generator.generate()).thenReturn("replacement-token");
-        when(hasher.hash("replacement-token")).thenReturn("replacement-hash");
+        final String token = UUID.randomUUID().toString();
+        when(generator.generate()).thenReturn(token);
+        when(hasher.hash(token)).thenReturn("replacement-" + token);
     }
 
     private ActivationTokenEntity seed() {
@@ -107,7 +109,7 @@ class ActivationTokenResendTransactionIntegrationTest extends PostgresDataJpaTes
         final var now = Instant.now();
         return tokens.saveAndFlush(ActivationTokenEntity.of(
             ActivationTokenIdEmbeddable.from(ActivationTokenId.newId(ids)), customerId,
-            "original-hash", now.plusSeconds(3600), null, now));
+            "original-" + UUID.randomUUID(), now.plusSeconds(3600), null, now));
     }
 
     @TestConfiguration
